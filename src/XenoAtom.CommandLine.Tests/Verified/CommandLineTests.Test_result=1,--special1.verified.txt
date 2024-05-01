@@ -1,0 +1,2 @@
+﻿multi: Unknown command or option: --special1
+Use `multi --help` for usage.

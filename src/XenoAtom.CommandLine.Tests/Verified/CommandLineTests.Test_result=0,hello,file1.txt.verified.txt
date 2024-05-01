@@ -1,0 +1,2 @@
+﻿Hello name=, age=0
+Hello File file1.txt

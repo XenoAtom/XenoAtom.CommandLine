@@ -1,0 +1,3 @@
+﻿Committing with name=John, age=50
+Commit message: Hello!
+Commit message: World!

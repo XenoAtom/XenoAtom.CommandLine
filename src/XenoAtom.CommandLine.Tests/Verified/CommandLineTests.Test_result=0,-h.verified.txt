@@ -1,0 +1,17 @@
+﻿Usage: multi [Options] COMMAND
+
+Options:
+  -D[=NAME:VALUE]            Add a marco NAME and optional VALUE
+  -f=FILE                    The input FILE
+  -x                         Extract the file
+  -c                         Create the file
+  -t                         List the file
+  -a, --advanced             Show advanced options
+  -h, -?, --help             Show this message and exit
+  -v, --version              Show the version of this command
+
+Available commands:
+  hello                      This is a hello command
+  world                      This is a world command
+
+Run 'multi [command] --help' for more information on a command.

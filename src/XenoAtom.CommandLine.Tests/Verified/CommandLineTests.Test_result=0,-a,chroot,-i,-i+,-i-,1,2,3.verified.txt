@@ -1,0 +1,5 @@
+﻿specialIncrease: 2
+specialDecrease: 1
+chroot 1
+chroot 2
+chroot 3

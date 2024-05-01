@@ -1,0 +1,8 @@
+﻿Usage: myexe [Options] COMMAND
+
+  -n, --name=NAME            Your NAME
+  -a, --age=AGE              Your AGE
+  -h, -?, --help             Show this message and exit
+
+Available commands:
+  commit                    

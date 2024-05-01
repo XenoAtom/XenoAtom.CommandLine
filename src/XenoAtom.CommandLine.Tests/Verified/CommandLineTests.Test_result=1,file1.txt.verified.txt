@@ -1,0 +1,2 @@
+﻿multi: Unknown command or option: file1.txt
+Use `multi --help` for usage.

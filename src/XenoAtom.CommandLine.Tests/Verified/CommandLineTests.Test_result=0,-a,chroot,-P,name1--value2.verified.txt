@@ -1,0 +1,3 @@
+﻿specialIncrease: 0
+specialDecrease: 0
+Macro: name1 => value2

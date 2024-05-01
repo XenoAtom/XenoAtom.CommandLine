@@ -1,0 +1,6 @@
+﻿Usage: multi hello [Options] [files]*
+
+Options:
+  -n, --name=VALUE           This is a name
+  -a, --age=AGE              Sets the AGE
+  -h, -?, --help             Show this message and exit

@@ -1,0 +1,6 @@
+--enum Value2
+Hello
+World
+From
+Response
+File

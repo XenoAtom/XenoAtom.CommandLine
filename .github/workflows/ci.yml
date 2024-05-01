@@ -1,0 +1,15 @@
+name: ci
+
+on:
+  push:
+    paths-ignore:
+    - 'doc/**'
+    - 'img/**'
+    - 'readme.md'
+  pull_request:
+
+jobs:
+  build:
+    uses: xoofx/.github/.github/workflows/dotnet.yml@main
+    secrets:
+      NUGET_TOKEN: ${{ secrets.NUGET_TOKEN }}

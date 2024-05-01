@@ -1,0 +1,70 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32014.148
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XenoAtom.CommandLine", "XenoAtom.CommandLine\XenoAtom.CommandLine.csproj", "{CA0761F7-4610-49AA-A54E-AE20DE68A2D9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XenoAtom.CommandLine.Tests", "XenoAtom.CommandLine.Tests\XenoAtom.CommandLine.Tests.csproj", "{A1D5FC31-CD02-4923-9A1D-E8C53E0B855F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "00-general", "00-general", "{BBC4B16D-083F-47E6-BFAE-9064E600F230}"
+	ProjectSection(SolutionItems) = preProject
+		..\.editorconfig = ..\.editorconfig
+		..\.gitattributes = ..\.gitattributes
+		..\.gitignore = ..\.gitignore
+		..\.github\workflows\ci.yml = ..\.github\workflows\ci.yml
+		dotnet-releaser.toml = dotnet-releaser.toml
+		global.json = global.json
+		..\license.txt = ..\license.txt
+		..\readme.md = ..\readme.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "10-docs", "10-docs", "{A325E687-03F0-4FED-801F-7CC32B87D866}"
+	ProjectSection(SolutionItems) = preProject
+		..\doc\readme.md = ..\doc\readme.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "20-samples", "20-samples", "{98F725E3-460D-4184-9392-D53256FF3943}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "30-src", "30-src", "{D0D6CFFD-DCD0-4621-ADA4-88B616901C5D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HelloWorld", "..\samples\HelloWorld\HelloWorld.csproj", "{69CBD6AE-3FFB-46DD-9601-4EFFA4EC2AE4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdvancedApp", "..\samples\AdvancedApp\AdvancedApp.csproj", "{3CD59759-E981-4599-AF74-F8F6762C931E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CA0761F7-4610-49AA-A54E-AE20DE68A2D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA0761F7-4610-49AA-A54E-AE20DE68A2D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CA0761F7-4610-49AA-A54E-AE20DE68A2D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CA0761F7-4610-49AA-A54E-AE20DE68A2D9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1D5FC31-CD02-4923-9A1D-E8C53E0B855F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1D5FC31-CD02-4923-9A1D-E8C53E0B855F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1D5FC31-CD02-4923-9A1D-E8C53E0B855F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1D5FC31-CD02-4923-9A1D-E8C53E0B855F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{69CBD6AE-3FFB-46DD-9601-4EFFA4EC2AE4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{69CBD6AE-3FFB-46DD-9601-4EFFA4EC2AE4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{69CBD6AE-3FFB-46DD-9601-4EFFA4EC2AE4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{69CBD6AE-3FFB-46DD-9601-4EFFA4EC2AE4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3CD59759-E981-4599-AF74-F8F6762C931E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3CD59759-E981-4599-AF74-F8F6762C931E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3CD59759-E981-4599-AF74-F8F6762C931E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3CD59759-E981-4599-AF74-F8F6762C931E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{CA0761F7-4610-49AA-A54E-AE20DE68A2D9} = {D0D6CFFD-DCD0-4621-ADA4-88B616901C5D}
+		{A1D5FC31-CD02-4923-9A1D-E8C53E0B855F} = {D0D6CFFD-DCD0-4621-ADA4-88B616901C5D}
+		{69CBD6AE-3FFB-46DD-9601-4EFFA4EC2AE4} = {98F725E3-460D-4184-9392-D53256FF3943}
+		{3CD59759-E981-4599-AF74-F8F6762C931E} = {98F725E3-460D-4184-9392-D53256FF3943}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {95E8F3B3-49E8-400E-97A1-38D8B946DFCA}
+	EndGlobalSection
+EndGlobal

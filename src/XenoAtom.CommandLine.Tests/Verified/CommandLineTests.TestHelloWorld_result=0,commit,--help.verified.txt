@@ -1,0 +1,4 @@
+﻿Usage: myexe commit [Options]
+
+  -m, --message=MESSAGE      Add a MESSAGE to this commit
+  -h, -?, --help             Show this message and exit

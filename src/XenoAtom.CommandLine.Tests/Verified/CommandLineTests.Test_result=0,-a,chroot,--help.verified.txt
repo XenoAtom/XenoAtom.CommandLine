@@ -1,0 +1,9 @@
+﻿Usage: multi chroot [Options]
+
+Options:
+  -M=NAME:VALUE              Add a marco NAME and mandatory VALUE
+  -P=NAME->VALUE             Add a marco NAME and mandatory VALUE
+      --this-is-a-very-long-option-that-doesnt-fit-on-the-column
+                             This is the long option
+  -i                         
+  -h, -?, --help             Show this message and exit

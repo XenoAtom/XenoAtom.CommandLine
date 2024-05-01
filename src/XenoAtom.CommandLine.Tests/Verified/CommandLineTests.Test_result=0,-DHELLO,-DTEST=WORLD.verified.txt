@@ -1,0 +1,8 @@
+﻿Extract: False
+Create: False
+List: False
+Special1: False
+Special2: False
+ShowAdvanced: False
+Macro: HELLO => 
+Macro: TEST => WORLD

@@ -1,0 +1,7 @@
+﻿Usage: multi world [Options] [files]* @file
+
+Options:
+  -e, --enum=ENUM            This is an ENUM accepting the following values:
+                               Value1, Value2, Value3
+  -h, -?, --help             Show this message and exit
+  @file                      Read response file for more options.

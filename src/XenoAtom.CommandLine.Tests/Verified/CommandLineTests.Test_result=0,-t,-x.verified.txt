@@ -1,0 +1,6 @@
+﻿Extract: True
+Create: False
+List: True
+Special1: False
+Special2: False
+ShowAdvanced: False
