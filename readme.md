@@ -1,4 +1,4 @@
-# XenoAtom.CommandLine [![Build Status](https://github.com/XenoAtom/XenoAtom.CommandLine/workflows/ci/badge.svg?branch=main)](https://github.com/XenoAtom/XenoAtom.CommandLine/actions) [![NuGet](https://img.shields.io/nuget/v/XenoAtom.CommandLine.svg)](https://www.nuget.org/packages/XenoAtom.CommandLine/)
+# XenoAtom.CommandLine [![ci](https://github.com/XenoAtom/XenoAtom.CommandLine/actions/workflows/ci.yml/badge.svg)](https://github.com/XenoAtom/XenoAtom.CommandLine/actions/workflows/ci.yml) [![NuGet](https://img.shields.io/nuget/v/XenoAtom.CommandLine.svg)](https://www.nuget.org/packages/XenoAtom.CommandLine/)
 
 <img align="right" width="256px" height="256px" src="https://raw.githubusercontent.com/XenoAtom/XenoAtom.CommandLine/blob/main/img/icon.png">
 
