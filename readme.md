@@ -1,6 +1,6 @@
 # XenoAtom.CommandLine [![ci](https://github.com/XenoAtom/XenoAtom.CommandLine/actions/workflows/ci.yml/badge.svg)](https://github.com/XenoAtom/XenoAtom.CommandLine/actions/workflows/ci.yml) [![NuGet](https://img.shields.io/nuget/v/XenoAtom.CommandLine.svg)](https://www.nuget.org/packages/XenoAtom.CommandLine/)
 
-<img align="right" width="256px" height="256px" src="https://raw.githubusercontent.com/XenoAtom/XenoAtom.CommandLine/blob/main/img/icon.png">
+<img align="right" width="256px" height="256px" src="https://raw.githubusercontent.com/XenoAtom/XenoAtom.CommandLine/main/img/icon.png">
 
 **XenoAtom.CommandLine** is a lightweight, powerful and NativeAOT friendly command line parser.
 
