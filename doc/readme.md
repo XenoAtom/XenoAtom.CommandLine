@@ -450,4 +450,4 @@ Not only the text is not displayed, but the options `--special1` and `--special2
 
 ## Going further
 
-You can have a look at the [samples](samples) to see more examples of how to use the library.
+You can have a look at the [samples](https://github.com/XenoAtom/XenoAtom.CommandLine/tree/main/samples) to see more examples of how to use the library.
