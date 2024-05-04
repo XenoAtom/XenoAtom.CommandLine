@@ -12,7 +12,7 @@ It is a fork of the excellent [NDesk.Options](http://www.ndesk.org/Options)/[Mon
 - `net8.0`+  ready and NativeAOT friendly, no `System.Reflection` used
 - Provides a simple API to parse command line arguments
 - Generates a help message from the command line definition
-    - Why you declare is what you get!
+    - What you declare is what you get!
 - Supports 
     - Commands and sub-command parsing (e.g. `git commit -m "message"`)
     - Tar and POSIX style options (e.g. `-abc` is equivalent to `-a -b -c`)
