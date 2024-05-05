@@ -9,6 +9,7 @@ XenoAtom.CommandLine is a library that provides a simple and easy way to create 
 - [ArgumentSource](#argumentsource)
 - [CommandGroup](#commandgroup)
 - [Going further](#going-further)
+- [Class diagram](#class-diagram)
 
 ## CommandApp and Command
 
@@ -451,3 +452,29 @@ Not only the text is not displayed, but the options `--special1` and `--special2
 ## Going further
 
 You can have a look at the [samples](https://github.com/XenoAtom/XenoAtom.CommandLine/tree/main/samples) to see more examples of how to use the library.
+
+## Class diagram
+
+The following class diagram shows the main classes of the library:
+
+![Class diagram](XenoAtom.CommandLine.png)
+
+The design of the library is voluntarily simple and straightforward. The main classes are `CommandApp`, `Command`, `Option`, `CommandGroup`, `ArgumentSource`, `HelpOption`, `VersionOption`, `ResponseFileSource` and `CommandException`. The `Action` is a delegate that can be used to execute code when the command-line is parsed.
+
+Other class derived from `Option` (for representing actions bound to options) are internal.
+
+The `CommandContainer` derived classes (`Command`, `CommandApp`, `CommanGroup`) provide several [extension methods](https://github.com/XenoAtom/XenoAtom.CommandLine/blob/main/src/XenoAtom.CommandLine/CommandExtensions.cs) to add options that are compatible with collection initializers:
+
+```csharp
+var app = new CommandApp();
+app.Add("n|name=", "The {NAME} of the person", v => name = v);
+```
+
+is equivalent to use the collection initializer:
+
+```csharp
+var app = new CommandApp()
+{
+    { "n|name=", "The {NAME} of the person", v => name = v },
+};
+```

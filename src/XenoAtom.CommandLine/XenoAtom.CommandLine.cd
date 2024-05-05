@@ -1,0 +1,96 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="XenoAtom.CommandLine.CommandNode" Collapsed="true">
+    <Position X="5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAEAAEAAAQAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>CommandNode.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="XenoAtom.CommandLine.CommandContainer" Collapsed="true">
+    <Position X="9" Y="2" Width="1.5" />
+    <AssociationLine Name="Nodes" Type="XenoAtom.CommandLine.CommandNode" FixedFromPoint="true" FixedToPoint="true">
+      <Path>
+        <Point X="10.188" Y="2" />
+        <Point X="10.188" Y="0.781" />
+        <Point X="6.5" Y="0.781" />
+      </Path>
+    </AssociationLine>
+    <TypeIdentifier>
+      <HashCode>AAIgABAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAIAAAAAA=</HashCode>
+      <FileName>CommandContainer.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsCollectionAssociation>
+      <Property Name="Nodes" />
+    </ShowAsCollectionAssociation>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="XenoAtom.CommandLine.Command" Collapsed="true">
+    <Position X="8" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AYQCAUJAA0AoEAAiIACAFAyAAQCiIAAADwCAIAFAAQQ=</HashCode>
+      <FileName>Command.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="XenoAtom.CommandLine.CommandUsage" Collapsed="true">
+    <Position X="2.75" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAIAAAAgAAAEAAAAAAABAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>CommandUsage.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="XenoAtom.CommandLine.HelpOption" Collapsed="true">
+    <Position X="6" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>HelpOption.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="XenoAtom.CommandLine.Option" Collapsed="true">
+    <Position X="5" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>EEAgoQAAAAAoAAAEEAAAAAAAgAAAAAAECQAAgAAEAAI=</HashCode>
+      <FileName>Option.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="XenoAtom.CommandLine.CommandGroup" Collapsed="true">
+    <Position X="10" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>CommandGroup.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="XenoAtom.CommandLine.CommandApp" Collapsed="true">
+    <Position X="8" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAABAAACAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>CommandApp.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="XenoAtom.CommandLine.VersionOption" Collapsed="true">
+    <Position X="4" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>IAAAAAAAAAAAAAAAEAAAAAAAAAAAACAAAAAAAAAAAAA=</HashCode>
+      <FileName>VersionOption.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="XenoAtom.CommandLine.ArgumentSource" Collapsed="true">
+    <Position X="0.5" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAgAAAAAAAAAAACAgACAAAACAAAAAAAAAA=</HashCode>
+      <FileName>ArgumentSource.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="XenoAtom.CommandLine.ResponseFileSource" Collapsed="true">
+    <Position X="0.5" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAgAAAAAAAAAAACAAAAAAAACAAAAAAAAAA=</HashCode>
+      <FileName>ResponseFileSource.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

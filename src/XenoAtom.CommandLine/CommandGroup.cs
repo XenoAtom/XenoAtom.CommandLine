@@ -10,4 +10,6 @@ namespace XenoAtom.CommandLine;
 /// A group of commands that will be inlined in the parent command.
 /// </summary>
 /// <param name="active">A function to determine if this group is active</param>
-public class CommandGroup(Func<bool>? active = null) : CommandContainer(active);
+public class CommandGroup(Func<bool>? active = null) : CommandContainer(active)
+{
+}
