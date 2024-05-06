@@ -19,7 +19,7 @@
     <PackageTags>command line;commandline;argument;option;parser;parsing;library;syntax;shell</PackageTags>
     <PackageReadmeFile>readme.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
-    <PackageProjectUrl>https://github.com/xoofx/XenoAtom.CommandLine</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/XenoAtom/XenoAtom.CommandLine</PackageProjectUrl>
     <PackageLicenseExpression>BSD-2-Clause</PackageLicenseExpression>
     <!--Add support for sourcelink-->
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
