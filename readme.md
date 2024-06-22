@@ -108,7 +108,6 @@ Running `myexe --name John -a50` will output:
 Hello John! You are 50 years old.
 ```
 
-
 Running `myexe --name John -a50 -DHello -DWorld=121` will output:
 
 ```
