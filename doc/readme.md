@@ -192,7 +192,10 @@ Random other tidbits:
   ```csharp
   var app = new CommandApp()
   {
-      { "D:", "Add a marco {0:NAME} and optional {1:VALUE}", (k, v) => Console.WriteLin($"Macro:    {k}` => `{v}`") },
+      { "D:", "Add a macro {0:NAME} and optional {1:VALUE}", (k, v) => {
+        if (k is null) throw new OptionException("Missing macro name", "D");
+        Console.WriteLine($"Macro:    {k}` => `{v}`"); 
+      }},
       { "I|macro=", "Add a marco {0:NAME} and required {1:VALUE}", (k, v) => Console.WriteLine  ($"Required Macro: `{k}` => `{v}`") },
   };
   await app.RunAsync(["-DA=B", "-DHello=World", "-DG", "-IG=F", "--macro", "X=Y"]);

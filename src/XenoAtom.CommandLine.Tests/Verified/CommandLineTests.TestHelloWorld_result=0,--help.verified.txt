@@ -1,5 +1,6 @@
 ﻿Usage: myexe [Options] COMMAND
 
+  -D[=name:value]            Defines a name and optional value
   -n, --name=NAME            Your NAME
   -a, --age=AGE              Your AGE
   -h, -?, --help             Show this message and exit

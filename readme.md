@@ -36,11 +36,17 @@ using XenoAtom.CommandLine;
 const string _ = "";
 string? name = null;
 int age = 0;
+List<(string, string?)> keyValues = new List<(string, string?)>();
 List<string> messages = new List<string>();
 
 var commandApp = new CommandApp("myexe")
 {
     _,
+    {"D:", "Defines a {0:name} and optional {1:value}", (key, value) =>
+    {
+        if (key is null) throw new OptionException("The key is mandatory for a define", "D");
+        keyValues.Add((key, value));
+    }},
     {"n|name=", "Your {NAME}", v => name = v},
     {"a|age=", "Your {AGE}", (int v) => age = v},
     new HelpOption(),
@@ -53,20 +59,28 @@ var commandApp = new CommandApp("myexe")
         new HelpOption(),
 
         // Action for the commit command
-        (arguments) =>
+        (ctx, arguments) =>
         {
-            Console.Out.WriteLine($"Committing with name={name}, age={age}");
+            ctx.Out.WriteLine($"Committing with name={name}, age={age}");
             foreach (var message in messages)
             {
-                Console.Out.WriteLine($"Commit message: {message}");
+                ctx.Out.WriteLine($"Commit message: {message}");
             }
             return ValueTask.FromResult(0);
         }
     },
     // Default action if no command is specified
-    (_) =>
+    (ctx, _) =>
     {
-        Console.Out.WriteLine($"Hello {name}! You are {age} years old.");
+        ctx.Out.WriteLine($"Hello {name}! You are {age} years old.");
+        if (keyValues.Count > 0)
+        {
+            foreach (var keyValue in keyValues)
+            {
+                ctx.Out.WriteLine($"Define: {keyValue.Item1} => {keyValue.Item2}");
+            }
+        }
+
         return ValueTask.FromResult(0);
     }
 };
@@ -79,18 +93,28 @@ Running `myexe --help` will output:
 ```
 Usage: myexe [Options] COMMAND
 
+  -D[=name:value]            Defines a name and optional value
   -n, --name=NAME            Your NAME
   -a, --age=AGE              Your AGE
   -h, -?, --help             Show this message and exit
 
 Available commands:
-  commit    
+  commit
 ```
 
 Running `myexe --name John -a50` will output:
 
 ```
 Hello John! You are 50 years old.
+```
+
+
+Running `myexe --name John -a50 -DHello -DWorld=121` will output:
+
+```
+Hello John! You are 50 years old.
+Define: Hello =>
+Define: World => 121
 ```
 
 Running `myexe commit --help` will output:

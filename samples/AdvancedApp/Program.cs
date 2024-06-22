@@ -29,7 +29,12 @@ var app = new CommandApp("multi")
     _,
     "Options:",
     // gcc-like options
-    { "D:", "Add a marco {0:NAME} and optional {1:VALUE}", (k, v) => keyValues.Add((k, v)) },
+    { "D:", "Add a marco {0:NAME} and optional {1:VALUE}", (k, v) =>
+        {
+            if (k is null) throw new OptionException("Name is required", "D");
+            keyValues.Add((k, v));
+        }
+    },
 
     // tar-like options
     { "f=", "The input {FILE}", files },

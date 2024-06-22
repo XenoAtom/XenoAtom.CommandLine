@@ -8,6 +8,7 @@ public class CommandLineTests : VerifyBase
     [TestMethod]
     [DataRow(0, "--help")]
     [DataRow(0, "--name", "John", "-a50" )]
+    [DataRow(0, "--name", "John", "-a50", "-DHello", "-DWorld=126")]
     [DataRow(0, "commit", "--help")]
     [DataRow(0, "--name", "John", "-a50", "commit", "--message", "Hello!", "--message", "World!")]
     public async Task TestHelloWorld(int result, params string[] args)
@@ -15,11 +16,17 @@ public class CommandLineTests : VerifyBase
         const string _ = "";
         string? name = null;
         int age = 0;
+        List<(string, string?)> keyValues = new List<(string, string?)>();
         List<string> messages = new List<string>();
 
         var commandApp = new CommandApp("myexe")
         {
             _,
+            {"D:", "Defines a {0:name} and optional {1:value}", (key, value) =>
+            {
+                if (key is null) throw new OptionException("The key is mandatory for a define", "D");
+                keyValues.Add((key, value));
+            }},
             {"n|name=", "Your {NAME}", v => name = v},
             {"a|age=", "Your {AGE}", (int v) => age = v},
             new HelpOption(),
@@ -46,6 +53,14 @@ public class CommandLineTests : VerifyBase
             (ctx, _) =>
             {
                 ctx.Out.WriteLine($"Hello {name}! You are {age} years old.");
+                if (keyValues.Count > 0)
+                {
+                    foreach (var keyValue in keyValues)
+                    {
+                        ctx.Out.WriteLine($"Define: {keyValue.Item1} => {keyValue.Item2}");
+                    }
+                }
+
                 return ValueTask.FromResult(0);
             }
         };
