@@ -5,7 +5,6 @@
     <Nullable>enable</Nullable>
     <IsPackable>true</IsPackable>
 
-    <PublishAot>true</PublishAot>
     <!-- Enable AOT analyzers -->
     <IsAotCompatible>true</IsAotCompatible>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>

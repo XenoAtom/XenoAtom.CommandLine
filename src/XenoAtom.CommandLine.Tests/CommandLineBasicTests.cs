@@ -173,7 +173,7 @@ public class CommandLineBasicTests
 
         await app.RunAsync(["-M", "KEY", "VALUE:SHOULD_NOT_SPLIT"], new CommandRunConfig() { Out = TextWriter.Null, Error = TextWriter.Null });
 
-        Assert.AreEqual(1, values.Count);
+        Assert.HasCount(1, values);
         Assert.AreEqual("KEY", values[0].Key);
         Assert.AreEqual("VALUE:SHOULD_NOT_SPLIT", values[0].Value);
     }
@@ -192,7 +192,7 @@ public class CommandLineBasicTests
 
         await app.RunAsync(["-P", "KEY", "VALUE->SHOULD_NOT_SPLIT"], new CommandRunConfig() { Out = TextWriter.Null, Error = TextWriter.Null });
 
-        Assert.AreEqual(1, values.Count);
+        Assert.HasCount(1, values);
         Assert.AreEqual("KEY", values[0].Key);
         Assert.AreEqual("VALUE->SHOULD_NOT_SPLIT", values[0].Value);
     }

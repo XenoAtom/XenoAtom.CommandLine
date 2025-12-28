@@ -35,7 +35,7 @@ public class SpecialTests
             {"D=", "{0:NAME} and mandatory {1:VALUE}", (string k, int v) => { list.Add((k, v)); }},
         };
         await commandApp.RunAsync(new[] { "-DHELLO=1", "-DTEST=2" });
-        Assert.AreEqual(2, list.Count);
+        Assert.HasCount(2, list);
         Assert.AreEqual("HELLO", list[0].Item1);
         Assert.AreEqual(1, list[0].Item2);
         Assert.AreEqual("TEST", list[1].Item1);
@@ -53,7 +53,7 @@ public class SpecialTests
             return new ValueTask<int>(0);
         });
         await commandApp.RunAsync([ "a", "b", "c" ]);
-        Assert.AreEqual(3, list.Count);
+        Assert.HasCount(3, list);
         Assert.AreEqual("a", list[0]);
         Assert.AreEqual("b", list[1]);
         Assert.AreEqual("c", list[2]);
@@ -65,7 +65,7 @@ public class SpecialTests
         var values = ArgumentSource.GetArguments(new StringReader("""
                                                      "a" "b" "c"
                                                      """)).ToArray();
-        Assert.AreEqual(3, values.Length);
+        Assert.HasCount(3, values);
         Assert.AreEqual("a", values[0]);
         Assert.AreEqual("b", values[1]);
         Assert.AreEqual("c", values[2]);
@@ -89,10 +89,10 @@ public class SpecialTests
         };
         Assert.AreEqual("test", customOption.Prototype);
         var names = customOption.GetNames();
-        Assert.AreEqual(1, names.Length);
+        Assert.HasCount(1, names);
         Assert.AreEqual("test", names[0]);
         var seps = customOption.GetValueSeparators();
-        Assert.AreEqual(0, seps.Length);
+        Assert.HasCount(0, seps);
         Assert.AreEqual("test", customOption.ToString());
         
         await commandApp.RunAsync(new[] { "--test" });
@@ -119,11 +119,11 @@ public class SpecialTests
 
             c.OptionValues.Insert(0, "Hello");
             var array = c.OptionValues.ToArray();
-            Assert.AreEqual(2, array.Length);
+            Assert.HasCount(2, array);
             Assert.AreEqual("Hello", array[0]);
 
             var list = c.OptionValues.ToList();
-            Assert.AreEqual(2, list.Count);
+            Assert.HasCount(2, list);
             Assert.AreEqual("Hello", list[0]);
 
 

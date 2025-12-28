@@ -1,5 +1,7 @@
 using System.Globalization;
 
+[assembly: DoNotParallelize]
+
 namespace XenoAtom.CommandLine.Tests;
 
 [TestClass]

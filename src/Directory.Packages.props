@@ -4,9 +4,9 @@
     <CentralPackageTransitivePinningEnabled>false</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="BenchmarkDotNet" Version="0.14.0" />
-    <PackageVersion Include="MinVer" Version="5.0.0" />
-    <PackageVersion Include="Verify.MSTest" Version="24.1.0" />
+    <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
+    <PackageVersion Include="MinVer" Version="6.1.0" />
+    <PackageVersion Include="Verify.MSTest" Version="31.9.3" />
     <PackageVersion Include="MSTest" Version="4.0.2" />
   </ItemGroup>
 </Project>
