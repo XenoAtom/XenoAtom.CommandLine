@@ -22,6 +22,7 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
 {
     private readonly Dictionary<string, Command> _subCommands = new();
     private readonly Dictionary<string, Option> _options = new();
+    private readonly Dictionary<char, Option> _shortOptions = new();
     private readonly List<ArgumentSource> _sources = new();
     private bool _hasCommandUsage;
 
@@ -94,6 +95,10 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
             foreach (var name in option.Names)
             {
                 _options.Add(name, option);
+                if (name.Length == 1)
+                {
+                    _shortOptions.Add(name[0], option);
+                }
             }
         }
         else if (node is ArgumentSource source)
@@ -198,6 +203,7 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
             return 1;
         }
     }
+
 
     /// <summary>
     /// Gets the root command app from this command.
@@ -342,6 +348,13 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
         foreach (string argument in ae)
         {
             ++c.OptionIndex;
+
+            if (process && c.Option != null)
+            {
+                ParseValue(argument, c);
+                continue;
+            }
+
             if (argument == "--")
             {
                 if (!process)
@@ -352,7 +365,7 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
                 continue;
             }
 
-            if (_subCommands.ContainsKey(argument))
+            if (process && _subCommands.ContainsKey(argument))
             {
                 unprocessed.Add(argument);
                 process = false;
@@ -390,6 +403,18 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
         return false;
     }
 
+    private bool AddSource(List<IEnumerator<string>> sources, string argument)
+    {
+        foreach (ArgumentSource source in _sources)
+        {
+            if (!source.TryGetArguments(argument, out var replacement))
+                continue;
+            sources.Add(replacement.GetEnumerator());
+            return true;
+        }
+        return false;
+    }
+
     private static bool Unprocessed(ICollection<string> extra, Option? def, OptionContext c, string argument)
     {
         if (def == null)
@@ -403,25 +428,53 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
         return false;
     }
 
-    [GeneratedRegex(@"^(?<flag>--|-|/)(?<name>[^:=]+)((?<sep>[:=])(?<value>.*))?$")]
-    private static partial Regex ValueOption();
-
-    private bool GetOptionParts(string argument, [NotNullWhen(true)] out string? flag, [NotNullWhen(true)] out string? name, out string? sep, out string? value)
+    private static bool TryGetOptionParts(
+        string argument,
+        out int flagLength,
+        [NotNullWhen(true)] out string? flag,
+        out ReadOnlySpan<char> name,
+        out int sepIndex,
+        out ReadOnlySpan<char> value)
     {
-        flag = name = sep = value = null;
-        var m = ValueOption().Match(argument);
-        if (!m.Success)
+        flagLength = 0;
+        flag = null;
+        name = default;
+        sepIndex = -1;
+        value = default;
+
+        if (string.IsNullOrEmpty(argument))
+            return false;
+
+        ReadOnlySpan<char> span = argument.AsSpan();
+        if (span.Length >= 2 && span[0] == '-' && span[1] == '-')
+        {
+            flagLength = 2;
+            flag = "--";
+        }
+        else if (span[0] == '-' || span[0] == '/')
+        {
+            flagLength = 1;
+            flag = span[0] == '-' ? "-" : "/";
+        }
+        else
         {
             return false;
         }
-        flag = m.Groups["flag"].Value;
-        name = m.Groups["name"].Value;
-        if (m.Groups["sep"].Success && m.Groups["value"].Success)
+
+        if (span.Length <= flagLength)
+            return false;
+
+        var rest = span[flagLength..];
+        sepIndex = rest.IndexOfAny(':', '=');
+        if (sepIndex < 0)
         {
-            sep = m.Groups["sep"].Value;
-            value = m.Groups["value"].Value;
+            name = rest;
+            return name.Length > 0;
         }
-        return true;
+
+        name = rest[..sepIndex];
+        value = rest[(sepIndex + 1)..];
+        return name.Length > 0;
     }
 
     private bool ParseOption(string argument, OptionContext c)
@@ -434,33 +487,33 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
             return true;
         }
 
-        if (!GetOptionParts(argument, out var flag, out var name, out var sep, out var value))
+        if (!TryGetOptionParts(argument, out var flagLength, out var flag, out var name, out var sepIndex, out var value))
             return false;
 
         Option? p;
-        if (_options.TryGetValue(name, out p) && p.IsActive())
+        if (TryGetOption(name, out p) && p.IsActive())
         {
-            c.OptionName = flag + name;
+            c.OptionName = sepIndex < 0 ? argument : argument.Substring(0, flagLength + name.Length);
             c.Option = p;
             switch (p.OptionValueType)
             {
                 case OptionValueType.None:
-                    c.OptionValues.Add(name);
+                    c.OptionValues.Add(name.ToString());
                     c.Option.Invoke(c);
                     break;
                 case OptionValueType.Optional:
                 case OptionValueType.Required:
-                    ParseValue(value, c);
+                    ParseValue(sepIndex < 0 ? null : value.ToString(), c);
                     break;
             }
             return true;
         }
 
         // no match; is it a bool option?
-        if (ParseBool(argument, name, c))
+        if (TryParseBool(argument, name, c))
             return true;
         // is it a bundled option?
-        if (ParseBundledValue(flag, $"{name}{sep}{value}", c))
+        if (TryParseBundledValue(flag, argument.AsSpan(flagLength), c, argument))
             return true;
 
         return false;
@@ -469,12 +522,18 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
     private void ParseValue(string? option, OptionContext c)
     {
         if (option != null)
-            foreach (string o in c.Option!.ValueSeparators != null
-                         ? option.Split(c.Option.ValueSeparators, c.Option.MaxValueCount - c.OptionValues.Count, StringSplitOptions.None)
-                         : new string[] { option })
+        {
+            var separators = c.Option!.ValueSeparators;
+            if (separators == null)
             {
-                c.OptionValues.Add(o);
+                c.OptionValues.Add(option);
             }
+            else
+            {
+                AddSplitOptionValues(option, separators, c.Option.MaxValueCount - c.OptionValues.Count, c.OptionValues);
+            }
+        }
+
         if (c.OptionValues.Count == c.Option!.MaxValueCount ||
             c.Option.OptionValueType == OptionValueType.Optional)
             c.Option.Invoke(c);
@@ -484,53 +543,145 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
         }
     }
 
-    private bool ParseBool(string option, string n, OptionContext c)
+    private bool TryParseBool(string option, ReadOnlySpan<char> name, OptionContext c)
     {
-        Option p;
-        string rn;
-        if (n.Length >= 1 && (n[^1] == '+' || n[^1] == '-') && _options.ContainsKey((rn = n.Substring(0, n.Length - 1))))
-        {
-            p = _options[rn];
-            if (p.IsActive())
-            {
-                string? v = n[^1] == '+' ? option : null;
-                c.OptionName = option;
-                c.Option = p;
-                c.OptionValues.Add(v);
-                p.Invoke(c);
-                return true;
-            }
-        }
-        return false;
+        if (name.Length < 2)
+            return false;
+
+        var last = name[^1];
+        if (last != '+' && last != '-')
+            return false;
+
+        var baseName = name[..^1];
+        if (!TryGetOption(baseName, out var p) || !p.IsActive())
+            return false;
+
+        string? v = last == '+' ? option : null;
+        c.OptionName = option;
+        c.Option = p;
+        c.OptionValues.Add(v);
+        p.Invoke(c);
+        return true;
     }
 
-    private bool ParseBundledValue(string f, string n, OptionContext c)
+    private bool TryGetOption(ReadOnlySpan<char> name, [NotNullWhen(true)] out Option? option)
+    {
+        if (name.Length == 1)
+        {
+            return _shortOptions.TryGetValue(name[0], out option);
+        }
+
+#if NET10_0_OR_GREATER
+        return _options.GetAlternateLookup<ReadOnlySpan<char>>().TryGetValue(name, out option);
+#else
+        return _options.TryGetValue(name.ToString(), out option);
+#endif
+    }
+
+    private static void AddSplitOptionValues(string option, string[] separators, int maxSplitCount, OptionValueCollection target)
+    {
+        if (maxSplitCount <= 1 || separators.Length == 0)
+        {
+            target.Add(option);
+            return;
+        }
+
+        // Fast path: all separators are single characters.
+        var hasOnlySingleCharSeparators = true;
+        for (var i = 0; i < separators.Length; i++)
+        {
+            if (separators[i].Length != 1)
+            {
+                hasOnlySingleCharSeparators = false;
+                break;
+            }
+        }
+
+        if (hasOnlySingleCharSeparators)
+        {
+            Span<char> sepChars = separators.Length <= 8 ? stackalloc char[separators.Length] : new char[separators.Length];
+            for (var i = 0; i < separators.Length; i++)
+            {
+                sepChars[i] = separators[i][0];
+            }
+
+            var start = 0;
+            var remainingSegments = maxSplitCount;
+            while (remainingSegments > 1)
+            {
+                var next = option.AsSpan(start).IndexOfAny(sepChars);
+                if (next < 0)
+                    break;
+                next += start;
+                target.Add(option.Substring(start, next - start));
+                start = next + 1;
+                remainingSegments--;
+            }
+
+            target.Add(start == 0 ? option : option.Substring(start));
+            return;
+        }
+
+        // Fallback for multi-character separators.
+        var segmentStart = 0;
+        var remaining = maxSplitCount;
+        while (remaining > 1)
+        {
+            int nextIndex = -1;
+            int nextSepLength = 0;
+            for (var i = 0; i < separators.Length; i++)
+            {
+                var sep = separators[i];
+                var idx = option.IndexOf(sep, segmentStart, StringComparison.Ordinal);
+                if (idx < 0)
+                    continue;
+                if (nextIndex < 0 || idx < nextIndex)
+                {
+                    nextIndex = idx;
+                    nextSepLength = sep.Length;
+                }
+            }
+
+            if (nextIndex < 0)
+                break;
+
+            target.Add(option.Substring(segmentStart, nextIndex - segmentStart));
+            segmentStart = nextIndex + nextSepLength;
+            remaining--;
+        }
+
+        target.Add(segmentStart == 0 ? option : option.Substring(segmentStart));
+    }
+
+    private bool TryParseBundledValue(string f, ReadOnlySpan<char> bundle, OptionContext c, string originalToken)
     {
         if (f != "-")
             return false;
 
-        for (int i = 0; i < n.Length; ++i)
+        string? bundleString = null;
+        for (int i = 0; i < bundle.Length; ++i)
         {
-            string opt = $"{f}{n[i]}";
-            string rn = n[i].ToString();
-            if (!_options.TryGetValue(rn, out var p) || !p.IsActive())
+            char shortName = bundle[i];
+            string rn = shortName.ToString();
+            if (!_shortOptions.TryGetValue(shortName, out var p) || !p.IsActive())
             {
                 if (i == 0)
                     return false;
-                throw new OptionException(string.Format(Config.Localizer("Cannot use unregistered option '{0}' in bundle '{1}'."), rn, f + n), string.Empty);
+                throw new OptionException(string.Format(Config.Localizer("Cannot use unregistered option '{0}' in bundle '{1}'."), rn, originalToken), string.Empty);
             }
 
             switch (p.OptionValueType)
             {
                 case OptionValueType.None:
-                    Invoke(c, opt, n, p);
+                    bundleString ??= bundle.ToString();
+                    Invoke(c, string.Concat('-', shortName), bundleString, p);
                     break;
                 case OptionValueType.Optional:
                 case OptionValueType.Required:
                     {
-                        string v = n.Substring(i + 1);
+                        string v = bundle[(i + 1)..].ToString();
                         c.Option = p;
-                        c.OptionName = opt;
+                        c.OptionName = string.Concat('-', shortName);
                         ParseValue(v.Length != 0 ? v : null, c);
                         return true;
                     }

@@ -86,5 +86,5 @@ public class OptionValueCollection : IList<string?>
     public string?[] ToArray() => _values.ToArray();
 
     /// <inheritdoc />
-    public override string ToString() => string.Join(", ", _values.ToArray());
+    public override string ToString() => string.Join(", ", _values);
 }
