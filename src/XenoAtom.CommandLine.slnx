@@ -1,0 +1,24 @@
+<Solution>
+  <Folder Name="/00-general/">
+    <File Path="../.editorconfig" />
+    <File Path="../.gitattributes" />
+    <File Path="../.github/workflows/ci.yml" />
+    <File Path="../.gitignore" />
+    <File Path="../license.txt" />
+    <File Path="../readme.md" />
+    <File Path="Directory.Packages.props" />
+    <File Path="dotnet-releaser.toml" />
+    <File Path="global.json" />
+  </Folder>
+  <Folder Name="/10-docs/">
+    <File Path="../doc/readme.md" />
+  </Folder>
+  <Folder Name="/20-samples/">
+    <Project Path="../samples/AdvancedApp/AdvancedApp.csproj" />
+    <Project Path="../samples/HelloWorld/HelloWorld.csproj" />
+  </Folder>
+  <Folder Name="/30-src/">
+    <Project Path="XenoAtom.CommandLine.Tests/XenoAtom.CommandLine.Tests.csproj" />
+    <Project Path="XenoAtom.CommandLine/XenoAtom.CommandLine.csproj" />
+  </Folder>
+</Solution>

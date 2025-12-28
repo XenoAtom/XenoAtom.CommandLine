@@ -18,7 +18,7 @@ public class SpecialTests
         var commandApp = new CommandApp();
         var command = new Command("command");
         commandApp.Add(command);
-        Assert.ThrowsException<InvalidOperationException>(() => commandApp.Add(command));
+        Assert.Throws<InvalidOperationException>(() => commandApp.Add(command));
 
         var enumerator = ((IEnumerable)commandApp).GetEnumerator();
         Assert.IsTrue(enumerator.MoveNext());
@@ -145,7 +145,7 @@ public class SpecialTests
             c.OptionValues.RemoveAt(0);
             Assert.AreEqual(1, c.OptionValues.Count);
 
-            Assert.ThrowsException<ArgumentOutOfRangeException>(() => c.OptionValues[1]);
+            Assert.Throws<ArgumentOutOfRangeException>(() => c.OptionValues[1]);
         }
     }
 }
