@@ -26,6 +26,7 @@ int age = 0;
 var app = new CommandApp("multi")
 {
     new CommandUsage(),
+    new CompletionCommands(), // Add completion commands
     _,
     "Options:",
     // gcc-like options

@@ -18,6 +18,7 @@ var commandApp = new CommandApp()
     {"n|name=", "Your {NAME}", v => name = v},
     {"a|age=", "Your {AGE}", (int v) => age = v},
     new HelpOption(),
+    new CompletionCommands(), // Add completion commands
     // Run the command
     (arguments) =>
     {

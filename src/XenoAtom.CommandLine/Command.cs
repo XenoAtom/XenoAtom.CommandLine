@@ -51,6 +51,11 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
     public string Name { get; }
 
     /// <summary>
+    /// Gets or sets a boolean indicating if this command is hidden from help.
+    /// </summary>
+    public bool Hidden { get; set; }
+
+    /// <summary>
     /// Gets the description of this command.
     /// </summary>
     public string? Description { get; }
@@ -257,6 +262,11 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
 
             if (p is Command co)
             {
+                if (co.Hidden)
+                {
+                    continue;
+                }
+
                 ShowHelp(runConfig, co, co.Name);
                 continue;
             }

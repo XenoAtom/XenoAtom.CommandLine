@@ -26,6 +26,7 @@ It is a fork of the excellent [NDesk.Options](http://www.ndesk.org/Options)/[Mon
     - Parsing of values to specific target types (e.g. `int`, `bool`, `enum`, etc.))
     - Response files e.g `@file.txt`
     - Grouping of command/options that can be activated together when a specific condition is met.
+    - Completions via `CompletionCommands` to generate shell completions scripts for bash, zsh, fish and PowerShell and a completion command to output completions suggestions.
 
 ## 🧪 Example
 

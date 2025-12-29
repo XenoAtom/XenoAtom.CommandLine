@@ -6,6 +6,7 @@ XenoAtom.CommandLine is a library that provides a simple and easy way to create 
 - [Options](#options)
 - [Help Text](#help-text)
 - [Actions](#actions)
+- [Completions](#completions)
 - [Configuration](#configuration)
 - [ArgumentSource](#argumentsource)
 - [CommandGroup](#commandgroup)
@@ -369,6 +370,46 @@ var app = new CommandApp()
 ```
 
 The same applies to sub-commands.
+
+## Completions
+
+`CommandApp` can provide completion candidates for a partially typed command line:
+
+```csharp
+var candidates = commandApp.GetCompletions("hello --na"); // -> ["--name"]
+```
+
+To expose completions from a CLI, add `CompletionCommands` (it adds `completion <shell>` and a hidden `__complete` command):
+
+```csharp
+var commandApp = new CommandApp("myexe")
+{
+    new CompletionCommands(),
+    // ... your commands/options/actions ...
+};
+```
+
+Generate and install a script for your shell:
+
+```console
+# Bash (current session)
+source <(myexe completion bash)
+
+# Zsh
+myexe completion zsh > "${fpath[1]}/_myexe"
+autoload -U compinit && compinit
+
+# Fish
+myexe completion fish > ~/.config/fish/completions/myexe.fish
+
+# PowerShell (current session)
+myexe completion powershell | Out-String | Invoke-Expression
+```
+
+Notes:
+- The completion glue scripts call the hidden `__complete` subcommand (e.g. `myexe __complete --line <LINE> --cursor <POS> --command-name <NAME>`) and expect one candidate per line on stdout.
+- For reliability (notably on PowerShell where the current directory is not searched by default), the generated scripts invoke the current executable path (or `dotnet <entry-assembly.dll>` when hosted by `dotnet`), and the invocation is quoted for bash/zsh/fish/powershell.
+- Completion is non-executing: it does not invoke user option actions; it only inspects the declared command tree.
 
 ## Configuration
 
