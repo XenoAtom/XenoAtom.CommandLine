@@ -39,12 +39,14 @@ public class NativeAotSizeTests
             Assert.Fail($"dotnet publish failed with exit code {result.ExitCode}\nSTDOUT:\n{result.StdOut}\nSTDERR:\n{result.StdErr}");
         }
 
-        var exePath = Path.Combine(publishDir, "NativeAotSizeApp.exe");
+        var exePath = Path.Combine(publishDir, "NativeAotSizeApp" + (OperatingSystem.IsWindows() ? ".exe" : ""));
         Assert.IsTrue(File.Exists(exePath), $"Published executable not found at `{exePath}`\nSTDOUT:\n{result.StdOut}\nSTDERR:\n{result.StdErr}");
 
         var exeSize = new FileInfo(exePath).Length;
-        Console.WriteLine($"Executable size: {exeSize:N0} bytes");
-        const long maxBytes = 25L * 1024 * 1024; // 25 MiB
+        //Console.WriteLine($"Executable size: {exeSize:N0} bytes");
+        long maxBytes = OperatingSystem.IsWindows() ? 1_250_000 :
+            OperatingSystem.IsMacOS() ? 1_450_000 :
+            1_500_000; // Linux (To check);
         Assert.IsLessThanOrEqualTo(maxBytes, exeSize, $"NativeAOT size regression: {exeSize:N0} bytes > {maxBytes:N0} bytes. Output: `{exePath}`");
     }
 
@@ -85,7 +87,7 @@ public class NativeAotSizeTests
                </PropertyGroup>
 
                <ItemGroup>
-                 <ProjectReference Include="{include}">/
+                 <ProjectReference Include="{include}"/>
                </ItemGroup>
              </Project>
              """;
