@@ -93,7 +93,7 @@ await commandApp.RunAsync(args);
 Running `myexe --help` will output:
 
 ```
-Usage: myexe [Options] COMMAND
+Usage: myexe [options] <command>
 
   -D[=name:value]            Defines a name and optional value
   -n, --name=NAME            Your NAME
@@ -121,7 +121,7 @@ Define: World => 121
 Running `myexe commit --help` will output:
 
 ```
-Usage: myexe commit [Options]
+Usage: myexe commit [options]
 
   -m, --message=MESSAGE      Add a MESSAGE to this commit
   -h, -?, --help             Show this message and exit

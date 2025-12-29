@@ -154,7 +154,7 @@ public class CommandArgumentTests
 
         Assert.AreEqual(0, result);
         var output = writer.ToString();
-        Assert.IsTrue(output.Contains("Usage: app [Options] <input> [<output>]", StringComparison.Ordinal));
+        Assert.IsTrue(output.Contains("Usage: app [options] <input> [<output>]", StringComparison.Ordinal));
         Assert.IsTrue(output.Contains("<input>", StringComparison.Ordinal));
         Assert.IsTrue(output.Contains("[<output>]", StringComparison.Ordinal));
     }

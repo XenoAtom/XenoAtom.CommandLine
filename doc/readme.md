@@ -54,7 +54,7 @@ int age = 0;
 
 var commandApp = new CommandApp()
 {
-    new CommandUsage("Usage: {NAME} [Options] [files]+"),
+    new CommandUsage(),
     _,
     "Options:",
     {"f|flag", "This is a flag", v => flag = v != null }, 
@@ -187,7 +187,7 @@ Random other tidbits:
   ```
   will display the following message:
   ```
-  Usage: HelloWorld [Options]
+  Usage: HelloWorld [options]
     -n, --name=NAME            Your NAME
     -a, --age=AGE              Your AGE
     -h, -?, --help             Show this message and exit
@@ -312,7 +312,7 @@ var app = new CommandApp("myexe")
 };
 ```
 
-Declared arguments are included in the default usage output (e.g. `Usage: myexe [Options] <input> [<output>]`).
+Declared arguments are included in the default usage output (e.g. `Usage: myexe [options] <input> [<output>]`).
 
 ## Help Text
 
@@ -333,11 +333,11 @@ await app.RunAsync(args);
 
 More in general, all the items (`CommandNode`: `Command`, `Option`, `string`, `ArgumentSource`, `Action`...) within a `Command` or a `CommandApp` are kept in order when displayed in the help message.
 
-There is a special kind of text called `CommandUsage` that will be displayed at the beginning of the help message. It is used to display the usage of the command.
+There is a special kind of text called `CommandUsage` that will be displayed at the beginning of the help message. It is used to display the usage of the command. You can use `{NAME}` to inject the full command path and `{SYNTAX}` to inject the default syntax derived from options/arguments/subcommands.
 
 ```csharp
 var app = new CommandApp() {
-    new CommandUsage("Usage: {NAME} [Options] [files]+"),
+    new CommandUsage(), // Defaults to "Usage: {NAME} {SYNTAX}"
     "Available commands:",
     // ...  
     new CommandUsage("Usage: {NAME} [--advanced] [Advanced Options]"),
@@ -361,7 +361,7 @@ int age = 0;
 
 var commandApp = new CommandApp()
 {
-    new CommandUsage("Usage: {NAME} [Options] [files]+"),
+    new CommandUsage(),
     _,
     "Options:",
     {"f|flag", "This is a flag", v => flag = v != null },
@@ -498,7 +498,7 @@ await app.RunAsync(["--help"]);
 will display the following message:
 
 ```
-Usage: myexe [Options]
+Usage: myexe [options]
 Options:
   -h, -?, --help             Show this message and exit
   @file                      Read response file for more options.
@@ -537,7 +537,7 @@ await app.RunAsync(["--help"]);
 will display the following message:
 
 ```
-Usage: HelloWorld [Options]
+Usage: HelloWorld [options]
 Options:
       --advanced             Activate advanced options
   -h, -?, --help             Show this message and exit
@@ -551,7 +551,7 @@ await app.RunAsync(["--advanced", "--help"]);
 It will display the following:
 
 ```
-Usage: HelloWorld [Options]
+Usage: HelloWorld [options]
 Options:
       --advanced             Activate advanced options
   -h, -?, --help             Show this message and exit

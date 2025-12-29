@@ -892,32 +892,74 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
         var _ = Config.Localizer;
         usage.Append(_("Usage: "));
         usage.Append(GetFullCommandPath());
-        if (_options.Count > 0)
+        var syntax = GetDefaultUsageSyntax();
+        if (syntax.Length > 0)
         {
-            usage.Append(" [");
-            usage.Append(OptionsName);
-            usage.Append(']');
+            usage.Append(' ');
+            usage.Append(syntax);
+        }
+        return usage.ToString();
+    }
+
+    internal string GetDefaultUsageSyntax()
+    {
+        var _ = Config.Localizer;
+
+        var hasVisibleOptions = false;
+        foreach (var node in Nodes)
+        {
+            if (node is not Option option)
+                continue;
+            if (!option.IsActive() || option.Hidden)
+                continue;
+            if (option.Names.Length == 1 && option.Names[0] == "<>")
+                continue;
+            hasVisibleOptions = true;
+            break;
         }
 
-        if (SubCommands.Count > 0)
+        var hasVisibleSubCommands = false;
+        foreach (var node in Nodes)
         {
-            usage.Append(_(" COMMAND"));
+            if (node is not Command command)
+                continue;
+            if (!command.IsActive() || command.Hidden)
+                continue;
+            hasVisibleSubCommands = true;
+            break;
         }
 
+        var sb = new StringBuilder();
+
+        if (hasVisibleOptions)
+        {
+            sb.Append(_("[options]"));
+        }
+
+        if (hasVisibleSubCommands)
+        {
+            if (sb.Length > 0) sb.Append(' ');
+            sb.Append(_("<command>"));
+            return sb.ToString();
+        }
+
+        var hasListArgument = false;
         foreach (var argument in _arguments)
         {
             if (!argument.IsActive() || argument.Hidden)
                 continue;
-            usage.Append(' ');
-            usage.Append(argument.GetDisplayName());
+            if (sb.Length > 0) sb.Append(' ');
+            sb.Append(argument.GetDisplayName());
+            hasListArgument = argument.IsList;
         }
 
-        if (_options.TryGetValue("<>", out var def) && def.Description != null)
+        if (!hasListArgument && _options.TryGetValue("<>", out var def) && def.IsActive() && !def.Hidden)
         {
-            usage.Append(' ');
-            usage.Append(def.Description);
+            if (sb.Length > 0) sb.Append(' ');
+            sb.Append(def.Description ?? _("[<args>...]"));
         }
-        return usage.ToString();
+
+        return sb.ToString();
     }
     
 

@@ -1,4 +1,4 @@
-﻿Usage: multi chroot [Options]
+﻿Usage: multi chroot [options]
 
 Options:
   -M=NAME:VALUE              Add a marco NAME and mandatory VALUE

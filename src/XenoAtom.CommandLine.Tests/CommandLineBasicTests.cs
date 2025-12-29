@@ -6,6 +6,26 @@ namespace XenoAtom.CommandLine.Tests;
 public class CommandLineBasicTests
 {
     [TestMethod]
+    public async Task CommandUsage_SyntaxMarker_IsExpanded()
+    {
+        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+
+        var writer = new StringWriter();
+        var app = new CommandApp("app")
+        {
+            new CommandUsage(),
+            { "n|name=", "Name", _ => { } },
+            new HelpOption(),
+            (ctx, _) => ValueTask.FromResult(0)
+        };
+
+        var result = await app.RunAsync(["--help"], new CommandRunConfig { Out = writer, Error = writer });
+
+        Assert.AreEqual(0, result);
+        Assert.IsTrue(writer.ToString().Contains("Usage: app [options]", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     public async Task PendingValue_MatchesSubcommandName_IsConsumedAsValue()
     {
         CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;

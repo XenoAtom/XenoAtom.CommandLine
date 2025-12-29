@@ -1,4 +1,4 @@
-﻿Usage: myexe [Options] COMMAND
+﻿Usage: myexe [options] <command>
 
   -D[=name:value]            Defines a name and optional value
   -n, --name=NAME            Your NAME

@@ -1,4 +1,4 @@
-﻿Usage: multi [Options] COMMAND
+﻿Usage: multi [options] <command>
 
 Options:
   -D[=NAME:VALUE]            Add a marco NAME and optional VALUE

@@ -1,4 +1,4 @@
-﻿Usage: multi hello [Options] [files]*
+﻿Usage: multi hello [options] [files]*
 
 Options:
   -n, --name=VALUE           This is a name

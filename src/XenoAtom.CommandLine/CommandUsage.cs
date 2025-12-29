@@ -20,9 +20,14 @@ public class CommandUsage(string? description) : CommandNode, ICommandNodeDescri
     public const string NameMarker = "{NAME}";
 
     /// <summary>
+    /// Gets the marker used to replace the default syntax of the command (options/arguments/subcommands) from the description.
+    /// </summary>
+    public const string SyntaxMarker = "{SYNTAX}";
+
+    /// <summary>
     /// Creates a new instance of <see cref="CommandUsage"/>, the usage description will be automatically rendered.
     /// </summary>
-    public CommandUsage() : this(null)
+    public CommandUsage() : this("Usage: {NAME} {SYNTAX}")
     {
     }
 
@@ -33,11 +38,13 @@ public class CommandUsage(string? description) : CommandNode, ICommandNodeDescri
         {
             if (Parent != null && _description != null)
             {
-                var index = _description.IndexOf(NameMarker, StringComparison.OrdinalIgnoreCase);
-                if (index >= 0)
+                var command = GetCommand();
+                if (command != null)
                 {
-                    var fullCommandPath = GetFullCommandPath() ?? string.Empty;
-                    return $"{_description.Substring(0, index)}{fullCommandPath}{_description.Substring(index + NameMarker.Length)}";
+                    var result = _description;
+                    result = ReplaceMarker(result, NameMarker, command.GetFullCommandPath());
+                    result = ReplaceMarker(result, SyntaxMarker, command.GetDefaultUsageSyntax());
+                    return result;
                 }
             }
 
@@ -45,16 +52,25 @@ public class CommandUsage(string? description) : CommandNode, ICommandNodeDescri
         }
     }
     
-    private string? GetFullCommandPath()
+    private Command? GetCommand()
     {
         for (var c = (CommandNode)this; c != null; c = c.Parent)
         {
             if (c is Command command)
             {
-                return command.GetFullCommandPath();
+                return command;
             }
         }
 
         return null;
+    }
+
+    private static string ReplaceMarker(string value, string marker, string replacement)
+    {
+        var index = value.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+        if (index < 0)
+            return value;
+
+        return $"{value.Substring(0, index)}{replacement}{value.Substring(index + marker.Length)}";
     }
 }
