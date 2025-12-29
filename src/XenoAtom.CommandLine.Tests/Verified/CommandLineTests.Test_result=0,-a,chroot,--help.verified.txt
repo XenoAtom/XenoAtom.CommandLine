@@ -1,4 +1,4 @@
-﻿Usage: multi chroot [options]
+﻿Usage: multi chroot [options] <files>*
 
 Options:
   -M=NAME:VALUE              Add a marco NAME and mandatory VALUE
@@ -7,3 +7,6 @@ Options:
                              This is the long option
   -i                         
   -h, -?, --help             Show this message and exit
+
+Arguments:
+  <files>*                   Files

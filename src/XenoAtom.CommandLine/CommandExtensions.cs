@@ -57,6 +57,27 @@ public static class CommandExtensions
     }
 
     /// <summary>
+    /// Adds the remainder positional argument (<c>&lt;&gt;</c>) to this command container.
+    /// All remaining arguments are passed unprocessed to the command action.
+    /// </summary>
+    /// <typeparam name="TCommand">Type of the command container.</typeparam>
+    /// <param name="command">The command container.</param>
+    /// <param name="prototype">Must be <c>"&lt;&gt;"</c>.</param>
+    /// <param name="description">The help description for this remainder argument.</param>
+    /// <returns>The command container.</returns>
+    public static TCommand Add<TCommand>(this TCommand command, string prototype, string? description)
+        where TCommand : CommandContainer
+    {
+        ArgumentException.ThrowIfNullOrEmpty(prototype);
+
+        if (!string.Equals(prototype, "<>", StringComparison.Ordinal))
+            throw new ArgumentException("This overload can only be used with the remainder argument '<>'.", nameof(prototype));
+
+        command.Add(new RemainderArgument(description));
+        return command;
+    }
+
+    /// <summary>
     /// Adds an option to this command container.
     /// </summary>
     /// <typeparam name="TCommand">Type of the command container.</typeparam>
@@ -114,6 +135,8 @@ public static class CommandExtensions
         where TCommand : CommandContainer
     {
         ArgumentNullException.ThrowIfNull(action);
+        if (string.Equals(prototype, "<>", StringComparison.Ordinal))
+            throw new ArgumentException("The remainder argument '<>' cannot be bound to an action. Add it with { \"<>\", \"description\" } and read it from the command action arguments.", nameof(prototype));
 
         if (CommandArgument.IsArgumentPrototype(prototype))
         {
@@ -203,6 +226,9 @@ public static class CommandExtensions
         where TCommand : CommandContainer
         where T : ISpanParsable<T>
     {
+        if (string.Equals(prototype, "<>", StringComparison.Ordinal))
+            throw new ArgumentException("The remainder argument '<>' cannot be bound to an action. Add it with { \"<>\", \"description\" } and read it from the command action arguments.", nameof(prototype));
+
         if (CommandArgument.IsArgumentPrototype(prototype))
         {
             command.Add(new ActionArgument<T>(prototype, description, action));
@@ -241,6 +267,9 @@ public static class CommandExtensions
         where TCommand : CommandContainer
         where T : ISpanParsable<T>
     {
+        if (string.Equals(prototype, "<>", StringComparison.Ordinal))
+            throw new ArgumentException("The remainder argument '<>' cannot be bound to a list. Add it with { \"<>\", \"description\" } and read it from the command action arguments.", nameof(prototype));
+
         if (CommandArgument.IsArgumentPrototype(prototype))
         {
             command.Add(new ActionArgument<T>(prototype, description, list.Add));
@@ -397,6 +426,17 @@ public static class CommandExtensions
             }
 
             _action(Parse<T>(c.ArgumentValue, c));
+        }
+    }
+
+    private sealed class RemainderArgument : CommandArgument
+    {
+        public RemainderArgument(string? description) : base("<>", description)
+        {
+        }
+
+        protected override void OnParseComplete(CommandArgumentContext c)
+        {
         }
     }
 }

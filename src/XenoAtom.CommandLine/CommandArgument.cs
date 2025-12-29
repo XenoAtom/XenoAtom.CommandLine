@@ -12,6 +12,8 @@ namespace XenoAtom.CommandLine;
 /// </summary>
 public abstract class CommandArgument : CommandNode, ICommandNodeDescriptor
 {
+    private readonly string? _description;
+
     /// <summary>
     /// Defines the value cardinality for an argument.
     /// </summary>
@@ -54,7 +56,7 @@ public abstract class CommandArgument : CommandNode, ICommandNodeDescriptor
         Prototype = normalizedPrototype;
         BasePrototype = basePrototype;
         Cardinality = cardinality;
-        Description = description;
+        _description = description;
         Optional = cardinality is ValueCardinality.Optional or ValueCardinality.ZeroOrMore;
         IsList = cardinality is ValueCardinality.ZeroOrMore or ValueCardinality.OneOrMore;
         MinValueCount = cardinality is ValueCardinality.Optional or ValueCardinality.ZeroOrMore ? 0 : 1;
@@ -80,7 +82,7 @@ public abstract class CommandArgument : CommandNode, ICommandNodeDescriptor
     /// <summary>
     /// Gets the description of this argument.
     /// </summary>
-    public string? Description { get; }
+    public string? Description => _description;
 
     /// <summary>
     /// Gets a boolean indicating if this argument is optional.
@@ -91,6 +93,11 @@ public abstract class CommandArgument : CommandNode, ICommandNodeDescriptor
     /// Gets a boolean indicating if this argument accepts multiple values.
     /// </summary>
     public bool IsList { get; }
+
+    /// <summary>
+    /// Gets a boolean indicating if this argument represents a remainder pass-through (<c>&lt;&gt;</c>) that is forwarded to the command action.
+    /// </summary>
+    public bool IsRemainder => BasePrototype == "<>";
 
     /// <summary>
     /// Gets the minimum number of values for this argument.
@@ -130,6 +137,11 @@ public abstract class CommandArgument : CommandNode, ICommandNodeDescriptor
     /// </summary>
     public string GetDisplayName()
     {
+        if (IsRemainder)
+        {
+            return "[args]...";
+        }
+
         return Cardinality switch
         {
             ValueCardinality.Optional => $"[{BasePrototype}]",
@@ -183,7 +195,12 @@ public abstract class CommandArgument : CommandNode, ICommandNodeDescriptor
         cardinality = ValueCardinality.Single;
 
         if (prototype == "<>")
-            return false;
+        {
+            normalizedPrototype = "<>";
+            basePrototype = "<>";
+            cardinality = ValueCardinality.ZeroOrMore;
+            return true;
+        }
 
         if (prototype.Length < 3 || prototype[0] != '<')
             return false;
@@ -219,7 +236,7 @@ public abstract class CommandArgument : CommandNode, ICommandNodeDescriptor
     {
         var prototype = prototypeText.AsSpan();
         if (prototype.SequenceEqual("<>".AsSpan()))
-            return false;
+            return true;
 
         if (prototype.Length < 3 || prototype[0] != '<')
             return false;

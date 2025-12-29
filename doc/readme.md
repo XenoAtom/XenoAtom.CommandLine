@@ -51,6 +51,7 @@ const string _ = "";
 bool flag = false;
 string? name = null;
 int age = 0;
+var files = new List<string>();
 
 var commandApp = new CommandApp()
 {
@@ -61,18 +62,21 @@ var commandApp = new CommandApp()
     {"n|name=", "Your {NAME}", v => name = v},
     {"a|age=", "Your {AGE}", (int v) => age = v},
     new HelpOption(),
+    _,
+    "Arguments:",
+    { "<files>+", "Input files", files },
     // Run the command
-    (arguments) =>
+    (_) =>
     {
-        if (arguments.Length == 0) throw new CommandException("Missing at least one file argument");
+        if (files.Count == 0) throw new CommandException("Missing at least one file argument");
         if (name == null) throw new OptionException("Missing name argument", nameof(name));
         if (age == 0) throw new OptionException("Missing age argument", nameof(age));
         
         Console.Out.WriteLine($"Hello {name}! You are {age} years old with flag = {flag}");
         int index = 0;
-        foreach (var arg in arguments)
+        foreach (var file in files)
         {
-            Console.Out.WriteLine($"Arg[{index}]: {arg}");
+            Console.Out.WriteLine($"File[{index}]: {file}");
             index++;
         }
         return ValueTask.FromResult(0);
@@ -126,8 +130,7 @@ Option bundling is permitted so long as:
 This allows specifying `-a -b -c` as `-abc`, and specifying `-D name=value`
 as `-Dname=value`.
 
-Option processing is disabled by specifying `--`.  All options after `--`
-are passed to the arguments unchanged and unprocessed.
+Option processing is disabled by specifying `--`. All tokens after `--` are treated as positional arguments (use `<>` to forward them to the command action).
 
 If the parser is currently expecting a value for an option, the next token is always consumed as that value, even if it is `--` or matches an existing sub-command name.
 
@@ -139,6 +142,7 @@ var app = new CommandApp()
 {
     {"v", v => ++verbose},
     {"name=|value=", v => Console.WriteLine(v)},
+    {"<>", "Extra arguments passed to the action"},
     (arguments) => { /* other code here */ }
 };
 await app.RunAsync(["-v", "--v", "/v", "-name=A", "/name", "B", "extra"]);
@@ -147,7 +151,7 @@ await app.RunAsync(["-v", "--v", "/v", "-name=A", "/name", "B", "extra"]);
 The above would parse the argument string array, and would invoke the
 lambda expression three times, setting `verbose` to 3 when complete.  
 It would also print out "A" and "B" to standard output.
-The returned array in `arguments` would contain the string "extra".
+The returned array in `arguments` would contain the string "extra" because the remainder argument `<>` is declared.
 
 The interface [`ISpanParsable<TSelf>`](https://learn.microsoft.com/en-us/dotnet/api/system.ispanparsable-1) is also supported, allowing the use of
 custom data types in the callback type; The method `ISpanParsable<TSelf>.Parse`
@@ -224,7 +228,7 @@ Random other tidbits:
       "Options:",
       { "n|name=", "Your {NAME}", strings },
       { "a|age=", "Your {AGE}", ints },
-      { "<>", "files", otherArguments},
+      { "<files>*", "Files", otherArguments},
       new HelpOption(),
       // Run the command
       (arguments) =>
@@ -254,7 +258,7 @@ Random other tidbits:
   Arg: Hello
   Arg: World
   ```
-  Notice the usage of the special option/argument `<>` that will collect all the arguments instead of collecting them to the default arguments passed to the action on the command.
+  Notice the usage of the positional argument `<files>*` that collects all remaining arguments into a list.
 - There are builtin options like `HelpOption` and `VersionOption`:
       
   ```csharp
@@ -285,6 +289,7 @@ An argument prototype uses angle brackets:
 - `"<output>?"`: an optional positional argument (only allowed for the last argument)
 - `"<files>*"`: an optional list argument (0 or more values, only allowed for the last argument)
 - `"<files>+"`: a required list argument (1 or more values, only allowed for the last argument)
+- `"<>"`: a remainder argument (0 or more values, only allowed for the last argument) forwarded to the command action
 
 Example:
 
@@ -299,20 +304,22 @@ var app = new CommandApp("myexe")
     { "<input>", "Input file", v => input = v },
     { "<output>?", "Output file (optional)", v => output = v },
 
-    // Optional: handle all remaining arguments with the default argument handler.
-    { "<>", "[files]*", extraFiles },
+    // Collect all remaining arguments into a list.
+    { "<files>*", "Extra files", extraFiles },
 
     new HelpOption(),
     (ctx, args) =>
     {
-        // args contains the remaining arguments after consuming declared positional arguments.
-        // If a "<>" handler is declared, remaining arguments are consumed by it and args will be empty.
+        // args is empty when all remaining arguments are collected via CommandArguments (e.g. <files>*).
+        // Declare <> to forward remaining arguments to this action.
         return ValueTask.FromResult(0);
     }
 };
 ```
 
-Declared arguments are included in the default usage output (e.g. `Usage: myexe [options] <input> [<output>]`).
+If you declare no positional arguments, passing one is treated as an error. Use `<>` to accept and forward extra arguments to the command action.
+
+Declared arguments are included in the default usage output (e.g. `Usage: myexe [options] <input> [<output>]` and `Usage: myexe [options] [args]...`).
 
 ## Help Text
 
@@ -368,6 +375,7 @@ var commandApp = new CommandApp()
     {"n|name=", "Your {NAME}", v => name = v},
     {"a|age=", "Your {AGE}", (int v) => age = v},
     new HelpOption(),
+    {"<>", "Input files passed to the action"},
     // Run the command
     (arguments) =>
     {

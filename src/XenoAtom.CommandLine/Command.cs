@@ -378,8 +378,6 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
         bool process = true;
 
         List<string> unprocessed = new List<string>();
-        _options.TryGetValue("<>", out var def);
-        var deferDefaultArgumentHandler = _arguments.Count > 0 && def != null;
         ArgumentEnumerator ae = new ArgumentEnumerator(arguments);
         foreach (string argument in ae)
         {
@@ -414,11 +412,11 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
                     continue;
 
                 if (!ParseOption(argument, c))
-                    Unprocessed(unprocessed, deferDefaultArgumentHandler ? null : def, c, argument);
+                    unprocessed.Add(argument);
             }
             else
             {
-                Unprocessed(unprocessed, deferDefaultArgumentHandler ? null : def, c, argument);
+                unprocessed.Add(argument);
             }
         }
         if (c.Option != null)
@@ -430,7 +428,13 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
     private List<string> ParseArgumentsAndDefaultOption(CommandRunContext runContext, List<string> arguments)
     {
         if (_arguments.Count == 0)
+        {
+            if (arguments.Count > 0)
+            {
+                throw new CommandException(Config.Localizer($"Unexpected argument `{arguments[0]}`."));
+            }
             return arguments;
+        }
 
         var activeArgs = new List<CommandArgument>();
         foreach (var argument in _arguments)
@@ -442,7 +446,44 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
 
         if (activeArgs.Count == 0)
         {
-            return InvokeDefaultArgumentHandler(runContext, arguments);
+            if (arguments.Count > 0)
+            {
+                throw new CommandException(Config.Localizer($"Unexpected argument `{arguments[0]}`."));
+            }
+
+            return arguments;
+        }
+
+        if (activeArgs[^1].IsRemainder)
+        {
+            var fixedCount = activeArgs.Count - 1;
+
+            if (arguments.Count < fixedCount)
+            {
+                var missing = activeArgs[arguments.Count];
+                throw new CommandException(Config.Localizer($"Missing required argument `{missing.GetDisplayName()}`."));
+            }
+
+            var argumentContext = new CommandArgumentContext(runContext, this)
+            {
+                ArgumentIndex = -1
+            };
+
+            for (var i = 0; i < fixedCount; i++)
+            {
+                argumentContext.Argument = activeArgs[i];
+                argumentContext.ArgumentValue = arguments[i];
+                argumentContext.ArgumentIndex = i;
+                activeArgs[i].Invoke(argumentContext);
+            }
+
+            var remainingArguments = new List<string>();
+            for (var i = fixedCount; i < arguments.Count; i++)
+            {
+                remainingArguments.Add(arguments[i]);
+            }
+
+            return remainingArguments;
         }
 
         if (activeArgs[^1].IsList)
@@ -478,7 +519,7 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
                 listArg.Invoke(argumentContext);
             }
 
-            return InvokeDefaultArgumentHandler(runContext, new List<string>());
+            return new List<string>();
         }
 
         var requiredCount = activeArgs.Count;
@@ -523,25 +564,9 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
             remaining.Add(arguments[i]);
         }
 
-        return InvokeDefaultArgumentHandler(runContext, remaining);
-    }
-
-    private List<string> InvokeDefaultArgumentHandler(CommandRunContext runContext, List<string> arguments)
-    {
-        if (!_options.TryGetValue("<>", out var def))
-            return arguments;
-
-        if (arguments.Count == 0)
-            return arguments;
-
-        var c = CreateOptionContext(runContext);
-        c.OptionIndex = -1;
-
-        foreach (var argument in arguments)
+        if (remaining.Count > 0)
         {
-            c.OptionValues.Add(argument);
-            c.Option = def;
-            c.Option.Invoke(c);
+            throw new CommandException(Config.Localizer($"Unexpected argument `{remaining[0]}`."));
         }
 
         return new List<string>();
@@ -568,19 +593,6 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
             sources.Add(replacement.GetEnumerator());
             return true;
         }
-        return false;
-    }
-
-    private static bool Unprocessed(ICollection<string> extra, Option? def, OptionContext c, string argument)
-    {
-        if (def == null)
-        {
-            extra.Add(argument);
-            return false;
-        }
-        c.OptionValues.Add(argument);
-        c.Option = def;
-        c.Option.Invoke(c);
         return false;
     }
 
@@ -912,8 +924,6 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
                 continue;
             if (!option.IsActive() || option.Hidden)
                 continue;
-            if (option.Names.Length == 1 && option.Names[0] == "<>")
-                continue;
             hasVisibleOptions = true;
             break;
         }
@@ -953,12 +963,6 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
             hasListArgument = argument.IsList;
         }
 
-        if (!hasListArgument && _options.TryGetValue("<>", out var def) && def.IsActive() && !def.Hidden)
-        {
-            if (sb.Length > 0) sb.Append(' ');
-            sb.Append(def.Description ?? _("[<args>...]"));
-        }
-
         return sb.ToString();
     }
     
@@ -994,7 +998,7 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
     {
         string[] names = p.Names;
 
-        int i = GetNextOptionIndex(names, 0);
+        int i = 0;
         if (i == names.Length)
             return false;
 
@@ -1009,9 +1013,9 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
             Write(o, ref written, names[0]);
         }
 
-        for (i = GetNextOptionIndex(names, i + 1);
+        for (i += 1;
              i < names.Length;
-             i = GetNextOptionIndex(names, i + 1))
+             i++)
         {
             Write(o, ref written, ", ");
             Write(o, ref written, names[i].Length == 1 ? "-" : "--");
@@ -1042,15 +1046,6 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
         }
 
         return true;
-    }
-
-    private static int GetNextOptionIndex(string[] names, int i)
-    {
-        while (i < names.Length && names[i] == "<>")
-        {
-            ++i;
-        }
-        return i;
     }
 
     private static void Write(TextWriter o, ref int n, string s)

@@ -21,7 +21,7 @@ It is a fork of the excellent [NDesk.Options](http://www.ndesk.org/Options)/[Mon
     - Optional and required option values `:` (e.g. `-o[BAR] -oBAR`)
     - Key/value pairs (e.g. `-DMACRO=VALUE1)
     - Option aliases (e.g. `-v`, `-verbose`)
-    - Named positional arguments (e.g. `<input> [<output>] <files>*`)
+    - Named positional arguments (e.g. `<input> [<output>] <files>*`) and remainder arguments (`<>`)
     - `--` to stop option parsing
     - `--help` and `--version` built-in options
     - Parsing of values to specific target types (e.g. `int`, `bool`, `enum`, etc.))

@@ -6,6 +6,23 @@ namespace XenoAtom.CommandLine.Tests;
 public class CommandLineBasicTests
 {
     [TestMethod]
+    public async Task PassingArgument_WithNoArgumentSpec_ReturnsUsageError()
+    {
+        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+
+        var writer = new StringWriter();
+        var app = new CommandApp("app")
+        {
+            (ctx, _) => ValueTask.FromResult(0)
+        };
+
+        var result = await app.RunAsync(["a.txt"], new CommandRunConfig() { Out = writer, Error = writer });
+
+        Assert.AreEqual(1, result);
+        Assert.IsTrue(writer.ToString().Contains("Unexpected argument `a.txt`.", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     public async Task CommandUsage_SyntaxMarker_IsExpanded()
     {
         CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
@@ -107,9 +124,9 @@ public class CommandLineBasicTests
 
         var app = new CommandApp("app")
         {
+            { "<args>*", "Args", args },
             (ctx, a) =>
             {
-                args.AddRange(a);
                 return ValueTask.FromResult(0);
             }
         };

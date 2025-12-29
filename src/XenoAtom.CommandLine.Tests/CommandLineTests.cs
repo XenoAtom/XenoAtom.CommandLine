@@ -132,6 +132,8 @@ public class CommandLineTests : VerifyBase
         int specialDecrease = 0;
 
         var hello_files = new List<string>();
+        var world_files = new List<string>();
+        var chroot_files = new List<string>();
 
         string? name = null;
         int age = 0;
@@ -170,7 +172,9 @@ public class CommandLineTests : VerifyBase
                 { "n|name=", "This is a name", v => { name = v; } },
                 { "a|age=", "Sets the {AGE}", (int v) => age = v > 200 ? throw new ArgumentException("Age must be <= 200") : v },
                 new HelpOption(),
-                {"<>", "[files]*", hello_files},
+                _,
+                "Arguments:",
+                { "<files>*", "Input files", hello_files },
 
                 (ctx, _) =>
                 {
@@ -184,16 +188,19 @@ public class CommandLineTests : VerifyBase
             },
             new Command("world", "This is a world command")
             {
-                new CommandUsage("Usage: {{NAME}} [Options] [files]* @file"),
+                new CommandUsage("Usage: {NAME} {SYNTAX} @file"),
                 _,
                 "Options:",
                 { "e|enum=", $"This is an {{ENUM}} accepting the following values: {EnumWrapper<TestEnum>.Names}", (EnumWrapper<TestEnum> v) => { enums.Add(v); } },
                 new HelpOption(),
                 new ResponseFileSource(),
+                _,
+                "Arguments:",
+                { "<files>*", "Input files", world_files },
                 
-                (ctx,arguments) =>
+                (ctx,_) =>
                 {
-                    foreach (var file in arguments)
+                    foreach (var file in world_files)
                     {
                         ctx.Out.WriteLine($"World {file}");
                     }
@@ -230,12 +237,15 @@ public class CommandLineTests : VerifyBase
                         }
                     },
                     new HelpOption(),
-                    (ctx, arguments) =>
+                    _,
+                    "Arguments:",
+                    { "<files>*", "Files", chroot_files },
+                    (ctx, _) =>
                     {
                         ctx.Out.WriteLine($"specialIncrease: {specialIncrease}");
                         ctx.Out.WriteLine($"specialDecrease: {specialDecrease}");
 
-                        foreach (var file in arguments)
+                        foreach (var file in chroot_files)
                         {
                             ctx.Out.WriteLine($"chroot {file}");
                         }

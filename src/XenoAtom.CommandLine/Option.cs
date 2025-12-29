@@ -65,10 +65,8 @@ public abstract class Option : CommandNode, ICommandNodeDescriptor
                 nameof(maxValueCount));
         if (OptionValueType == OptionValueType.None && maxValueCount > 1)
             throw new ArgumentException($"Cannot provide maxValueCount of {maxValueCount} for OptionValueType.None.", nameof(maxValueCount));
-        if (Array.IndexOf(Names, "<>") >= 0 &&
-            ((Names.Length == 1 && OptionValueType != OptionValueType.None) ||
-             (Names.Length > 1 && MaxValueCount > 1)))
-            throw new ArgumentException("The default option handler '<>' cannot require values.", nameof(prototype));
+        if (Array.IndexOf(Names, "<>") >= 0)
+            throw new ArgumentException("The remainder argument '<>' is reserved for positional arguments and cannot be used as an option name.", nameof(prototype));
     }
 
     /// <summary>

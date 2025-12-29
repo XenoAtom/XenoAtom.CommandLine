@@ -171,9 +171,6 @@ public class CommandApp : Command
 
             foreach (var name in option.GetNames())
             {
-                if (name == "<>")
-                    continue;
-
                 if (optionPrefix is not null)
                 {
                     if (optionNamePrefix.Length > 0 && !name.StartsWith(optionNamePrefix, StringComparison.OrdinalIgnoreCase))

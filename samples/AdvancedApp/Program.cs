@@ -130,6 +130,9 @@ var app = new CommandApp("multi")
                 }
             },
             new HelpOption(),
+            _,
+            "Arguments:",
+            { "<>", "Extra arguments passed to the action" },
             (arguments) =>
             {
                 Console.WriteLine($"specialIncrease: {specialIncrease}");

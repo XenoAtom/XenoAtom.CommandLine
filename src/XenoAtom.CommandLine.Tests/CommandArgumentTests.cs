@@ -18,9 +18,9 @@ public class CommandArgumentTests
         {
             { "<file1>", "First input file", v => file1 = v },
             { "<file2>", "Second input file", v => file2 = v },
+            { "<remaining>*", "Remaining files", remaining },
             (ctx, args) =>
             {
-                remaining.AddRange(args);
                 return ValueTask.FromResult(0);
             }
         };
@@ -59,7 +59,6 @@ public class CommandArgumentTests
 
         string? input = null;
         string? output = null;
-        var remaining = new List<string>();
 
         var app = new CommandApp("app")
         {
@@ -67,24 +66,27 @@ public class CommandArgumentTests
             { "<output>?", "Output file (optional)", v => output = v },
             (ctx, args) =>
             {
-                remaining.AddRange(args);
                 return ValueTask.FromResult(0);
             }
         };
 
-        await app.RunAsync(["in.txt"], new CommandRunConfig { Out = TextWriter.Null, Error = TextWriter.Null });
+        var result = await app.RunAsync(["in.txt"], new CommandRunConfig { Out = TextWriter.Null, Error = TextWriter.Null });
+        Assert.AreEqual(0, result);
         Assert.AreEqual("in.txt", input);
         Assert.IsNull(output);
-        CollectionAssert.AreEqual(Array.Empty<string>(), remaining);
 
         input = null;
         output = null;
-        remaining.Clear();
 
-        await app.RunAsync(["in.txt", "out.txt", "extra.txt"], new CommandRunConfig { Out = TextWriter.Null, Error = TextWriter.Null });
+        result = await app.RunAsync(["in.txt", "out.txt"], new CommandRunConfig { Out = TextWriter.Null, Error = TextWriter.Null });
+        Assert.AreEqual(0, result);
         Assert.AreEqual("in.txt", input);
         Assert.AreEqual("out.txt", output);
-        CollectionAssert.AreEqual(new[] { "extra.txt" }, remaining);
+
+        var writer = new StringWriter();
+        result = await app.RunAsync(["in.txt", "out.txt", "extra.txt"], new CommandRunConfig { Out = writer, Error = writer });
+        Assert.AreEqual(1, result);
+        Assert.IsTrue(writer.ToString().Contains("Unexpected argument `extra.txt`.", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -108,7 +110,7 @@ public class CommandArgumentTests
     }
 
     [TestMethod]
-    public async Task CommandArguments_CanBeCombinedWithDefaultArgumentHandler()
+    public async Task CommandArguments_CanCaptureRemainingArguments()
     {
         CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
 
@@ -120,7 +122,7 @@ public class CommandArgumentTests
         {
             new HelpOption(),
             { "<input>", "Input file", v => input = v },
-            { "<>", "[files]*", files },
+            { "<files>*", "Extra files", files },
             (ctx, args) =>
             {
                 actionArgs.AddRange(args);
@@ -229,5 +231,75 @@ public class CommandArgumentTests
         catch (InvalidOperationException)
         {
         }
+    }
+
+    [TestMethod]
+    public async Task CommandArguments_Remainder_ForwardsToAction()
+    {
+        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+
+        var actionArgs = new List<string>();
+        var app = new CommandApp("app")
+        {
+            { "<>", "Remainder arguments passed to the action" },
+            (ctx, args) =>
+            {
+                actionArgs.AddRange(args);
+                return ValueTask.FromResult(0);
+            }
+        };
+
+        var result = await app.RunAsync(["a.txt", "b.txt"], new CommandRunConfig { Out = TextWriter.Null, Error = TextWriter.Null });
+
+        Assert.AreEqual(0, result);
+        CollectionAssert.AreEqual(new[] { "a.txt", "b.txt" }, actionArgs);
+    }
+
+    [TestMethod]
+    public async Task CommandArguments_Remainder_WorksAfterFixedArguments()
+    {
+        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+
+        string? input = null;
+        var actionArgs = new List<string>();
+
+        var app = new CommandApp("app")
+        {
+            { "<input>", "Input file", v => input = v },
+            { "<>", "Extra arguments passed to the action" },
+            (ctx, args) =>
+            {
+                actionArgs.AddRange(args);
+                return ValueTask.FromResult(0);
+            }
+        };
+
+        var result = await app.RunAsync(["in.txt", "x", "y"], new CommandRunConfig { Out = TextWriter.Null, Error = TextWriter.Null });
+
+        Assert.AreEqual(0, result);
+        Assert.AreEqual("in.txt", input);
+        CollectionAssert.AreEqual(new[] { "x", "y" }, actionArgs);
+    }
+
+    [TestMethod]
+    public async Task CommandArguments_Remainder_AppearsInDefaultUsage()
+    {
+        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+
+        var writer = new StringWriter();
+        var app = new CommandApp("app")
+        {
+            new HelpOption(),
+            { "<>", "Extra arguments passed to the action" },
+            (ctx, _) => ValueTask.FromResult(0)
+        };
+
+        var result = await app.RunAsync(["--help"], new CommandRunConfig { Out = writer, Error = writer });
+
+        Assert.AreEqual(0, result);
+        var output = writer.ToString();
+        Assert.IsTrue(output.Contains("Usage: app [options] [args]...", StringComparison.Ordinal));
+        Assert.IsTrue(output.Contains("[args]...", StringComparison.Ordinal));
+        Assert.IsTrue(output.Contains("Extra arguments passed to the action", StringComparison.Ordinal));
     }
 }

@@ -46,12 +46,11 @@ public class SpecialTests
     public async Task TestAction()
     {
         var list = new List<string>();
-        var commandApp = new CommandApp();
-        commandApp.Add(args =>
+        var commandApp = new CommandApp()
         {
-            list.AddRange(args);
-            return new ValueTask<int>(0);
-        });
+            { "<args>+", "Args", list },
+            (ctx, _) => new ValueTask<int>(0)
+        };
         await commandApp.RunAsync([ "a", "b", "c" ]);
         Assert.HasCount(3, list);
         Assert.AreEqual("a", list[0]);
