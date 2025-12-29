@@ -35,18 +35,12 @@ public abstract class CommandNode
 
         while (node != null)
         {
-            CommandNode? nextNode;
-
             if (!node.IsThisNodeActive())
             {
                 return false;
             }
 
-            lock (node)
-            {
-                nextNode = node.Parent;
-            }
-            node = nextNode;
+            node = node.Parent;
         }
 
         return true;
