@@ -115,8 +115,15 @@ public static class CommandExtensions
     {
         ArgumentNullException.ThrowIfNull(action);
 
-        Option p = new ActionOption(prototype, description, 1, delegate (OptionValueCollection v) { action(v[0]); }, hidden);
-        command.Add(p);
+        if (CommandArgument.IsArgumentPrototype(prototype))
+        {
+            command.Add(new ActionArgument(prototype, description, action, hidden));
+        }
+        else
+        {
+            Option p = new ActionOption(prototype, description, 1, delegate (OptionValueCollection v) { action(v[0]); }, hidden);
+            command.Add(p);
+        }
         return command;
     }
 
@@ -196,6 +203,12 @@ public static class CommandExtensions
         where TCommand : CommandContainer
         where T : ISpanParsable<T>
     {
+        if (CommandArgument.IsArgumentPrototype(prototype))
+        {
+            command.Add(new ActionArgument<T>(prototype, description, action));
+            return command;
+        }
+
         return Add(command, new ActionOption<T>(prototype, description, action));
     }
 
@@ -228,6 +241,12 @@ public static class CommandExtensions
         where TCommand : CommandContainer
         where T : ISpanParsable<T>
     {
+        if (CommandArgument.IsArgumentPrototype(prototype))
+        {
+            command.Add(new ActionArgument<T>(prototype, description, list.Add));
+            return command;
+        }
+
         command.Add(new ActionOption<T>(prototype, description, list.Add));
         return command;
     }
@@ -341,5 +360,43 @@ public static class CommandExtensions
     private sealed class TextNode(string description) : CommandNode, ICommandNodeDescriptor
     {
         public string Description { get; } = description;
+    }
+
+    private sealed class ActionArgument : CommandArgument
+    {
+        private readonly Action<string?> _action;
+
+        public ActionArgument(string prototype, string? description, Action<string?> action, bool hidden) : base(prototype, description, hidden)
+        {
+            ArgumentNullException.ThrowIfNull(action);
+            _action = action;
+        }
+
+        protected override void OnParseComplete(CommandArgumentContext c)
+        {
+            _action(c.ArgumentValue);
+        }
+    }
+
+    private sealed class ActionArgument<T> : CommandArgument
+        where T : ISpanParsable<T>
+    {
+        private readonly Action<T> _action;
+
+        public ActionArgument(string prototype, string? description, Action<T> action) : base(prototype, description)
+        {
+            ArgumentNullException.ThrowIfNull(action);
+            _action = action;
+        }
+
+        protected override void OnParseComplete(CommandArgumentContext c)
+        {
+            if (c.ArgumentValue is null)
+            {
+                return;
+            }
+
+            _action(Parse<T>(c.ArgumentValue, c));
+        }
     }
 }

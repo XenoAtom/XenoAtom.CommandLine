@@ -22,6 +22,7 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
     private readonly Dictionary<string, Command> _subCommands = new();
     private readonly Dictionary<string, Option> _options = new();
     private readonly Dictionary<char, Option> _shortOptions = new();
+    private readonly List<CommandArgument> _arguments = new();
     private readonly List<ArgumentSource> _sources = new();
     private bool _hasCommandUsage;
 
@@ -37,6 +38,7 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
 
         Options = new ReadOnlyDictionary<string, Option>(_options);
         SubCommands = new ReadOnlyDictionary<string, Command>(_subCommands);
+        Arguments = new ReadOnlyCollection<CommandArgument>(_arguments);
 
         Name = NormalizeCommandName(name);
         OptionsName = "Options";
@@ -75,6 +77,11 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
     public ReadOnlyDictionary<string, Command> SubCommands { get; }
 
     /// <summary>
+    /// Gets the positional arguments of this command.
+    /// </summary>
+    public ReadOnlyCollection<CommandArgument> Arguments { get; }
+
+    /// <summary>
     /// Gets the configuration of this command inherited from the parent command.
     /// </summary>
     public CommandConfig Config { get; internal set; }
@@ -104,6 +111,15 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
                     _shortOptions.Add(name[0], option);
                 }
             }
+        }
+        else if (node is CommandArgument argument)
+        {
+            if (_arguments.Count > 0 && (_arguments[^1].Optional || _arguments[^1].IsList))
+            {
+                throw new InvalidOperationException($"Cannot add an argument `{argument}` after the last argument `{_arguments[^1]}` (only the last argument can be optional or a list).");
+            }
+
+            _arguments.Add(argument);
         }
         else if (node is ArgumentSource source)
         {
@@ -174,6 +190,7 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
 
             if (commandContext.ShouldRunAfterParsingOptions)
             {
+                extra = ParseArgumentsAndDefaultOption(commandContext, extra);
                 if (Action == null)
                 {
                     WriteUnknownOptions(runConfig,this, extra);
@@ -295,6 +312,15 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
 
                 isIndented = true;
             }
+            else if (p is CommandArgument arg)
+            {
+                if (arg.Hidden)
+                    continue;
+
+                Write(o, ref written, "  ");
+                Write(o, ref written, arg.GetDisplayName());
+                isIndented = true;
+            }
 
             if (isIndented)
             {
@@ -353,6 +379,7 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
 
         List<string> unprocessed = new List<string>();
         _options.TryGetValue("<>", out var def);
+        var deferDefaultArgumentHandler = _arguments.Count > 0 && def != null;
         ArgumentEnumerator ae = new ArgumentEnumerator(arguments);
         foreach (string argument in ae)
         {
@@ -387,17 +414,137 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
                     continue;
 
                 if (!ParseOption(argument, c))
-                    Unprocessed(unprocessed, def, c, argument);
+                    Unprocessed(unprocessed, deferDefaultArgumentHandler ? null : def, c, argument);
             }
             else
             {
-                Unprocessed(unprocessed, def, c, argument);
+                Unprocessed(unprocessed, deferDefaultArgumentHandler ? null : def, c, argument);
             }
         }
         if (c.Option != null)
             c.Option.Invoke(c);
 
         return unprocessed;
+    }
+
+    private List<string> ParseArgumentsAndDefaultOption(CommandRunContext runContext, List<string> arguments)
+    {
+        if (_arguments.Count == 0)
+            return arguments;
+
+        var activeArgs = new List<CommandArgument>();
+        foreach (var argument in _arguments)
+        {
+            if (!argument.IsActive())
+                continue;
+            activeArgs.Add(argument);
+        }
+
+        if (activeArgs.Count == 0)
+        {
+            return InvokeDefaultArgumentHandler(runContext, arguments);
+        }
+
+        if (activeArgs[^1].IsList)
+        {
+            var listArg = activeArgs[^1];
+            var fixedCount = activeArgs.Count - 1;
+            var minTotal = fixedCount + listArg.MinValueCount;
+
+            if (arguments.Count < minTotal)
+            {
+                var missing = arguments.Count < fixedCount ? activeArgs[arguments.Count] : listArg;
+                throw new CommandException(Config.Localizer($"Missing required argument `{missing.GetDisplayName()}`."));
+            }
+
+            var argumentContext = new CommandArgumentContext(runContext, this)
+            {
+                ArgumentIndex = -1
+            };
+
+            for (var i = 0; i < fixedCount; i++)
+            {
+                argumentContext.Argument = activeArgs[i];
+                argumentContext.ArgumentValue = arguments[i];
+                argumentContext.ArgumentIndex = i;
+                activeArgs[i].Invoke(argumentContext);
+            }
+
+            for (var i = fixedCount; i < arguments.Count; i++)
+            {
+                argumentContext.Argument = listArg;
+                argumentContext.ArgumentValue = arguments[i];
+                argumentContext.ArgumentIndex = i;
+                listArg.Invoke(argumentContext);
+            }
+
+            return InvokeDefaultArgumentHandler(runContext, new List<string>());
+        }
+
+        var requiredCount = activeArgs.Count;
+        if (activeArgs[^1].Optional)
+            requiredCount--;
+
+        if (arguments.Count < requiredCount)
+        {
+            var missing = activeArgs[arguments.Count];
+            throw new CommandException(Config.Localizer($"Missing required argument `{missing.GetDisplayName()}`."));
+        }
+
+        var ctx = new CommandArgumentContext(runContext, this)
+        {
+            ArgumentIndex = -1
+        };
+
+        var consumed = Math.Min(arguments.Count, activeArgs.Count);
+        for (var i = 0; i < consumed; i++)
+        {
+            ctx.Argument = activeArgs[i];
+            ctx.ArgumentValue = arguments[i];
+            ctx.ArgumentIndex = i;
+            activeArgs[i].Invoke(ctx);
+        }
+
+        for (var i = consumed; i < activeArgs.Count; i++)
+        {
+            var argument = activeArgs[i];
+            if (!argument.Optional)
+                throw new InvalidOperationException($"Missing required argument `{argument.Prototype}` should have been detected.");
+
+            ctx.Argument = argument;
+            ctx.ArgumentValue = null;
+            ctx.ArgumentIndex = i;
+            argument.Invoke(ctx);
+        }
+
+        var remaining = new List<string>();
+        for (var i = consumed; i < arguments.Count; i++)
+        {
+            remaining.Add(arguments[i]);
+        }
+
+        return InvokeDefaultArgumentHandler(runContext, remaining);
+    }
+
+    private List<string> InvokeDefaultArgumentHandler(CommandRunContext runContext, List<string> arguments)
+    {
+        if (!_options.TryGetValue("<>", out var def))
+            return arguments;
+
+        if (arguments.Count == 0)
+            return arguments;
+
+        var c = CreateOptionContext(runContext);
+        c.OptionIndex = -1;
+
+        foreach (var argument in arguments)
+        {
+            c.OptionValues.Add(argument);
+            c.Option = def;
+            c.Option.Invoke(c);
+        }
+
+        return new List<string>();
     }
 
     private bool AddSource(ArgumentEnumerator ae, string argument)
@@ -755,6 +902,14 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
         if (SubCommands.Count > 0)
         {
             usage.Append(_(" COMMAND"));
+        }
+
+        foreach (var argument in _arguments)
+        {
+            if (!argument.IsActive() || argument.Hidden)
+                continue;
+            usage.Append(' ');
+            usage.Append(argument.GetDisplayName());
         }
 
         if (_options.TryGetValue("<>", out var def) && def.Description != null)

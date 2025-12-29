@@ -4,6 +4,7 @@ XenoAtom.CommandLine is a library that provides a simple and easy way to create 
 
 - [CommandApp and Command](#commandapp-and-command)
 - [Options](#options)
+- [Command Arguments](#command-arguments)
 - [Help Text](#help-text)
 - [Actions](#actions)
 - [Completions](#completions)
@@ -274,6 +275,45 @@ Random other tidbits:
     ```
     It will extract the version from the Assembly Informational Version attribute or the Assembly Version attribute and will display it on the standard output when the option is used.
 
+## Command Arguments
+
+In addition to options (prefixed with `-`, `--`, `/`), you can declare positional command arguments.
+
+An argument prototype uses angle brackets:
+
+- `"<input>"`: a required positional argument
+- `"<output>?"`: an optional positional argument (only allowed for the last argument)
+- `"<files>*"`: an optional list argument (0 or more values, only allowed for the last argument)
+- `"<files>+"`: a required list argument (1 or more values, only allowed for the last argument)
+
+Example:
+
+```csharp
+string? input = null;
+string? output = null;
+var extraFiles = new List<string>();
+
+var app = new CommandApp("myexe")
+{
+    "Arguments:",
+    { "<input>", "Input file", v => input = v },
+    { "<output>?", "Output file (optional)", v => output = v },
+
+    // Optional: handle all remaining arguments with the default argument handler.
+    { "<>", "[files]*", extraFiles },
+
+    new HelpOption(),
+    (ctx, args) =>
+    {
+        // args contains the remaining arguments after consuming declared positional arguments.
+        // If a "<>" handler is declared, remaining arguments are consumed by it and args will be empty.
+        return ValueTask.FromResult(0);
+    }
+};
+```
+
+Declared arguments are included in the default usage output (e.g. `Usage: myexe [Options] <input> [<output>]`).
+
 ## Help Text
 
 Any string that is not an option is considered text and will be displayed when showing the help.
@@ -542,11 +582,11 @@ The following class diagram shows the main classes of the library:
 
 ![Class diagram](XenoAtom.CommandLine.png)
 
-The design of the library is voluntarily simple and straightforward. The main classes are `CommandApp`, `Command`, `Option`, `CommandGroup`, `ArgumentSource`, `HelpOption`, `VersionOption`, `ResponseFileSource` and `CommandException`. The `Action` is a delegate that can be used to execute code when the command-line is parsed.
+The design of the library is voluntarily simple and straightforward. The main classes are `CommandApp`, `Command`, `Option`, `CommandArgument`, `CommandGroup`, `ArgumentSource`, `HelpOption`, `VersionOption`, `ResponseFileSource` and `CommandException`. The `Action` is a delegate that can be used to execute code when the command-line is parsed.
 
 Other class derived from `Option` (for representing actions bound to options) are internal.
 
-The `CommandContainer` derived classes (`Command`, `CommandApp`, `CommandGroup`) provide several [extension methods](https://github.com/XenoAtom/XenoAtom.CommandLine/blob/main/src/XenoAtom.CommandLine/CommandExtensions.cs) to add options that are compatible with collection initializers:
+The `CommandContainer` derived classes (`Command`, `CommandApp`, `CommandGroup`) provide several [extension methods](https://github.com/XenoAtom/XenoAtom.CommandLine/blob/main/src/XenoAtom.CommandLine/CommandExtensions.cs) to add options and command arguments that are compatible with collection initializers:
 
 ```csharp
 var app = new CommandApp();

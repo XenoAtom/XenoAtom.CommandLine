@@ -28,7 +28,7 @@
   <Class Name="XenoAtom.CommandLine.Command" Collapsed="true">
     <Position X="8" Y="3.25" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AYQCAUJAA0AoEAAiIACAFAyAAQCiIAAADwCAIAFAAQQ=</HashCode>
+      <HashCode>AISAAUJAAwAoEAAiIAAAFgyAgQCiIAAAb4CSIEFEAQQ=</HashCode>
       <FileName>Command.cs</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
@@ -36,7 +36,7 @@
   <Class Name="XenoAtom.CommandLine.CommandUsage" Collapsed="true">
     <Position X="2.75" Y="2" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAIAAAAgAAAEAAAAAAABAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <HashCode>AAAAAAAAAAAgAAAEAgAAAAABAIAAAAAAAAAAAABAAAA=</HashCode>
       <FileName>CommandUsage.cs</FileName>
     </TypeIdentifier>
     <Lollipop Position="0.2" />
@@ -66,7 +66,7 @@
   <Class Name="XenoAtom.CommandLine.CommandApp" Collapsed="true">
     <Position X="8" Y="4.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAABAAACAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <HashCode>wAAAQBAAACABAQACAAAIAAAAAIIAQAAAIAAAAEQAAAA=</HashCode>
       <FileName>CommandApp.cs</FileName>
     </TypeIdentifier>
   </Class>
@@ -91,6 +91,14 @@
       <HashCode>AAAAAAAAAAAgAAAAAAAAAAACAAAAAAAACAAAAAAAAAA=</HashCode>
       <FileName>ResponseFileSource.cs</FileName>
     </TypeIdentifier>
+  </Class>
+  <Class Name="XenoAtom.CommandLine.CommandArgument" Collapsed="true">
+    <Position X="7" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAhBAAAAAAoAAAFEAAAAgAAAAAFAAIAAQAAgAAEAAI=</HashCode>
+      <FileName>CommandArgument.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
   </Class>
   <Font Name="Segoe UI" Size="9" />
 </ClassDiagram>
