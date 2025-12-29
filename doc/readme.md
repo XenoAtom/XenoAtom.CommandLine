@@ -41,7 +41,15 @@ There are 2 main classes that you will use when creating a command-line applicat
 The first class that you will use is the `CommandApp` class.
 This class is the entry point for your command-line application. You can create an instance of this class and then add options to it. The `CommandApp` class will parse the command-line arguments and call the appropriate methods based on the options that were specified.
 
-The `CommandApp` class inherits from `Command` and benefiting from using list initializers to add options, text and other commands to the application. This makes it easy to add options to the application in a readable and concise way.
+The `CommandApp` class inherits from `Command` and benefits from collection initializers to add options, arguments, text and other commands in a readable and concise way.
+
+Parsing flow (high level):
+- Parse options (until `--`), applying option actions as values are consumed.
+- If sub-commands exist, dispatch to the first matching active sub-command.
+- Parse positional arguments (`CommandArgument`) for the selected command.
+  - Positional arguments are strict by default: if none are declared, passing one is an error.
+  - Use `<>` to accept and forward remaining arguments to the command action.
+- Invoke the command action (if any) and return its exit code. Errors are reported to `Error` and `RunAsync` returns `1`.
 
 
 ```csharp
@@ -131,6 +139,7 @@ This allows specifying `-a -b -c` as `-abc`, and specifying `-D name=value`
 as `-Dname=value`.
 
 Option processing is disabled by specifying `--`. All tokens after `--` are treated as positional arguments (use `<>` to forward them to the command action).
+The `--` marker itself is not included in the resulting arguments; any later `--` is treated as a regular positional token.
 
 If the parser is currently expecting a value for an option, the next token is always consumed as that value, even if it is `--` or matches an existing sub-command name.
 
@@ -291,6 +300,11 @@ An argument prototype uses angle brackets:
 - `"<files>+"`: a required list argument (1 or more values, only allowed for the last argument)
 - `"<>"`: a remainder argument (0 or more values, only allowed for the last argument) forwarded to the command action
 
+Collection initializer forms:
+- Bind a single value: `{ "<input>", "Input file", v => input = v }`
+- Collect multiple values: `{ "<files>*", "Extra files", extraFiles }`
+- Accept pass-through remainder: `{ "<>", "Extra arguments passed to the action" }`
+
 Example:
 
 ```csharp
@@ -357,6 +371,8 @@ You can have multiple `CommandUsage` in a `CommandApp` or a `Command`. If no com
 ## Actions
 
 A `CommandApp` and a `Command` are meant to be executed. You can add a single action to a `CommandApp` or a `Command` that will be executed when the command-line after the options and arguments are parsed.
+
+When you declare positional arguments via `CommandArgument` (e.g. `<files>*`), those values are consumed and the action `arguments` array is empty. Use `<>` when you intentionally want to receive leftover/forwarded positional tokens in the command action.
 
 For example, the following code:
 
