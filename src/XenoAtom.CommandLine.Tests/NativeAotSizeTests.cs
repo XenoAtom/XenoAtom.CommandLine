@@ -16,8 +16,7 @@ public class NativeAotSizeTests
     {
         var commandLineProject = FindCommandLineProject();
 
-        var root = Path.Combine(AppContext.BaseDirectory, "csharp_tests", "nativeaot_size");
-        var projectDir = Path.Combine(root, "app");
+        var projectDir = Path.Combine(AppContext.BaseDirectory, "csharp_tests", "NativeAotSizeApp");
         if (Directory.Exists(projectDir))
         {
             Directory.Delete(projectDir, recursive: true);
@@ -31,8 +30,13 @@ public class NativeAotSizeTests
         File.WriteAllText(projectPath, CreateProjectFile(commandLineProject));
         File.WriteAllText(programPath, CreateProgramFile());
 
-        var publishArgs = $"publish \"{projectPath}\" -c Release " + $" -o \"{publishDir}\"";
-
+        List<string> publishArgs =
+        [
+            "publish",
+            projectPath,
+            "-c", "Release",
+            "-o", publishDir
+        ];
         var result = RunProcess("dotnet", publishArgs, projectDir);
         if (result.ExitCode != 0)
         {
@@ -124,18 +128,21 @@ public class NativeAotSizeTests
             """;
     }
 
-    private static (int ExitCode, string StdOut, string StdErr) RunProcess(string fileName, string arguments, string workingDirectory)
+    private static (int ExitCode, string StdOut, string StdErr) RunProcess(string fileName, List<string> arguments, string workingDirectory)
     {
         var psi = new ProcessStartInfo
         {
             FileName = fileName,
-            Arguments = arguments,
             WorkingDirectory = workingDirectory,
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             CreateNoWindow = true,
         };
+        foreach (var arg in arguments)
+        {
+            psi.ArgumentList.Add(arg);
+        }
 
         using var process = Process.Start(psi);
         if (process is null)
