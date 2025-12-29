@@ -156,7 +156,10 @@ public sealed class CompletionCommands : CommandGroup
             var fn = $"_{commandName}_complete";
             var sb = new StringBuilder();
             sb.AppendLine($"# Bash completion for {commandName}");
-            sb.AppendLine($"# Usage: source <({commandName} completion bash)");
+            sb.AppendLine($"# Usage (on PATH):          eval \"$({commandName} completion bash)\"");
+            sb.AppendLine($"# Usage (current folder):   eval \"$(./{commandName} completion bash)\"");
+            sb.AppendLine($"# Usage (Windows/Git Bash): eval \"$(./{commandName}.exe completion bash)\"");
+            sb.AppendLine();
             sb.AppendLine();
             sb.AppendLine($"{fn}() {{");
             sb.AppendLine("  local IFS=$'\\n'");
@@ -164,8 +167,7 @@ public sealed class CompletionCommands : CommandGroup
             sb.Append("  local -a cmd=(");
             AppendPosixArray(sb, invocationArguments);
             sb.AppendLine(")");
-            sb.Append("  local out=$(");
-            sb.Append("\"${cmd[@]}\" ");
+            sb.Append("  local out=$(\"${cmd[@]}\" ");
             sb.Append(QuotePosixSingle(completeRequestCommandName));
             sb.AppendLine(" --command-name \"${COMP_WORDS[0]}\" --line \"$COMP_LINE\" --cursor \"$COMP_POINT\" 2>/dev/null)");
             sb.AppendLine("  local line");
@@ -174,7 +176,7 @@ public sealed class CompletionCommands : CommandGroup
             sb.AppendLine("    COMPREPLY+=(\"$line\")");
             sb.AppendLine("  done <<< \"$out\"");
             sb.AppendLine("}");
-            sb.AppendLine($"complete -o default -F {fn} {commandName}");
+            sb.AppendLine($"complete -o default -F {fn} -- {QuotePosixSingle(commandName)} {QuotePosixSingle("./" + commandName)} {QuotePosixSingle(commandName + ".exe")} {QuotePosixSingle("./" + commandName + ".exe")}");
             return sb.ToString();
         }
 

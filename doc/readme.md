@@ -393,7 +393,9 @@ Generate and install a script for your shell:
 
 ```console
 # Bash (current session)
-source <(myexe completion bash)
+eval "$(myexe completion bash)"       # if on PATH
+eval "$(./myexe completion bash)"     # if in current directory
+eval "$(./myexe.exe completion bash)" # on Windows (Git Bash / MSYS)
 
 # Zsh (current session)
 source <(myexe completion zsh)
@@ -407,7 +409,7 @@ myexe completion powershell | Out-String | Invoke-Expression
 
 Notes:
 - The completion glue scripts call the hidden `__complete` subcommand (e.g. `myexe __complete --line <LINE> --cursor <POS> --command-name <NAME>`) and expect one candidate per line on stdout.
-- For reliability (notably on PowerShell where the current directory is not searched by default), the generated scripts invoke the current executable path (or `dotnet <entry-assembly.dll>` when hosted by `dotnet`), and the invocation is quoted for bash/zsh/fish/powershell.
+- On PowerShell, the generated script invokes the current executable path (or `dotnet <entry-assembly.dll>` when hosted by `dotnet`) because the current directory is not searched by default.
 - Completion is non-executing: it does not invoke user option actions; it only inspects the declared command tree.
 
 ## Configuration

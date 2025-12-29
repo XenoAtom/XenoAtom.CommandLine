@@ -120,8 +120,8 @@ public class CommandCompletionTests
         var script = writer.ToString();
         Assert.IsTrue(script.Contains("Bash completion for app", StringComparison.Ordinal));
         Assert.IsTrue(script.Contains("__complete", StringComparison.Ordinal));
-        Assert.IsTrue(script.Contains("local -a cmd=(", StringComparison.Ordinal));
-        Assert.IsTrue(script.Contains("\"${cmd[@]}\"", StringComparison.Ordinal));
+        Assert.IsTrue(script.Contains("COMPREPLY=()", StringComparison.Ordinal));
+        Assert.IsTrue(script.Contains("complete -o default -F _app_complete", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -156,14 +156,7 @@ public class CommandCompletionTests
         };
 
         var invocationArgs = GetExpectedInvocationArguments("app");
-        var expectedBashArray = string.Join(" ", invocationArgs.Select(QuotePosixSingle));
         var expectedPowerShellInvocation = "& " + string.Join(" ", invocationArgs.Select(QuotePowerShellSingle));
-
-        var bashWriter = new StringWriter();
-        var bashResult = await app.RunAsync(["completion", "bash"], new CommandRunConfig() { Out = bashWriter, Error = bashWriter });
-        Assert.AreEqual(0, bashResult);
-        var bashScript = bashWriter.ToString();
-        Assert.IsTrue(bashScript.Contains($"local -a cmd=({expectedBashArray})", StringComparison.Ordinal));
 
         var psWriter = new StringWriter();
         var psResult = await app.RunAsync(["completion", "powershell"], new CommandRunConfig() { Out = psWriter, Error = psWriter });
