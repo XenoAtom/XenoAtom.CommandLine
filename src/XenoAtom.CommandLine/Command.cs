@@ -438,7 +438,7 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
         return false;
     }
 
-    private static bool TryGetOptionParts(
+    private protected static bool TryGetOptionParts(
         string argument,
         out int flagLength,
         [NotNullWhen(true)] out string? flag,
@@ -485,6 +485,12 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
         name = rest[..sepIndex];
         value = rest[(sepIndex + 1)..];
         return name.Length > 0;
+    }
+
+    private protected static bool TryGetOption(Command command, ReadOnlySpan<char> name, [NotNullWhen(true)] out Option? option)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        return command.TryGetOption(name, out option);
     }
 
     private bool ParseOption(string argument, OptionContext c)

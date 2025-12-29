@@ -260,9 +260,10 @@ public class CommandApp : Command
                 continue;
             }
 
-            if (processOptions && TryParseOptionToken(token, out var name, out var hasSep, out var value))
+            if (processOptions && TryGetOptionParts(token, out _, out _, out var name, out var sepIndex, out var value))
             {
-                if (current.Options.TryGetValue(name, out var option) && option.IsActive())
+                var hasSep = sepIndex >= 0;
+                if (TryGetOption(current, name, out var option) && option.IsActive())
                 {
                     if (option.OptionValueType == OptionValueType.Required)
                     {
@@ -297,7 +298,7 @@ public class CommandApp : Command
         return current;
     }
 
-    private static bool TryGetBoolSuffixOption(string name, Command command, [NotNullWhen(true)] out Option? option)
+    private static bool TryGetBoolSuffixOption(ReadOnlySpan<char> name, Command command, [NotNullWhen(true)] out Option? option)
     {
         option = null;
         if (name.Length < 2)
@@ -307,8 +308,8 @@ public class CommandApp : Command
         if (last != '+' && last != '-')
             return false;
 
-        var baseName = name.Substring(0, name.Length - 1);
-        if (!command.Options.TryGetValue(baseName, out option))
+        var baseName = name[..^1];
+        if (!TryGetOption(command, baseName, out option))
             return false;
 
         return option.IsActive();
@@ -327,8 +328,7 @@ public class CommandApp : Command
 
         for (int i = 1; i < token.Length; i++)
         {
-            var optionName = token[i].ToString();
-            if (!current.Options.TryGetValue(optionName, out var option) || !option.IsActive())
+            if (!TryGetOption(current, token.AsSpan(i, 1), out var option) || !option.IsActive())
             {
                 return i != 1;
             }
@@ -339,7 +339,7 @@ public class CommandApp : Command
             }
 
             // Remaining characters are the value for the option.
-            var value = token.Substring(i + 1);
+            var value = token.AsSpan(i + 1);
 
             if (option.OptionValueType == OptionValueType.Required)
             {
@@ -362,52 +362,7 @@ public class CommandApp : Command
         return true;
     }
 
-    private static bool TryParseOptionToken(
-        string token,
-        [NotNullWhen(true)] out string? name,
-        out bool hasSep,
-        out string value)
-    {
-        name = null;
-        hasSep = false;
-        value = string.Empty;
-
-        if (string.IsNullOrEmpty(token))
-            return false;
-
-        ReadOnlySpan<char> span = token.AsSpan();
-        var prefixLen = 0;
-        if (span.Length >= 2 && span[0] == '-' && span[1] == '-')
-        {
-            prefixLen = 2;
-        }
-        else if (span[0] == '-' || span[0] == '/')
-        {
-            prefixLen = 1;
-        }
-        else
-        {
-            return false;
-        }
-
-        if (span.Length <= prefixLen)
-            return false;
-
-        var rest = span[prefixLen..];
-        var sepIndex = rest.IndexOfAny(':', '=');
-        if (sepIndex < 0)
-        {
-            name = rest.ToString();
-            return name.Length > 0;
-        }
-
-        name = rest[..sepIndex].ToString();
-        hasSep = true;
-        value = rest[(sepIndex + 1)..].ToString();
-        return name.Length > 0;
-    }
-
-    private static int ConsumeInlineValue(string value, Option option, int maxValues)
+    private static int ConsumeInlineValue(ReadOnlySpan<char> value, Option option, int maxValues)
     {
         if (maxValues <= 0)
             return 0;
@@ -421,17 +376,10 @@ public class CommandApp : Command
 
     private static int ConsumeValueToken(string token, Option option, int maxValues)
     {
-        if (maxValues <= 0)
-            return 0;
-
-        var separators = option.ValueSeparators;
-        if (separators == null || separators.Length == 0)
-            return 1;
-
-        return CountSplitSegments(token, separators, maxValues);
+        return ConsumeInlineValue(token.AsSpan(), option, maxValues);
     }
 
-    private static int CountSplitSegments(string value, string[] separators, int maxSegments)
+    private static int CountSplitSegments(ReadOnlySpan<char> value, string[] separators, int maxSegments)
     {
         if (maxSegments <= 1)
             return 1;
@@ -459,7 +407,7 @@ public class CommandApp : Command
             var start = 0;
             while (segments < maxSegments)
             {
-                var next = value.AsSpan(start).IndexOfAny(sepChars);
+                var next = value[start..].IndexOfAny(sepChars);
                 if (next < 0)
                     break;
                 start += next + 1;
@@ -476,9 +424,10 @@ public class CommandApp : Command
             for (var i = 0; i < separators.Length; i++)
             {
                 var sep = separators[i];
-                var idx = value.IndexOf(sep, searchStart, StringComparison.Ordinal);
+                var idx = value[searchStart..].IndexOf(sep.AsSpan(), StringComparison.Ordinal);
                 if (idx < 0)
                     continue;
+                idx += searchStart;
                 if (nextIndex < 0 || idx < nextIndex)
                 {
                     nextIndex = idx;
