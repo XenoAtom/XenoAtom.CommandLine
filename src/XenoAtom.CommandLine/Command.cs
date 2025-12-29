@@ -10,7 +10,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace XenoAtom.CommandLine;
@@ -863,34 +862,83 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
         o.Write(s);
     }
     
-    [GeneratedRegex(@"(?<=(?<!\{)\{)[^{}]*(?=\}(?!\}))")]
-    private static partial Regex ArgumentNamePattern();
-    
     private static string GetArgumentName(int index, int maxIndex, string? description)
     {
-
         if (description is not null)
         {
-            var matches = ArgumentNamePattern().Matches(description); // ignore double braces 
-            string? argName = null;
-            foreach (Match match in matches)
-            {
-                var parts = match.Value.Split(':');
-                // for maxIndex=1 it can be {foo} or {0:foo}
-                if (maxIndex == 1)
-                {
-                    argName = parts[parts.Length - 1];
-                }
-                // look for {i:foo} if maxIndex > 1
-                if (maxIndex > 1 && parts.Length == 2 &&
-                    parts[0] == index.ToString(CultureInfo.InvariantCulture))
-                {
-                    argName = parts[1];
-                }
+            var indexText = maxIndex > 1 ? index.ToString(CultureInfo.InvariantCulture) : null;
 
-                if (!string.IsNullOrEmpty(argName))
+            for (int i = 0; i < description.Length; i++)
+            {
+                if (description[i] == '{')
                 {
-                    return argName;
+                    // Ignore escaped "{{".
+                    if (i + 1 < description.Length && description[i + 1] == '{')
+                    {
+                        i++;
+                        continue;
+                    }
+
+                    var start = i + 1;
+                    var end = -1;
+                    for (int j = start; j < description.Length; j++)
+                    {
+                        var c = description[j];
+                        if (c == '{')
+                        {
+                            // Not a simple placeholder (nested '{'), skip.
+                            break;
+                        }
+
+                        if (c == '}')
+                        {
+                            // Ignore escaped "}}".
+                            if (j + 1 < description.Length && description[j + 1] == '}')
+                            {
+                                break;
+                            }
+
+                            end = j;
+                            break;
+                        }
+                    }
+
+                    if (end < 0)
+                        continue;
+
+                    i = end;
+                    var content = description.AsSpan(start, end - start);
+                    if (content.Length == 0)
+                        continue;
+
+                    if (maxIndex == 1)
+                    {
+                        var lastColon = content.LastIndexOf(':');
+                        var argNameSpan = lastColon >= 0 ? content[(lastColon + 1)..] : content;
+                        if (argNameSpan.Length > 0)
+                            return argNameSpan.ToString();
+                        continue;
+                    }
+
+                    var colonIndex = content.IndexOf(':');
+                    if (colonIndex <= 0)
+                        continue;
+
+                    // Only accept "{i:name}" (exactly one ':').
+                    if (content[(colonIndex + 1)..].IndexOf(':') >= 0)
+                        continue;
+
+                    if (!content[..colonIndex].SequenceEqual(indexText.AsSpan()))
+                        continue;
+
+                    var argName = content[(colonIndex + 1)..];
+                    if (argName.Length > 0)
+                        return argName.ToString();
+                }
+                else if (description[i] == '}' && i + 1 < description.Length && description[i + 1] == '}')
+                {
+                    // Ignore escaped "}}".
+                    i++;
                 }
             }
         }
