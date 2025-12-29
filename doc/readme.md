@@ -6,8 +6,10 @@ XenoAtom.CommandLine is a library that provides a simple and easy way to create 
 - [Options](#options)
 - [Help Text](#help-text)
 - [Actions](#actions)
+- [Configuration](#configuration)
 - [ArgumentSource](#argumentsource)
 - [CommandGroup](#commandgroup)
+- [Performance and Benchmarks](#performance-and-benchmarks)
 - [Going further](#going-further)
 - [Class diagram](#class-diagram)
 
@@ -80,9 +82,7 @@ await commandApp.RunAsync(args);
 
 ## Options
 
-An option is composed of:
-
-A prototype that defines the option syntax. (e.g . "o|output="))
+An option is composed of a prototype that defines the option syntax (e.g. `"o|output="`).
 
 ```
 Regex-like BNF Grammar: 
@@ -127,6 +127,8 @@ as `-Dname=value`.
 Option processing is disabled by specifying `--`.  All options after `--`
 are passed to the arguments unchanged and unprocessed.
 
+If the parser is currently expecting a value for an option, the next token is always consumed as that value, even if it is `--` or matches an existing sub-command name.
+
 Examples:
 
 ```c#
@@ -134,7 +136,7 @@ int verbose = 0;
 var app = new CommandApp()
 {
     {"v", v => ++verbose},
-    {"name=|value=", v => Console.WriteLine(v))},
+    {"name=|value=", v => Console.WriteLine(v)},
     (arguments) => { /* other code here */ }
 };
 await app.RunAsync(["-v", "--v", "/v", "-name=A", "/name", "B", "extra"]);
@@ -161,14 +163,14 @@ Random other tidbits:
    are explicitly enabled if they are followed with `+`, and explicitly
    disabled if they are followed with `-`:
    ```csharp
-     bool a;
-     var p = new CommandApp() {
-       { "a", s => a = s != null },
-     };
-     await p.RunAsync(["-a"]);    // sets v != null
-     await p.RunAsync(["-a+"]);   // sets v != null
-     await p.RunAsync(["-a-"]);   // sets v == null
-   ```
+      bool a;
+      var p = new CommandApp() {
+        { "a", s => a = s != null },
+      };
+      await p.RunAsync(["-a"]);    // sets a == true
+      await p.RunAsync(["-a+"]);   // sets a == true
+      await p.RunAsync(["-a-"]);   // sets a == false
+    ```
 - When declaring an option, you can name the value attached in the description:
   ```csharp
   string? name = null;
@@ -194,9 +196,9 @@ Random other tidbits:
   {
       { "D:", "Add a macro {0:NAME} and optional {1:VALUE}", (k, v) => {
         if (k is null) throw new OptionException("Missing macro name", "D");
-        Console.WriteLine($"Macro:    {k}` => `{v}`"); 
+        Console.WriteLine($"Macro: `{k}` => `{v}`"); 
       }},
-      { "I|macro=", "Add a marco {0:NAME} and required {1:VALUE}", (k, v) => Console.WriteLine  ($"Required Macro: `{k}` => `{v}`") },
+      { "I|macro=", "Add a macro {0:NAME} and required {1:VALUE}", (k, v) => Console.WriteLine($"Required Macro: `{k}` => `{v}`") },
   };
   await app.RunAsync(["-DA=B", "-DHello=World", "-DG", "-IG=F", "--macro", "X=Y"]);
   ```
@@ -361,12 +363,38 @@ Most of the time, you might want to declare an async function:
 var app = new CommandApp()
 {
     {"v", v => ++verbose},
-    {"name=|value=", v => Console.WriteLine(v))},
+    {"name=|value=", v => Console.WriteLine(v)},
     async (arguments) => { /* other code here */ }
 };
 ```
 
 The same applies to sub-commands.
+
+## Configuration
+
+`CommandRunConfig` controls how output and help formatting work at runtime:
+
+```csharp
+var config = new CommandRunConfig(Width: 120, OptionWidth: 32)
+{
+    Out = Console.Out,
+    Error = Console.Error,
+    ShowLicenseOnRun = true,
+};
+
+await app.RunAsync(args, config);
+```
+
+`CommandConfig` controls application-level behaviors:
+
+- `CommandConfig.Localizer` lets you localize all built-in help/error text (it is applied before writing to `Out`/`Error`), for example:
+  ```csharp
+  var app = new CommandApp("myexe", config: new CommandConfig
+  {
+      Localizer = s => s, // replace with your localization
+  });
+  ```
+- `CommandApp.LicenseHeader` (combined with `CommandRunConfig.ShowLicenseOnRun`) lets you print a license banner once before executing the selected command.
 
 ## ArgumentSource
 
@@ -452,6 +480,16 @@ Advanced Options:
 
 Not only the text is not displayed, but the options `--special1` and `--special2` are not available unless the `--advanced` option is passed.
 
+## Performance and Benchmarks
+
+The parser is optimized for minimal allocations on hot paths (e.g. avoiding regex parsing and avoiding per-option `string.Split` arrays).
+
+This repository includes a BenchmarkDotNet project to validate parsing speed:
+
+```console
+dotnet run -c Release --project src/XenoAtom.CommandLine.Benchmarks
+```
+
 ## Going further
 
 You can have a look at the [samples](https://github.com/XenoAtom/XenoAtom.CommandLine/tree/main/samples) to see more examples of how to use the library.
@@ -466,7 +504,7 @@ The design of the library is voluntarily simple and straightforward. The main cl
 
 Other class derived from `Option` (for representing actions bound to options) are internal.
 
-The `CommandContainer` derived classes (`Command`, `CommandApp`, `CommanGroup`) provide several [extension methods](https://github.com/XenoAtom/XenoAtom.CommandLine/blob/main/src/XenoAtom.CommandLine/CommandExtensions.cs) to add options that are compatible with collection initializers:
+The `CommandContainer` derived classes (`Command`, `CommandApp`, `CommandGroup`) provide several [extension methods](https://github.com/XenoAtom/XenoAtom.CommandLine/blob/main/src/XenoAtom.CommandLine/CommandExtensions.cs) to add options that are compatible with collection initializers:
 
 ```csharp
 var app = new CommandApp();
