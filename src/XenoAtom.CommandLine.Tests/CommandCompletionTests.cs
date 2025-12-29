@@ -32,10 +32,28 @@ public class CommandCompletionTests
         var app = new CommandApp("app")
         {
             { "n|name=", "Name", _ => { } },
+            { "h|help", "Help", _ => { } },
         };
 
         var results = app.GetCompletions("--na").ToArray();
         CollectionAssert.AreEqual(new[] { "--name" }, results);
+    }
+
+    [TestMethod]
+    public void GetCompletions_ShortAndLongPrefixPolicy()
+    {
+        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+
+        var app = new CommandApp("app")
+        {
+            { "h|help", "Help", _ => { } },
+        };
+
+        var shortResults = app.GetCompletions("-h").ToArray();
+        CollectionAssert.AreEqual(new[] { "-h" }, shortResults);
+
+        var longResults = app.GetCompletions("--h").ToArray();
+        CollectionAssert.AreEqual(new[] { "--help" }, longResults);
     }
 
     [TestMethod]
@@ -104,6 +122,26 @@ public class CommandCompletionTests
         Assert.IsTrue(script.Contains("__complete", StringComparison.Ordinal));
         Assert.IsTrue(script.Contains("local -a cmd=(", StringComparison.Ordinal));
         Assert.IsTrue(script.Contains("\"${cmd[@]}\"", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public async Task CompletionCommands_ZshScript_CanBeSourced()
+    {
+        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+
+        var writer = new StringWriter();
+        var app = new CommandApp("app")
+        {
+            new CompletionCommands(),
+            (ctx, _) => ValueTask.FromResult(0),
+        };
+
+        var result = await app.RunAsync(["completion", "zsh"], new CommandRunConfig() { Out = writer, Error = writer });
+        Assert.AreEqual(0, result);
+        var script = writer.ToString();
+        Assert.IsTrue(script.Contains("source <(app completion zsh)", StringComparison.Ordinal));
+        Assert.IsTrue(script.Contains("compdef _app_complete app", StringComparison.Ordinal));
+        Assert.IsTrue(script.Contains("compadd", StringComparison.Ordinal));
     }
 
     [TestMethod]

@@ -395,12 +395,11 @@ Generate and install a script for your shell:
 # Bash (current session)
 source <(myexe completion bash)
 
-# Zsh
-myexe completion zsh > "${fpath[1]}/_myexe"
-autoload -U compinit && compinit
+# Zsh (current session)
+source <(myexe completion zsh)
 
-# Fish
-myexe completion fish > ~/.config/fish/completions/myexe.fish
+# Fish (current session)
+myexe completion fish | source
 
 # PowerShell (current session)
 myexe completion powershell | Out-String | Invoke-Expression

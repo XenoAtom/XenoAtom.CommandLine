@@ -179,7 +179,36 @@ public class CommandApp : Command
                     if (optionNamePrefix.Length > 0 && !name.StartsWith(optionNamePrefix, StringComparison.OrdinalIgnoreCase))
                         continue;
 
-                    yield return prefix + name;
+                    // Completion policy:
+                    // - `--` suggests long options only (`--help`, not `--h`).
+                    // - `-` suggests short options for single-letter prefixes (`-h`, not `-help`),
+                    //   but allows completing long options (as `--name`) when the user already started typing a long name.
+                    if (optionPrefix == "--")
+                    {
+                        if (name.Length == 1)
+                            continue;
+                        yield return "--" + name;
+                    }
+                    else if (optionPrefix == "-")
+                    {
+                        if (optionNamePrefix.Length <= 1)
+                        {
+                            if (name.Length != 1)
+                                continue;
+                            yield return "-" + name;
+                        }
+                        else
+                        {
+                            if (name.Length == 1)
+                                continue;
+                            yield return "--" + name;
+                        }
+                    }
+                    else
+                    {
+                        // Keep `/` and other prefixes as-is.
+                        yield return prefix + name;
+                    }
                 }
                 else
                 {
