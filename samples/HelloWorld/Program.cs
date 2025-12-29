@@ -8,10 +8,11 @@ const string _ = "";
 bool flag = false;
 string? name = null;
 int age = 0;
+var files = new List<string>();
 
 var commandApp = new CommandApp()
 {
-    new CommandUsage("Usage: {NAME} [Options] [files]+"),
+    new CommandUsage(),
     _,
     "Options:",
     {"f|flag", "This is a flag", v => flag = v != null },
@@ -19,18 +20,20 @@ var commandApp = new CommandApp()
     {"a|age=", "Your {AGE}", (int v) => age = v},
     new HelpOption(),
     new CompletionCommands(), // Add completion commands
+    _,
+    "Arguments:",
+    { "<files>+", "Input files", files },
     // Run the command
-    (arguments) =>
+    (_) =>
     {
-        if (arguments.Length == 0) throw new CommandException("Missing at least one file argument");
         if (name == null) throw new OptionException("Missing name argument", nameof(name));
         if (age == 0) throw new OptionException("Missing age argument", nameof(age));
 
         Console.Out.WriteLine($"Hello {name}! You are {age} years old with flag = {flag}");
         int index = 0;
-        foreach (var arg in arguments)
+        foreach (var file in files)
         {
-            Console.Out.WriteLine($"Arg[{index}]: {arg}");
+            Console.Out.WriteLine($"File[{index}]: {file}");
             index++;
         }
         return ValueTask.FromResult(0);

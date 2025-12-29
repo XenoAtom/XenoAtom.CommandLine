@@ -71,6 +71,6 @@ public class CommandUsage(string? description) : CommandNode, ICommandNodeDescri
         if (index < 0)
             return value;
 
-        return $"{value.Substring(0, index)}{replacement}{value.Substring(index + marker.Length)}";
+        return $"{value[..index]}{replacement}{value[(index + marker.Length)..]}";
     }
 }

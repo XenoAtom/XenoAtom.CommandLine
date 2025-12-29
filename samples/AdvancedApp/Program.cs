@@ -19,6 +19,7 @@ int specialIncrease = 0;
 int specialDecrease = 0;
 
 var hello_files = new List<string>();
+var world_files = new List<string>();
 
 string? name = null;
 int age = 0;
@@ -58,12 +59,15 @@ var app = new CommandApp("multi")
     "Available commands:",
     new Command("hello", "This is a hello command")
     {
+        new CommandUsage(),
         _,
         "Options:",
         { "n|name=", "This is a name", v => { name = v; } },
         { "a|age=", "Sets the {AGE}", (int v) => age = v > 200 ? throw new ArgumentException("Age must be <= 200") : v },
         new HelpOption(),
-        {"<>", "[files]*", hello_files},
+        _,
+        "Arguments:",
+        { "<files>*", "Input files", hello_files },
 
         (_) =>
         {
@@ -77,16 +81,19 @@ var app = new CommandApp("multi")
     },
     new Command("world", "This is a world command")
     {
-        new CommandUsage("Usage: {{NAME}} [Options] [files]* @file"),
+        new CommandUsage("Usage: {NAME} {SYNTAX} @file"),
         _,
         "Options:",
         { "e|enum=", $"This is an {{ENUM}} accepting the following values: {EnumWrapper<TestEnum>.Names}", (EnumWrapper<TestEnum> v) => { enums.Add(v); } },
         new HelpOption(),
         new ResponseFileSource(),
+        _,
+        "Arguments:",
+        { "<files>*", "Input files", world_files },
 
-        (ctx,arguments) =>
+        (ctx,_) =>
         {
-            foreach (var file in arguments)
+            foreach (var file in world_files)
             {
                 Console.WriteLine($"World {file}");
             }
@@ -147,7 +154,7 @@ var app = new CommandApp("multi")
     _,
     new CommandUsage("Run '{NAME} [command] --help' for more information on a command."),
 
-    (arguments) =>
+    (_) =>
     {
         Console.WriteLine($"Extract: {extract}");
         Console.WriteLine($"Create: {create}");

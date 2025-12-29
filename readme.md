@@ -40,9 +40,11 @@ string? name = null;
 int age = 0;
 List<(string, string?)> keyValues = new List<(string, string?)>();
 List<string> messages = new List<string>();
+List<string> commitFiles = new List<string>();
 
 var commandApp = new CommandApp("myexe")
 {
+    new CommandUsage(),
     _,
     {"D:", "Defines a {0:name} and optional {1:value}", (key, value) =>
     {
@@ -58,15 +60,22 @@ var commandApp = new CommandApp("myexe")
     {
         _,
         {"m|message=", "Add a {MESSAGE} to this commit", messages},
+        _,
+        "Arguments:",
+        { "<files>*", "Files to commit", commitFiles },
         new HelpOption(),
 
         // Action for the commit command
-        (ctx, arguments) =>
+        (ctx, _) =>
         {
             ctx.Out.WriteLine($"Committing with name={name}, age={age}");
             foreach (var message in messages)
             {
                 ctx.Out.WriteLine($"Commit message: {message}");
+            }
+            foreach (var file in commitFiles)
+            {
+                ctx.Out.WriteLine($"Commit file: {file}");
             }
             return ValueTask.FromResult(0);
         }
@@ -121,10 +130,13 @@ Define: World => 121
 Running `myexe commit --help` will output:
 
 ```
-Usage: myexe commit [options]
+Usage: myexe commit [options] <files>*
 
   -m, --message=MESSAGE      Add a MESSAGE to this commit
   -h, -?, --help             Show this message and exit
+
+Arguments:
+  <files>*                   Files to commit
 ```
 
 Running `myexe --name John -a50 commit --message "Hello!" --message "World!"` will output:
