@@ -140,7 +140,7 @@ For more details on how to use XenoAtom.CommandLine, please visit the [user guid
 
 ## 🏗️ Build
 
-You need to install the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0). Then from the root folder:
+You need to install the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0). Then from the root folder:
 
 ```console
 $ dotnet build src -c Release
