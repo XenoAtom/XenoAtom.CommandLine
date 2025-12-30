@@ -98,6 +98,28 @@ await commandApp.RunAsync(args);
 
 An option is composed of a prototype that defines the option syntax (e.g. `"o|output="`).
 
+### Quick Reference
+
+The prototype is what you pass to `Add(...)` (or use in the collection initializer). It controls how the option can be written on the command line.
+
+| Prototype (declaration) | What it declares | How it’s passed | Notes |
+|---|---|---|---|
+| `"v|verbose"` | Flag / boolean option | `-v`, `--verbose`, `/v` | Use `-v+` / `-v-` to explicitly enable/disable when parsed as a bool option. |
+| `"n|name="` | Required value | `--name John`, `--name=John`, `-nJohn`, `-n:John`, `/name:John` | If you omit `:`/`=`, the next token is consumed as the value (e.g. `--name John`). |
+| `"o:"` | Optional value | `-o`, `-oVALUE`, `-o:VALUE`, `--o=VALUE` | Optional values must be inline; `-o VALUE` does **not** attach `VALUE` to `-o`. |
+| `"D:"` with 2 values | Key/value pair (2 values) | `-DKEY`, `-DKEY=VALUE`, `-DKEY:VALUE` | Typically used for “macro” options. With `:` (optional), the second value can be omitted. |
+| `"P={->}"` with 2 values | Key/value pair with custom separator | `-PKEY->VALUE` | Custom separator is declared between `{...}`. |
+| `"i"` in a bundle | Bundled short options | `-abc`, `-txc` | Only works with `-` and single-letter options; at most one option in the bundle can take a value. |
+| `--` | Stop option parsing | `myexe -- --not-an-option -x /mnt/home` | Everything after `--` is treated as positional arguments. |
+
+Value placeholders in descriptions:
+- For `MaxValueCount == 1`, `"{NAME}"` sets the displayed value name.
+- For multiple values, use `"{0:KEY} {1:VALUE}"` to name each value.
+
+Strictness note:
+- Unknown `-` / `--` options fail by default (`CommandConfig.StrictOptionParsing = true`).
+- This does not apply to `/...` tokens so POSIX paths like `/mnt/home` can be passed as positional arguments.
+
 ```
 Regex-like BNF Grammar: 
     name: .+
@@ -294,11 +316,13 @@ In addition to options (prefixed with `-`, `--`, `/`), you can declare positiona
 
 An argument prototype uses angle brackets:
 
-- `"<input>"`: a required positional argument
-- `"<output>?"`: an optional positional argument (only allowed for the last argument)
-- `"<files>*"`: an optional list argument (0 or more values, only allowed for the last argument)
-- `"<files>+"`: a required list argument (1 or more values, only allowed for the last argument)
-- `"<>"`: a remainder argument (0 or more values, only allowed for the last argument) forwarded to the command action
+| Prototype | Cardinality | Meaning |
+|---|---:|---|
+| `"<input>"` | 1 | Required positional argument |
+| `"<output>?"` | 0..1 | Optional positional argument (only allowed for the last argument) |
+| `"<files>*"` | 0..N | Optional list argument (only allowed for the last argument) |
+| `"<files>+"` | 1..N | Required list argument (only allowed for the last argument) |
+| `"<>"` | 0..N | Remainder argument forwarded to the command action (only allowed for the last argument) |
 
 Collection initializer forms:
 - Bind a single value: `{ "<input>", "Input file", v => input = v }`
@@ -449,6 +473,19 @@ You can also complete from a pre-tokenized command line (useful for shells that 
 var candidates = commandApp.GetCompletionsForTokens(["myexe", "hello", "--na"], tokenIndex: 2); // -> ["--name"]
 ```
 
+Value completions (optional):
+
+```csharp
+var app = new CommandApp("myexe")
+{
+    { "c|color=", "Console {COLOR}", v => {} },
+    { "<file>", "Input {FILE}", v => {} },
+};
+
+app.Options["color"].ValueCompleter = static (_, prefix) => ["red", "green", "blue"];
+app.Arguments[0].ValueCompleter = static (_, prefix) => ["README.md", "src/"];
+```
+
 To expose completions from a CLI, add `CompletionCommands` (it adds `completion <shell>` and a hidden `__complete` command):
 
 ```csharp
@@ -552,6 +589,16 @@ Response file parsing supports:
 - Single and double quotes
 - `#` comments (when `#` is the first non-whitespace character on a line, or after a completed token)
 - Basic `\` escaping on non-Windows platforms (e.g. `c\ d` -> `c d`), while keeping `\` as a literal character on Windows (so paths like `C:\Temp\file.txt` are preserved).
+
+Quick examples:
+
+| Response file line | Produces tokens |
+|---|---|
+| `--name John` | `--name`, `John` |
+| `"hello world"` | `hello world` |
+| `# comment` | *(no tokens)* |
+| `c\\ d` (non-Windows) | `c d` |
+| `C:\Temp\file.txt` (Windows) | `C:\Temp\file.txt` |
 
 ## CommandGroup
 
