@@ -73,13 +73,26 @@ public class SpecialTests
     [TestMethod]
     public void TestArgumentSource_CommentsWhitespaceAndEscapes()
     {
-        var values = ArgumentSource.GetArguments(new StringReader("""
-                                                     # comment
-                                                     "a b"   c\ d   # trailing comment
-                                                     """)).ToArray();
-        Assert.HasCount(2, values);
-        Assert.AreEqual("a b", values[0]);
-        Assert.AreEqual("c d", values[1]);
+        if (OperatingSystem.IsWindows())
+        {
+            var values = ArgumentSource.GetArguments(new StringReader("""
+                                                         # comment
+                                                         "a b"   C:\Temp\file.txt   # trailing comment
+                                                         """)).ToArray();
+            Assert.HasCount(2, values);
+            Assert.AreEqual("a b", values[0]);
+            Assert.AreEqual(@"C:\Temp\file.txt", values[1]);
+        }
+        else
+        {
+            var values = ArgumentSource.GetArguments(new StringReader("""
+                                                         # comment
+                                                         "a b"   c\ d   # trailing comment
+                                                         """)).ToArray();
+            Assert.HasCount(2, values);
+            Assert.AreEqual("a b", values[0]);
+            Assert.AreEqual("c d", values[1]);
+        }
     }
 
     [TestMethod]

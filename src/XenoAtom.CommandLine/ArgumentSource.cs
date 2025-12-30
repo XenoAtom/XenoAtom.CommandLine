@@ -2,6 +2,7 @@
 // Licensed under the BSD-Clause 2 license.
 // See license.txt file in the project root for full license information.
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -63,6 +64,7 @@ public abstract class ArgumentSource : CommandNode, ICommandNodeDescriptor
         try
         {
             var arg = new StringBuilder(64);
+            var enableBackslashEscapes = !OperatingSystem.IsWindows();
 
             string? line;
             while ((line = reader.ReadLine()) != null)
@@ -99,12 +101,16 @@ public abstract class ArgumentSource : CommandNode, ICommandNodeDescriptor
                                 continue;
                             }
 
-                            if (c == '\\' && i + 1 < line.Length)
+                            if (enableBackslashEscapes && c == '\\' && i + 1 < line.Length)
                             {
-                                // Basic escaping inside quotes.
-                                arg.Append(line[i + 1]);
-                                i += 2;
-                                continue;
+                                var next = line[i + 1];
+                                if (next == '\\' || next == '"' || next == '\'' || char.IsWhiteSpace(next) || next == '#')
+                                {
+                                    // Basic escaping inside quotes.
+                                    arg.Append(next);
+                                    i += 2;
+                                    continue;
+                                }
                             }
 
                             arg.Append(c);
@@ -130,12 +136,16 @@ public abstract class ArgumentSource : CommandNode, ICommandNodeDescriptor
                             continue;
                         }
 
-                        if (c == '\\' && i + 1 < line.Length)
+                        if (enableBackslashEscapes && c == '\\' && i + 1 < line.Length)
                         {
-                            // Basic escaping outside quotes.
-                            arg.Append(line[i + 1]);
-                            i += 2;
-                            continue;
+                            var next = line[i + 1];
+                            if (next == '\\' || next == '"' || next == '\'' || char.IsWhiteSpace(next) || next == '#')
+                            {
+                                // Basic escaping outside quotes.
+                                arg.Append(next);
+                                i += 2;
+                                continue;
+                            }
                         }
 
                         arg.Append(c);

@@ -27,7 +27,7 @@ It is a fork of the excellent [NDesk.Options](http://www.ndesk.org/Options)/[Mon
     - `--help` and `--version` built-in options
     - Parsing of values to specific target types (e.g. `int`, `bool`, `enum`, etc.)
     - Response files e.g `@file.txt`
-        - `#` comments and basic `\` escaping
+        - `#` comments and basic escaping (non-Windows)
     - Grouping of command/options that can be activated together when a specific condition is met.
     - Completions via `CompletionCommands` (bash/zsh/fish/PowerShell) with optional value completions (`ValueCompleter`) and token-based completion protocol when supported.
     - Strict option parsing mode by default (`CommandConfig.StrictOptionParsing`)

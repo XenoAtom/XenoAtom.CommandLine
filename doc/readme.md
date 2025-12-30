@@ -551,7 +551,7 @@ Response file parsing supports:
 - Whitespace separation (spaces/tabs)
 - Single and double quotes
 - `#` comments (when `#` is the first non-whitespace character on a line, or after a completed token)
-- Basic `\` escaping (e.g. `c\ d` -> `c d`)
+- Basic `\` escaping on non-Windows platforms (e.g. `c\ d` -> `c d`), while keeping `\` as a literal character on Windows (so paths like `C:\Temp\file.txt` are preserved).
 
 ## CommandGroup
 
