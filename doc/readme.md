@@ -443,6 +443,12 @@ The same applies to sub-commands.
 var candidates = commandApp.GetCompletions("hello --na"); // -> ["--name"]
 ```
 
+You can also complete from a pre-tokenized command line (useful for shells that already provide tokens):
+
+```csharp
+var candidates = commandApp.GetCompletionsForTokens(["myexe", "hello", "--na"], tokenIndex: 2); // -> ["--name"]
+```
+
 To expose completions from a CLI, add `CompletionCommands` (it adds `completion <shell>` and a hidden `__complete` command):
 
 ```csharp
@@ -472,7 +478,10 @@ myexe completion powershell | Out-String | Invoke-Expression
 ```
 
 Notes:
-- The completion glue scripts call the hidden `__complete` subcommand (e.g. `myexe __complete --line <LINE> --cursor <POS> --command-name <NAME>`) and expect one candidate per line on stdout.
+- The completion glue scripts call the hidden `__complete` subcommand and expect one candidate per line on stdout.
+  - Token mode (preferred when supported by the shell): `myexe __complete --command-name <NAME> --index <TOKEN_INDEX> --token <TOKEN> --token <TOKEN> ...`
+  - Line mode (fallback): `myexe __complete --command-name <NAME> --line <LINE> --cursor <POS>`
+- Value completion: you can provide value candidates for a specific option/argument by setting `ValueCompleter` on the declared node (option or argument).
 - On PowerShell, the generated script invokes the current executable path (or `dotnet <entry-assembly.dll>` when hosted by `dotnet`) because the current directory is not searched by default.
 - Completion is non-executing: it does not invoke user option actions; it only inspects the declared command tree.
 
@@ -500,6 +509,9 @@ await app.RunAsync(args, config);
       Localizer = s => s, // replace with your localization
   });
   ```
+- `CommandConfig.StrictOptionParsing` (default: `true`) makes unknown `-` / `--` option-like tokens (e.g. `--unknown`) fail early as an error instead of being treated as positional arguments.
+  - This does not apply to `/`-prefixed tokens, to allow POSIX-style absolute paths like `/mnt/home` to be passed as positional arguments.
+  - Use `--` to pass values that start with `-` (e.g. `myexe -- -5`).
 - `CommandApp.LicenseHeader` (combined with `CommandRunConfig.ShowLicenseOnRun`) lets you print a license banner once before executing the selected command.
 
 ## ArgumentSource
@@ -534,6 +546,12 @@ If you pass a response file via the syntax `@responsefile.txt`, the content of t
 // Read lines from file.txt and inject arguments there
 await app.RunAsync(["@file.txt"]);
 ```
+
+Response file parsing supports:
+- Whitespace separation (spaces/tabs)
+- Single and double quotes
+- `#` comments (when `#` is the first non-whitespace character on a line, or after a completed token)
+- Basic `\` escaping (e.g. `c\ d` -> `c d`)
 
 ## CommandGroup
 

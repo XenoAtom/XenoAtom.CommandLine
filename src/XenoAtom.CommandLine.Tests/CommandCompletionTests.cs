@@ -120,6 +120,8 @@ public class CommandCompletionTests
         var script = writer.ToString();
         Assert.IsTrue(script.Contains("Bash completion for app", StringComparison.Ordinal));
         Assert.IsTrue(script.Contains("__complete", StringComparison.Ordinal));
+        Assert.IsTrue(script.Contains("--index", StringComparison.Ordinal));
+        Assert.IsTrue(script.Contains("--token", StringComparison.Ordinal));
         Assert.IsTrue(script.Contains("COMPREPLY=()", StringComparison.Ordinal));
         Assert.IsTrue(script.Contains("complete -o default -F _app_complete", StringComparison.Ordinal));
     }

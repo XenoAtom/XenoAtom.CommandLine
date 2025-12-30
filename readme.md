@@ -17,6 +17,7 @@ It is a fork of the excellent [NDesk.Options](http://www.ndesk.org/Options)/[Mon
     - Commands and sub-command parsing (e.g. `git commit -m "message"`)
     - Tar and POSIX style options (e.g. `-abc` is equivalent to `-a -b -c`)
     - `-`, `/` and `--` option prefixes (e.g. `-v`, `/v`, `--verbose`)
+    - Helpful unknown token diagnostics (inactive matches + suggestions)
     - Multiple option values (e.g. `-i foo -i bar`)
     - Optional (`:`) and required (`=`) option values (e.g. `-o`, `-oVALUE`, `-o:VALUE2`, `-o=VALUE`)
     - Key/value pairs (e.g. `-DMACRO=VALUE1`)
@@ -26,8 +27,10 @@ It is a fork of the excellent [NDesk.Options](http://www.ndesk.org/Options)/[Mon
     - `--help` and `--version` built-in options
     - Parsing of values to specific target types (e.g. `int`, `bool`, `enum`, etc.)
     - Response files e.g `@file.txt`
+        - `#` comments and basic `\` escaping
     - Grouping of command/options that can be activated together when a specific condition is met.
-    - Completions via `CompletionCommands` to generate shell completions scripts for bash, zsh, fish and PowerShell and a completion command to output completions suggestions.
+    - Completions via `CompletionCommands` (bash/zsh/fish/PowerShell) with optional value completions (`ValueCompleter`) and token-based completion protocol when supported.
+    - Strict option parsing mode by default (`CommandConfig.StrictOptionParsing`)
 
 ## 🧪 Example
 

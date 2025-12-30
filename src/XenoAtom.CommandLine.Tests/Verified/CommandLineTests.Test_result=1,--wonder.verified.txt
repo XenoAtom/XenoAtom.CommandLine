@@ -1,2 +1,3 @@
-﻿multi: Unknown command or option: --wonder
+multi: Unknown option: --wonder
 Use `multi --help` for usage.
+

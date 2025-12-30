@@ -1,2 +1,3 @@
-﻿multi: Unknown command or option: -w
+multi: Unknown option: -w
 Use `multi --help` for usage.
+

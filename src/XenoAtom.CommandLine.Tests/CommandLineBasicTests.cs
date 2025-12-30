@@ -317,7 +317,7 @@ public class CommandLineBasicTests
         var args = new List<string?>();
         var writer = new StringWriter();
 
-        var app = new CommandApp("app", config: new CommandConfig { StrictOptionParsing = true })
+        var app = new CommandApp("app")
         {
             { "<args>*", "Args", v => args.Add(v) },
             (ctx, _) => ValueTask.FromResult(0)
@@ -338,7 +338,7 @@ public class CommandLineBasicTests
         var args = new List<string?>();
         var writer = new StringWriter();
 
-        var app = new CommandApp("app", config: new CommandConfig { StrictOptionParsing = true })
+        var app = new CommandApp("app")
         {
             { "<args>*", "Args", v => args.Add(v) },
             (ctx, _) => ValueTask.FromResult(0)
@@ -349,5 +349,26 @@ public class CommandLineBasicTests
         Assert.AreEqual(0, result);
         Assert.HasCount(1, args);
         Assert.AreEqual("--unknown", args[0]);
+    }
+
+    [TestMethod]
+    public async Task StrictOptionParsing_DoesNotApplyToSlashPrefixedValues()
+    {
+        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+
+        var args = new List<string?>();
+        var writer = new StringWriter();
+
+        var app = new CommandApp("app")
+        {
+            { "<args>*", "Args", v => args.Add(v) },
+            (ctx, _) => ValueTask.FromResult(0)
+        };
+
+        var result = await app.RunAsync(["/mnt/home"], new CommandRunConfig { Out = writer, Error = writer });
+
+        Assert.AreEqual(0, result);
+        Assert.HasCount(1, args);
+        Assert.AreEqual("/mnt/home", args[0]);
     }
 }

@@ -28,5 +28,5 @@ public record CommandConfig()
     /// <remarks>
     /// If you need to pass an argument that starts with <c>-</c> or <c>/</c>, use <c>--</c> to stop option parsing (e.g. <c>mytool -- -5</c>).
     /// </remarks>
-    public bool StrictOptionParsing { get; init; }
+    public bool StrictOptionParsing { get; init; } = true;
 }

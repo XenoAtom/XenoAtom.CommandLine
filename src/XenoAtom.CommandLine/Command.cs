@@ -413,7 +413,9 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
 
                 if (!ParseOption(argument, c))
                 {
-                    if (Config.StrictOptionParsing && TryGetOptionParts(argument, out _, out _, out _, out _, out _))
+                    if (Config.StrictOptionParsing &&
+                        TryGetOptionParts(argument, out _, out var flag, out _, out _, out _) &&
+                        flag != "/")
                     {
                         throw new OptionException(Config.Localizer($"Unknown option: {argument}"), argument);
                     }
