@@ -165,6 +165,79 @@ public class CommandCompletionTests
         Assert.IsTrue(psScript.Contains(expectedPowerShellInvocation, StringComparison.Ordinal));
     }
 
+    [TestMethod]
+    public void GetCompletions_InlineOptionValue_CompletesFullToken()
+    {
+        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+
+        static IEnumerable<string> Colors(int index, string prefix) => new[] { "red", "green", "blue" };
+
+        var app = new CommandApp("app")
+        {
+            { "c|color=", "Color", _ => { } },
+        };
+        app.Options["color"].ValueCompleter = Colors;
+
+        var results = app.GetCompletions("--color=gr").ToArray();
+        CollectionAssert.AreEqual(new[] { "--color=green" }, results);
+    }
+
+    [TestMethod]
+    public void GetCompletions_PendingOptionValue_CompletesValueToken()
+    {
+        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+
+        static IEnumerable<string> Colors(int index, string prefix) => new[] { "red", "green" };
+
+        var app = new CommandApp("app")
+        {
+            { "c|color=", "Color", _ => { } },
+        };
+        app.Options["color"].ValueCompleter = Colors;
+
+        var results = app.GetCompletions("--color ").ToArray();
+        CollectionAssert.AreEquivalent(new[] { "red", "green" }, results);
+    }
+
+    [TestMethod]
+    public void GetCompletions_PositionalArgument_CompletesValueToken()
+    {
+        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+
+        static IEnumerable<string> Files(int index, string prefix) => new[] { "foo.txt", "bar.txt" };
+
+        var app = new CommandApp("app")
+        {
+            { "<file>", "File", _ => { } },
+        };
+        app.Arguments[0].ValueCompleter = Files;
+
+        var results = app.GetCompletions("fo").ToArray();
+        CollectionAssert.AreEqual(new[] { "foo.txt" }, results);
+    }
+
+    [TestMethod]
+    public async Task CompletionCommands_CompleteRequest_TokenMode_Works()
+    {
+        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+
+        var writer = new StringWriter();
+        var app = new CommandApp("app")
+        {
+            new CompletionCommands(),
+            new Command("hello"),
+        };
+
+        var result = await app.RunAsync(
+            ["__complete", "--command-name=app", "--index=1", "--token=app", "--token=he"],
+            new CommandRunConfig { Out = writer, Error = writer }
+        );
+
+        Assert.AreEqual(0, result);
+        var output = writer.ToString().ReplaceLineEndings("\n");
+        Assert.AreEqual("hello\n", output);
+    }
+
     private static string[] GetExpectedInvocationArguments(string commandName)
     {
         var processPath = Environment.ProcessPath;

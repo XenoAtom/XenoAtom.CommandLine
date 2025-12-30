@@ -67,6 +67,67 @@ public class CommandApp : Command
         return GetCompletionsCore(commandLine, cursorPosition, commandName);
     }
 
+    /// <summary>
+    /// Gets completion candidates for a tokenized command line and the index of the token being completed.
+    /// </summary>
+    /// <param name="tokens">A tokenized command line, typically including the executable name as the first token.</param>
+    /// <param name="tokenIndex">
+    /// The 0-based index of the token being completed. Use <c>tokens.Count</c> when completing a new token (cursor after whitespace).
+    /// </param>
+    /// <param name="commandName">The invocation name (e.g. <c>"mytool"</c>) to strip from the beginning of the token stream.</param>
+    public IEnumerable<string> GetCompletionsForTokens(IReadOnlyList<string> tokens, int tokenIndex, string? commandName = null)
+    {
+        ArgumentNullException.ThrowIfNull(tokens);
+        if ((uint)tokenIndex > (uint)tokens.Count)
+            throw new ArgumentOutOfRangeException(nameof(tokenIndex));
+
+        var startIndex = 0;
+        if (tokens.Count > 0)
+        {
+            if (!string.IsNullOrEmpty(commandName) && string.Equals(tokens[0], commandName, StringComparison.OrdinalIgnoreCase))
+            {
+                startIndex = 1;
+            }
+            else if (string.Equals(tokens[0], Name, StringComparison.OrdinalIgnoreCase))
+            {
+                startIndex = 1;
+            }
+        }
+
+        var effectiveCount = tokens.Count - startIndex;
+        var effectiveTokens = new List<string>(capacity: Math.Max(effectiveCount, 0));
+        for (var i = startIndex; i < tokens.Count; i++)
+        {
+            effectiveTokens.Add(tokens[i]);
+        }
+
+        var effectiveTokenIndex = tokenIndex - startIndex;
+        if (effectiveTokenIndex < 0) effectiveTokenIndex = 0;
+        if (effectiveTokenIndex > effectiveTokens.Count) effectiveTokenIndex = effectiveTokens.Count;
+
+        string currentToken;
+        var contextTokenCount = effectiveTokenIndex;
+        if (effectiveTokenIndex == effectiveTokens.Count)
+        {
+            currentToken = string.Empty;
+        }
+        else
+        {
+            currentToken = effectiveTokens[effectiveTokenIndex];
+        }
+
+        var state = ResolveCompletionState(effectiveTokens, contextTokenCount);
+
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var completion in GetCompletionsForState(state, currentToken))
+        {
+            if (seen.Add(completion))
+            {
+                yield return completion;
+            }
+        }
+    }
+
     private IEnumerable<string> GetCompletionsCore(string commandLine, int cursorPosition, string? commandName)
     {
         cursorPosition = Math.Clamp(cursorPosition, 0, commandLine.Length);
@@ -106,10 +167,10 @@ public class CommandApp : Command
             contextTokenCount = tokens.Count - 1;
         }
 
-        var command = ResolveCommandContext(tokens, contextTokenCount);
+        var state = ResolveCompletionState(tokens, contextTokenCount);
 
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var completion in GetCompletionsForCommand(command, currentToken))
+        foreach (var completion in GetCompletionsForState(state, currentToken))
         {
             if (seen.Add(completion))
             {
@@ -118,16 +179,56 @@ public class CommandApp : Command
         }
     }
 
-    private static IEnumerable<string> GetCompletionsForCommand(Command command, string currentToken)
+    private readonly struct CompletionState
+    {
+        public readonly Command Command;
+        public readonly Option? PendingOption;
+        public readonly int PendingRemaining;
+        public readonly int PendingMax;
+        public readonly int PositionalCount;
+
+        public CompletionState(Command command, Option? pendingOption, int pendingRemaining, int pendingMax, int positionalCount)
+        {
+            Command = command;
+            PendingOption = pendingOption;
+            PendingRemaining = pendingRemaining;
+            PendingMax = pendingMax;
+            PositionalCount = positionalCount;
+        }
+    }
+
+    private IEnumerable<string> GetCompletionsForState(CompletionState state, string currentToken)
     {
         var hasPrefix = currentToken.Length > 0;
         var isOptionToken = currentToken.Length > 0 && (currentToken[0] == '-' || currentToken[0] == '/');
         var optionPrefix = GetOptionPrefix(currentToken);
         var optionNamePrefix = optionPrefix is null ? string.Empty : currentToken.Substring(optionPrefix.Length);
 
+        if (state.PendingOption is not null)
+        {
+            var option = state.PendingOption;
+            var provider = option.ValueCompleter;
+            if (provider is null)
+            {
+                yield break;
+            }
+
+            var valueIndex = state.PendingMax - state.PendingRemaining;
+            if ((uint)valueIndex >= (uint)state.PendingMax)
+            {
+                yield break;
+            }
+
+            foreach (var candidate in FilterByPrefix(provider(valueIndex, currentToken), currentToken))
+            {
+                yield return candidate;
+            }
+            yield break;
+        }
+
         if (!isOptionToken)
         {
-            foreach (var entry in command.SubCommands)
+            foreach (var entry in state.Command.SubCommands)
             {
                 var sub = entry.Value;
                 if (!sub.IsActive() || sub.Hidden)
@@ -139,7 +240,7 @@ public class CommandApp : Command
                 }
             }
 
-            foreach (var node in command.Nodes)
+            foreach (var node in state.Command.Nodes)
             {
                 if (node is not ArgumentSource source)
                     continue;
@@ -160,20 +261,42 @@ public class CommandApp : Command
         // Also suggest options when starting a token (empty) or completing an option token.
         if (!isOptionToken && currentToken.Length != 0)
         {
+            // Allow positional argument completions as well.
+            foreach (var completion in GetArgumentCompletions(state.Command, state.PositionalCount, currentToken))
+            {
+                yield return completion;
+            }
             yield break;
         }
 
+        if (isOptionToken && TryGetOptionParts(currentToken, out var flagLength, out var flag, out var optionNameSpan, out var sepIndex, out var value))
+        {
+            // Inline value completion: `--opt=...`
+            if (sepIndex >= 0 && TryGetOption(state.Command, optionNameSpan, out var option) && option.IsActive() && option.ValueCompleter is not null)
+            {
+                var (inlineTokenPrefix, valueIndex, valuePrefix) = GetInlineValueCompletionContext(currentToken, flagLength, optionNameSpan.Length, option, value);
+                if (inlineTokenPrefix is not null)
+                {
+                    foreach (var candidate in FilterByPrefix(option.ValueCompleter(valueIndex, valuePrefix), valuePrefix))
+                    {
+                        yield return inlineTokenPrefix + candidate;
+                    }
+                    yield break;
+                }
+            }
+        }
+
         var prefix = optionPrefix ?? "--";
-        foreach (var option in GetUniqueOptions(command))
+        foreach (var option in GetUniqueOptions(state.Command))
         {
             if (!option.IsActive() || option.Hidden)
                 continue;
 
-            foreach (var name in option.GetNames())
+            foreach (var optionName in option.GetNames())
             {
                 if (optionPrefix is not null)
                 {
-                    if (optionNamePrefix.Length > 0 && !name.StartsWith(optionNamePrefix, StringComparison.OrdinalIgnoreCase))
+                    if (optionNamePrefix.Length > 0 && !optionName.StartsWith(optionNamePrefix, StringComparison.OrdinalIgnoreCase))
                         continue;
 
                     // Completion policy:
@@ -182,29 +305,29 @@ public class CommandApp : Command
                     //   but allows completing long options (as `--name`) when the user already started typing a long name.
                     if (optionPrefix == "--")
                     {
-                        if (name.Length == 1)
+                        if (optionName.Length == 1)
                             continue;
-                        yield return "--" + name;
+                        yield return "--" + optionName;
                     }
                     else if (optionPrefix == "-")
                     {
                         if (optionNamePrefix.Length <= 1)
                         {
-                            if (name.Length != 1)
+                            if (optionName.Length != 1)
                                 continue;
-                            yield return "-" + name;
+                            yield return "-" + optionName;
                         }
                         else
                         {
-                            if (name.Length == 1)
+                            if (optionName.Length == 1)
                                 continue;
-                            yield return "--" + name;
+                            yield return "--" + optionName;
                         }
                     }
                     else
                     {
                         // Keep `/` and other prefixes as-is.
-                        yield return prefix + name;
+                        yield return prefix + optionName;
                     }
                 }
                 else
@@ -213,8 +336,16 @@ public class CommandApp : Command
                     if (currentToken.Length != 0)
                         continue;
 
-                    yield return (name.Length == 1 ? "-" : "--") + name;
+                    yield return (optionName.Length == 1 ? "-" : "--") + optionName;
                 }
+            }
+        }
+
+        if (!isOptionToken)
+        {
+            foreach (var completion in GetArgumentCompletions(state.Command, state.PositionalCount, currentToken))
+            {
+                yield return completion;
             }
         }
     }
@@ -322,6 +453,211 @@ public class CommandApp : Command
         }
 
         return current;
+    }
+
+    private CompletionState ResolveCompletionState(IReadOnlyList<string> tokens, int count)
+    {
+        Command current = this;
+
+        var processOptions = true;
+        Option? pending = null;
+        var pendingRemaining = 0;
+        var pendingMax = 0;
+        var canSelectSubcommand = true;
+        var positionalCount = 0;
+
+        for (int i = 0; i < count; i++)
+        {
+            var token = tokens[i];
+
+            if (pending != null)
+            {
+                var consumed = ConsumeValueToken(token, pending, pendingRemaining);
+                pendingRemaining -= consumed;
+                if (pendingRemaining <= 0)
+                {
+                    pending = null;
+                    pendingRemaining = 0;
+                    pendingMax = 0;
+                }
+                continue;
+            }
+
+            if (processOptions && token == "--")
+            {
+                processOptions = false;
+                canSelectSubcommand = false;
+                continue;
+            }
+
+            if (canSelectSubcommand && current.SubCommands.TryGetValue(token, out var sub) && sub.IsActive())
+            {
+                current = sub;
+                processOptions = true;
+                pending = null;
+                pendingRemaining = 0;
+                pendingMax = 0;
+                canSelectSubcommand = true;
+                positionalCount = 0;
+                continue;
+            }
+
+            if (processOptions && TryConsumeBundledOptions(token, current, ref pending, ref pendingRemaining))
+            {
+                if (pending is not null)
+                {
+                    pendingMax = pending.MaxValueCount;
+                }
+                continue;
+            }
+
+            if (processOptions && TryGetOptionParts(token, out _, out _, out var name, out var sepIndex, out var value))
+            {
+                var hasSep = sepIndex >= 0;
+                if (TryGetOption(current, name, out var option) && option.IsActive())
+                {
+                    if (option.OptionValueType == OptionValueType.Required)
+                    {
+                        pendingMax = option.MaxValueCount;
+                        var remaining = option.MaxValueCount;
+                        if (hasSep)
+                        {
+                            remaining -= ConsumeInlineValue(value, option, remaining);
+                        }
+
+                        if (remaining > 0)
+                        {
+                            pending = option;
+                            pendingRemaining = remaining;
+                        }
+                    }
+                }
+                else if (!hasSep && TryGetBoolSuffixOption(name, current, out option))
+                {
+                    // Bool suffix options (`--flag+` / `--flag-`) consume the token and do not affect context.
+                }
+                else
+                {
+                    // Unknown option token: treat it as a positional token for argument completion context.
+                    canSelectSubcommand = false;
+                    positionalCount++;
+                }
+                continue;
+            }
+
+            // Non-option token.
+            canSelectSubcommand = false;
+            positionalCount++;
+        }
+
+        return new CompletionState(current, pending, pendingRemaining, pendingMax, positionalCount);
+    }
+
+    private static IEnumerable<string> GetArgumentCompletions(Command command, int positionalIndex, string currentToken)
+    {
+        if (command.SubCommands.Count > 0)
+            yield break;
+
+        CommandArgument? argument = null;
+
+        var activeArgs = new List<CommandArgument>();
+        foreach (var arg in command.Arguments)
+        {
+            if (!arg.IsActive() || arg.Hidden)
+                continue;
+            activeArgs.Add(arg);
+        }
+
+        if (activeArgs.Count == 0)
+            yield break;
+
+        if (activeArgs[^1].IsRemainder)
+        {
+            argument = activeArgs[^1];
+        }
+        else if (activeArgs[^1].IsList)
+        {
+            var fixedCount = activeArgs.Count - 1;
+            argument = positionalIndex < fixedCount ? activeArgs[positionalIndex] : activeArgs[^1];
+        }
+        else
+        {
+            if ((uint)positionalIndex >= (uint)activeArgs.Count)
+                yield break;
+            argument = activeArgs[positionalIndex];
+        }
+
+        var provider = argument.ValueCompleter;
+        if (provider is null)
+            yield break;
+
+        foreach (var candidate in FilterByPrefix(provider(positionalIndex, currentToken), currentToken))
+        {
+            yield return candidate;
+        }
+    }
+
+    private static IEnumerable<string> FilterByPrefix(IEnumerable<string> candidates, string prefix)
+    {
+        foreach (var candidate in candidates)
+        {
+            if (string.IsNullOrWhiteSpace(candidate))
+                continue;
+
+            if (prefix.Length == 0 || candidate.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                yield return candidate;
+            }
+        }
+    }
+
+    private static (string? TokenPrefix, int ValueIndex, string ValuePrefix) GetInlineValueCompletionContext(string token, int flagLength, int nameLength, Option option, ReadOnlySpan<char> fullValue)
+    {
+        var separators = option.ValueSeparators;
+        if (separators == null || separators.Length == 0 || option.MaxValueCount <= 1)
+        {
+            var prefixLen = flagLength + nameLength + 1; // include '=' or ':'
+            var inlineTokenPrefix = token.Substring(0, prefixLen);
+            return (inlineTokenPrefix, 0, fullValue.ToString());
+        }
+
+        var lastSepIndex = -1;
+        var lastSepLength = 0;
+        for (var i = 0; i < separators.Length; i++)
+        {
+            var sep = separators[i].AsSpan();
+            if (sep.Length == 0)
+                continue;
+            var idx = fullValue.LastIndexOf(sep, StringComparison.Ordinal);
+            if (idx >= 0)
+            {
+                if (idx > lastSepIndex)
+                {
+                    lastSepIndex = idx;
+                    lastSepLength = sep.Length;
+                }
+            }
+        }
+
+        if (lastSepIndex < 0)
+        {
+            var prefixLen = flagLength + nameLength + 1;
+            var inlineTokenPrefix = token.Substring(0, prefixLen);
+            return (inlineTokenPrefix, 0, fullValue.ToString());
+        }
+
+        var completedPrefix = fullValue[..lastSepIndex];
+        var valueIndex = completedPrefix.Length == 0 ? 0 : CountSplitSegments(completedPrefix, separators, int.MaxValue);
+        if ((uint)valueIndex >= (uint)option.MaxValueCount)
+        {
+            return (null, 0, string.Empty);
+        }
+
+        var segmentStart = lastSepIndex + lastSepLength;
+        var tokenPrefixLen = (token.Length - fullValue.Length) + segmentStart;
+        var inlineTokenPrefix2 = tokenPrefixLen <= token.Length ? token.Substring(0, tokenPrefixLen) : null;
+        var valuePrefix = fullValue[segmentStart..].ToString();
+        return (inlineTokenPrefix2, valueIndex, valuePrefix);
     }
 
     private static bool TryGetBoolSuffixOption(ReadOnlySpan<char> name, Command command, [NotNullWhen(true)] out Option? option)

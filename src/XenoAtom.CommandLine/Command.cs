@@ -412,7 +412,14 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
                     continue;
 
                 if (!ParseOption(argument, c))
+                {
+                    if (Config.StrictOptionParsing && TryGetOptionParts(argument, out _, out _, out _, out _, out _))
+                    {
+                        throw new OptionException(Config.Localizer($"Unknown option: {argument}"), argument);
+                    }
+
                     unprocessed.Add(argument);
+                }
             }
             else
             {
@@ -878,6 +885,19 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
     {
         var fullCommandName = GetFullCommandPath();
         runConfig.Error.WriteLine(command.Config.Localizer($"{fullCommandName}: Unknown command or option: {unknownCommand}"));
+
+        if (TryGetUnknownTokenDetails(command, unknownCommand, out var details))
+        {
+            if (details.InactiveExactMatchMessage is not null)
+            {
+                runConfig.Error.WriteLine(command.Config.Localizer(details.InactiveExactMatchMessage));
+            }
+
+            if (details.Suggestions.Count > 0)
+            {
+                runConfig.Error.WriteLine(command.Config.Localizer($"Did you mean: {string.Join(", ", details.Suggestions)}"));
+            }
+        }
         runConfig.Error.WriteLine(command.Config.Localizer($"Use `{fullCommandName} --help` for usage."));
     }
 
@@ -885,6 +905,21 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
     {
         var fullCommandName = GetFullCommandPath();
         runConfig.Error.WriteLine($"{fullCommandName}: {e.Message}");
+
+        if (e is OptionException optionException &&
+            !string.IsNullOrWhiteSpace(optionException.OptionName) &&
+            TryGetUnknownTokenDetails(this, optionException.OptionName, out var details))
+        {
+            if (details.InactiveExactMatchMessage is not null)
+            {
+                runConfig.Error.WriteLine(Config.Localizer(details.InactiveExactMatchMessage));
+            }
+
+            if (details.Suggestions.Count > 0)
+            {
+                runConfig.Error.WriteLine(Config.Localizer($"Did you mean: {string.Join(", ", details.Suggestions)}"));
+            }
+        }
         runConfig.Error.WriteLine(Config.Localizer($"Use `{fullCommandName} --help` for usage."));
     }
 
@@ -894,8 +929,207 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
         foreach (var unknownOption in unknownOptions)
         {
             runConfig.Error.WriteLine(command.Config.Localizer($"{fullCommandName}: Unknown option: {unknownOption}"));
+
+            if (TryGetUnknownTokenDetails(command, unknownOption, out var details))
+            {
+                if (details.InactiveExactMatchMessage is not null)
+                {
+                    runConfig.Error.WriteLine(command.Config.Localizer(details.InactiveExactMatchMessage));
+                }
+
+                if (details.Suggestions.Count > 0)
+                {
+                    runConfig.Error.WriteLine(command.Config.Localizer($"Did you mean: {string.Join(", ", details.Suggestions)}"));
+                }
+            }
         }
         runConfig.Error.WriteLine(command.Config.Localizer($"Use `{fullCommandName} --help` for usage."));
+    }
+
+    private readonly struct UnknownTokenDetails
+    {
+        public readonly List<string> Suggestions;
+        public readonly string? InactiveExactMatchMessage;
+
+        public UnknownTokenDetails(List<string> suggestions, string? inactiveExactMatchMessage)
+        {
+            Suggestions = suggestions;
+            InactiveExactMatchMessage = inactiveExactMatchMessage;
+        }
+    }
+
+    private static bool TryGetUnknownTokenDetails(Command command, string token, out UnknownTokenDetails details)
+    {
+        details = default;
+        if (string.IsNullOrWhiteSpace(token))
+            return false;
+
+        var suggestions = new List<string>(capacity: 3);
+        string? inactiveExactMatchMessage = null;
+
+        // Option-like token?
+        if (TryGetOptionParts(token, out _, out var flag, out var name, out _, out _))
+        {
+            if (TryGetOption(command, name, out var exactOption))
+            {
+                if (exactOption.IsActive())
+                {
+                    // Not an unknown option (may still have failed parsing for other reasons).
+                    return false;
+                }
+
+                inactiveExactMatchMessage = $"Note: `{token}` matches an option that is currently inactive in this context.";
+            }
+
+            foreach (var suggested in GetOptionSuggestions(command, flag!, name.ToString()))
+            {
+                suggestions.Add(suggested);
+                if (suggestions.Count >= 3) break;
+            }
+
+            details = new UnknownTokenDetails(suggestions, inactiveExactMatchMessage);
+            return suggestions.Count > 0 || inactiveExactMatchMessage is not null;
+        }
+
+        // Command-like token.
+        if (command.SubCommands.TryGetValue(token, out var exactCommand))
+        {
+            if (exactCommand.IsActive())
+            {
+                // Not an unknown command (may have failed for other reasons).
+                return false;
+            }
+
+            inactiveExactMatchMessage = $"Note: `{token}` matches a command that is currently inactive in this context.";
+        }
+
+        foreach (var suggested in GetCommandSuggestions(command, token))
+        {
+            suggestions.Add(suggested);
+            if (suggestions.Count >= 3) break;
+        }
+
+        details = new UnknownTokenDetails(suggestions, inactiveExactMatchMessage);
+        return suggestions.Count > 0 || inactiveExactMatchMessage is not null;
+    }
+
+    private static IEnumerable<string> GetCommandSuggestions(Command command, string token)
+    {
+        return GetPrefixSuggestions(token, GetActiveVisibleSubCommands(command), maxSuggestions: 3);
+    }
+
+    private static IEnumerable<string> GetOptionSuggestions(Command command, string flag, string typedName)
+    {
+        // Match completion policy:
+        // - `--` suggests long options only (`--help`, not `--h`).
+        // - `-` suggests short options for single-letter prefixes (`-h`, not `-help`),
+        //   but allows completing long options (as `--name`) when the user already started typing a long name.
+        // - `/` keeps `/` as the prefix for all suggestions.
+        if (flag == "--")
+        {
+            foreach (var name in GetPrefixSuggestions(typedName, GetActiveVisibleLongOptionNames(command), maxSuggestions: 3))
+            {
+                yield return "--" + name;
+            }
+            yield break;
+        }
+
+        if (flag == "-")
+        {
+            if (typedName.Length <= 1)
+            {
+                foreach (var name in GetPrefixSuggestions(typedName, GetActiveVisibleShortOptionNames(command), maxSuggestions: 3))
+                {
+                    yield return "-" + name;
+                }
+                yield break;
+            }
+
+            foreach (var name in GetPrefixSuggestions(typedName, GetActiveVisibleLongOptionNames(command), maxSuggestions: 3))
+            {
+                yield return "--" + name;
+            }
+            yield break;
+        }
+
+        foreach (var name in GetPrefixSuggestions(typedName, GetActiveVisibleAllOptionNames(command), maxSuggestions: 3))
+        {
+            yield return flag + name;
+        }
+    }
+
+    private static IEnumerable<string> GetActiveVisibleSubCommands(Command command)
+    {
+        foreach (var entry in command.SubCommands)
+        {
+            var sub = entry.Value;
+            if (!sub.IsActive() || sub.Hidden)
+                continue;
+            yield return sub.Name;
+        }
+    }
+
+    private static IEnumerable<string> GetActiveVisibleAllOptionNames(Command command)
+    {
+        foreach (var option in GetActiveVisibleUniqueOptions(command))
+        {
+            foreach (var name in option.GetNames())
+            {
+                yield return name;
+            }
+        }
+    }
+
+    private static IEnumerable<string> GetActiveVisibleLongOptionNames(Command command)
+    {
+        foreach (var option in GetActiveVisibleUniqueOptions(command))
+        {
+            foreach (var name in option.GetNames())
+            {
+                if (name.Length > 1) yield return name;
+            }
+        }
+    }
+
+    private static IEnumerable<string> GetActiveVisibleShortOptionNames(Command command)
+    {
+        foreach (var option in GetActiveVisibleUniqueOptions(command))
+        {
+            foreach (var name in option.GetNames())
+            {
+                if (name.Length == 1) yield return name;
+            }
+        }
+    }
+
+    private static IEnumerable<Option> GetActiveVisibleUniqueOptions(Command command)
+    {
+        var seen = new HashSet<Option>();
+        foreach (var entry in command.Options)
+        {
+            var option = entry.Value;
+            if (!seen.Add(option))
+                continue;
+            if (!option.IsActive() || option.Hidden)
+                continue;
+            yield return option;
+        }
+    }
+
+    private static IEnumerable<string> GetPrefixSuggestions(string token, IEnumerable<string> candidates, int maxSuggestions)
+    {
+        if (token.Length == 0)
+            yield break;
+
+        foreach (var candidate in candidates)
+        {
+            if (!candidate.StartsWith(token, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            yield return candidate;
+            if (--maxSuggestions == 0)
+                yield break;
+        }
     }
 
     private string GetDefaultUsage(CommandRunConfig runConfig)

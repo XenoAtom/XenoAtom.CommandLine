@@ -1,2 +1,4 @@
-﻿multi: Unknown command or option: --special1
+multi: Unknown command or option: --special1
+Note: `--special1` matches an option that is currently inactive in this context.
 Use `multi --help` for usage.
+

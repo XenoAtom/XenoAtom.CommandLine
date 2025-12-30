@@ -94,6 +94,11 @@ public abstract class Option : CommandNode, ICommandNodeDescriptor
     /// </summary>
     public bool Hidden { get; }
 
+    /// <summary>
+    /// Gets or sets a completion provider for values of this option.
+    /// </summary>
+    public ValueCompleter? ValueCompleter { get; set; }
+
     internal string[] Names { get; }
 
     internal string[]? ValueSeparators => _separators;

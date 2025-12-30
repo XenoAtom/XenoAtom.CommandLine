@@ -3,6 +3,7 @@
 // See license.txt file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 
 namespace XenoAtom.CommandLine;
@@ -113,6 +114,11 @@ public abstract class CommandArgument : CommandNode, ICommandNodeDescriptor
     /// Gets a boolean indicating if this argument is hidden.
     /// </summary>
     public bool Hidden { get; }
+
+    /// <summary>
+    /// Gets or sets a completion provider for values of this argument.
+    /// </summary>
+    public ValueCompleter? ValueCompleter { get; set; }
 
     /// <summary>
     /// Invoke this argument after the parsing is complete.

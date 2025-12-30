@@ -62,45 +62,101 @@ public abstract class ArgumentSource : CommandNode, ICommandNodeDescriptor
     {
         try
         {
-            StringBuilder arg = new StringBuilder();
+            var arg = new StringBuilder(64);
 
             string? line;
             while ((line = reader.ReadLine()) != null)
             {
-                int t = line.Length;
-
-                for (int i = 0; i < t; i++)
+                var i = 0;
+                while (i < line.Length)
                 {
-                    char c = line[i];
-
-                    if (c == '"' || c == '\'')
+                    // Skip whitespace.
+                    while (i < line.Length && char.IsWhiteSpace(line[i]))
                     {
-                        char end = c;
-
-                        for (i++; i < t; i++)
-                        {
-                            c = line[i];
-
-                            if (c == end)
-                                break;
-                            arg.Append(c);
-                        }
+                        i++;
                     }
-                    else if (c == ' ')
-                    {
-                        if (arg.Length > 0)
-                        {
-                            yield return arg.ToString();
-                            arg.Length = 0;
-                        }
-                    }
-                    else
-                        arg.Append(c);
-                }
-                if (arg.Length > 0)
-                {
-                    yield return arg.ToString();
+
+                    if (i >= line.Length)
+                        break;
+
+                    // Comment-only line (allow leading whitespace).
+                    if (line[i] == '#')
+                        break;
+
                     arg.Length = 0;
+                    char quote = '\0';
+
+                    while (i < line.Length)
+                    {
+                        var c = line[i];
+
+                        if (quote != '\0')
+                        {
+                            if (c == quote)
+                            {
+                                quote = '\0';
+                                i++;
+                                continue;
+                            }
+
+                            if (c == '\\' && i + 1 < line.Length)
+                            {
+                                // Basic escaping inside quotes.
+                                arg.Append(line[i + 1]);
+                                i += 2;
+                                continue;
+                            }
+
+                            arg.Append(c);
+                            i++;
+                            continue;
+                        }
+
+                        if (char.IsWhiteSpace(c))
+                        {
+                            break;
+                        }
+
+                        if (c == '#')
+                        {
+                            // Treat as comment start only when not in a token (or after completing one).
+                            break;
+                        }
+
+                        if (c == '"' || c == '\'')
+                        {
+                            quote = c;
+                            i++;
+                            continue;
+                        }
+
+                        if (c == '\\' && i + 1 < line.Length)
+                        {
+                            // Basic escaping outside quotes.
+                            arg.Append(line[i + 1]);
+                            i += 2;
+                            continue;
+                        }
+
+                        arg.Append(c);
+                        i++;
+                    }
+
+                    if (arg.Length > 0)
+                    {
+                        yield return arg.ToString();
+                    }
+
+                    // Skip trailing token characters (whitespace or comment).
+                    while (i < line.Length && !char.IsWhiteSpace(line[i]))
+                    {
+                        if (line[i] == '#')
+                        {
+                            i = line.Length;
+                            break;
+                        }
+                        i++;
+                    }
                 }
             }
         }

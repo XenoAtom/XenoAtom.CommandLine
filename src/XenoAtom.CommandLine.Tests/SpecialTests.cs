@@ -71,6 +71,18 @@ public class SpecialTests
     }
 
     [TestMethod]
+    public void TestArgumentSource_CommentsWhitespaceAndEscapes()
+    {
+        var values = ArgumentSource.GetArguments(new StringReader("""
+                                                     # comment
+                                                     "a b"   c\ d   # trailing comment
+                                                     """)).ToArray();
+        Assert.HasCount(2, values);
+        Assert.AreEqual("a b", values[0]);
+        Assert.AreEqual("c d", values[1]);
+    }
+
+    [TestMethod]
     public void TestEnumWrapper()
     {
         Assert.IsFalse(EnumWrapper<SpecialEnum>.TryParse("Hello", null, out _));

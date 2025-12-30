@@ -308,4 +308,46 @@ public class CommandLineBasicTests
         Assert.IsTrue(output.Contains("LICENSE", StringComparison.Ordinal));
         Assert.IsTrue(output.Contains("RUN", StringComparison.Ordinal));
     }
+
+    [TestMethod]
+    public async Task StrictOptionParsing_UnknownOption_IsAnError_EvenWhenArgumentsAllowIt()
+    {
+        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+
+        var args = new List<string?>();
+        var writer = new StringWriter();
+
+        var app = new CommandApp("app", config: new CommandConfig { StrictOptionParsing = true })
+        {
+            { "<args>*", "Args", v => args.Add(v) },
+            (ctx, _) => ValueTask.FromResult(0)
+        };
+
+        var result = await app.RunAsync(["--unknown"], new CommandRunConfig { Out = writer, Error = writer });
+
+        Assert.AreEqual(1, result);
+        Assert.IsTrue(writer.ToString().Contains("Unknown option: --unknown", StringComparison.Ordinal));
+        Assert.HasCount(0, args);
+    }
+
+    [TestMethod]
+    public async Task StrictOptionParsing_DoubleDash_AllowsOptionLikePositionalArguments()
+    {
+        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+
+        var args = new List<string?>();
+        var writer = new StringWriter();
+
+        var app = new CommandApp("app", config: new CommandConfig { StrictOptionParsing = true })
+        {
+            { "<args>*", "Args", v => args.Add(v) },
+            (ctx, _) => ValueTask.FromResult(0)
+        };
+
+        var result = await app.RunAsync(["--", "--unknown"], new CommandRunConfig { Out = writer, Error = writer });
+
+        Assert.AreEqual(0, result);
+        Assert.HasCount(1, args);
+        Assert.AreEqual("--unknown", args[0]);
+    }
 }

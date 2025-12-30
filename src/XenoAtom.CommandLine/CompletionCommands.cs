@@ -3,6 +3,7 @@
 // See license.txt file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -39,21 +40,39 @@ public sealed class CompletionCommands : CommandGroup
             string? line = null;
             int cursor = 0;
             string? commandName = null;
+            var tokens = new List<string>();
+            var tokenIndex = -1;
 
             this.Add("line=", "The full command {0:LINE}", v => line = v);
             this.Add("cursor=", "The cursor {0:POSITION} (0-based)", (int v) => cursor = v);
             this.Add("command-name=", "The invoked {0:COMMAND} name", v => commandName = v);
+            this.Add("token=", "A tokenized argument {0:TOKEN} (repeatable)", v =>
+            {
+                if (v is not null) tokens.Add(v);
+            });
+            this.Add("index=", "The token {0:INDEX} being completed (0-based)", (int v) => tokenIndex = v);
 
             Action = (ctx, _) =>
             {
-                if (line is null)
-                    throw new OptionException("Missing required value for option 'line'.", "line");
-
                 var app = GetCommandApp();
                 if (app is null)
                     throw new InvalidOperationException("Cannot resolve CommandApp from the current command.");
 
-                foreach (var candidate in app.GetCompletionsForLine(line, cursor, commandName))
+                IEnumerable<string> candidates;
+                if (tokens.Count > 0)
+                {
+                    if (tokenIndex < 0)
+                        throw new OptionException("Missing required value for option 'index' when using token mode.", "index");
+                    candidates = app.GetCompletionsForTokens(tokens, tokenIndex, commandName);
+                }
+                else
+                {
+                    if (line is null)
+                        throw new OptionException("Missing required value for option 'line'.", "line");
+                    candidates = app.GetCompletionsForLine(line, cursor, commandName);
+                }
+
+                foreach (var candidate in candidates)
                 {
                     ctx.Out.WriteLine(candidate);
                 }
