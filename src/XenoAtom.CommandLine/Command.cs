@@ -17,7 +17,7 @@ namespace XenoAtom.CommandLine;
 /// <summary>
 /// This class represents a command that can be executed. It can contain sub-commands, options and argument sources.
 /// </summary>
-public partial class Command  : CommandContainer, ICommandNodeDescriptor
+public class Command  : CommandContainer, ICommandNodeDescriptor
 {
     private readonly Dictionary<string, Command> _subCommands = new();
     private readonly Dictionary<string, Option> _options = new();
@@ -201,13 +201,10 @@ public partial class Command  : CommandContainer, ICommandNodeDescriptor
                     if (commandContext.ShouldShowLicenseOnRun)
                     {
                         var appCommand = GetCommandApp();
-                        if (appCommand != null)
+                        var licenseHeader = appCommand?.LicenseHeader;
+                        if (licenseHeader != null)
                         {
-                            var licenseHeader = appCommand.LicenseHeader;
-                            if (licenseHeader != null)
-                            {
-                                runConfig.Out.WriteLine(licenseHeader());
-                            }
+                            runConfig.Out.WriteLine(licenseHeader());
                         }
                     }
                     return await Action.Invoke(commandContext, extra.ToArray());
