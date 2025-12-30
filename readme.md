@@ -4,33 +4,31 @@
 
 **XenoAtom.CommandLine** is a lightweight, powerful and NativeAOT friendly command line parser.
 
-It is a fork of the excellent [NDesk.Options](http://www.ndesk.org/Options)/[Mono.Options](https://tirania.org/blog/archive/2008/Oct-14.html) with several small improvements and new features.
+It is a fork of the excellent [NDesk.Options](http://www.ndesk.org/Options)/[Mono.Options](https://tirania.org/blog/archive/2008/Oct-14.html) with significant improvements and new features.
 
 ## ✨ Features 
 
-- Lightweight library with no dependencies
-- `net8.0`+  ready and NativeAOT friendly, no `System.Reflection` used
-- Provides a simple API to parse command line arguments
-- Generates a help message from the command line definition
-    - What you declare is what you get!
-- Supports 
-    - Commands and sub-command parsing (e.g. `git commit -m "message"`)
-    - Tar and POSIX style options (e.g. `-abc` is equivalent to `-a -b -c`)
-    - `-`, `/` and `--` option prefixes (e.g. `-v`, `/v`, `--verbose`)
-    - Helpful unknown token diagnostics (inactive matches + suggestions)
-    - Multiple option values (e.g. `-i foo -i bar`)
-    - Optional (`:`) and required (`=`) option values (e.g. `-o`, `-oVALUE`, `-o:VALUE2`, `-o=VALUE`)
-    - Key/value pairs (e.g. `-DMACRO=VALUE1`)
-    - Option aliases (e.g. `-v`, `-verbose`)
-    - Named positional arguments (e.g. `<input> [<output>] <files>*`) and remainder arguments (`<>`)
-    - `--` to stop option parsing
-    - `--help` and `--version` built-in options
-    - Parsing of values to specific target types (e.g. `int`, `bool`, `enum`, etc.)
-    - Response files e.g `@file.txt`
-        - `#` comments and basic escaping (non-Windows)
-    - Grouping of command/options that can be activated together when a specific condition is met.
-    - Completions via `CompletionCommands` (bash/zsh/fish/PowerShell) with optional value completions (`ValueCompleter`) and token-based completion protocol when supported.
-    - Strict option parsing mode by default (`CommandConfig.StrictOptionParsing`)
+- **Lightweight and NativeAOT-friendly** (`net8.0`+), with **zero dependencies**
+- **Composition-first API:** declare commands/options with collection initializers (**no attributes, no base classes, no required “command classes”**)
+- **Auto-generated usage/help:** “what you declare is what you get”
+- **Commands and sub-commands** (e.g. `git commit -m "message"`)
+- **Strict positional arguments by default** (named args + remainder): `<arg>`, `<arg>?`, `<arg>*`, `<arg>+`, `<>`
+- **Fast parsing:** optimized hot paths (**no regex**), **low GC allocations**
+- **Powerful option parsing**
+  - **Prefixes:** `-`, `--`, `/` (e.g. `-v`, `--verbose`, `/v`)
+  - **Aliases:** `-v`, `--verbose`
+  - **Bundled short options:** `-abc` == `-a -b -c` (tar/POSIX style)
+  - **Values:** required `=` / optional `:` (e.g. `-o`, `-oVALUE`, `-o:VALUE`, `-o=VALUE`)
+  - **Multiple values:** `-i foo -i bar`
+  - **Key/value pairs:** `-DMACRO=VALUE`
+- **Built-ins:** `--help` and `--version`
+- **Better errors by default**
+  - **Strict unknown `-` / `--` options** (`CommandConfig.StrictOptionParsing`)
+  - **Helpful diagnostics:** suggestions + “inactive in this context” hints
+  - Use `--` to pass values starting with `-` (e.g. `myexe -- -5`); `/mnt/home` is treated as a positional value (not an option)
+- **Response files:** `@file.txt` (supports quotes, `#` comments, and basic escaping on non-Windows)
+- **Conditional groups:** declare commands/options that are only active when a condition is met
+- **Shell completions:** bash/zsh/fish/PowerShell via `CompletionCommands`, token protocol, optional value completions (`ValueCompleter`)
 
 ## 🧪 Example
 
