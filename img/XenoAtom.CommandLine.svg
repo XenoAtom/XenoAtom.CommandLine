@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 512 512" role="img" aria-label="XenoAtom ANSI logo">
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 512 512" overflow="visible" role="img" aria-label="XenoAtom Terminal logo">
   <defs>
     <!-- Brand outer gradient -->
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
@@ -36,52 +36,48 @@
   </defs>
 
   <!-- Outer badge -->
-  <rect x="44" y="44" width="424" height="424" rx="76" fill="url(#bg)" filter="url(#shadow)"/>
+  <rect x="0" y="0" width="512" height="512" rx="92" fill="url(#bg)" filter="url(#shadow)"/>
 
   <!-- Inner terminal tile -->
-  <g transform="translate(84 92)">
-    <rect x="0" y="0" width="344" height="328" rx="52" fill="url(#panel)"/>
-    <rect x="0" y="0" width="344" height="328" rx="52" fill="none" stroke="#FFFFFF" stroke-opacity="0.14" stroke-width="2"/>
+  <g transform="translate(46 56)">
+    <g transform="scale(1.22)">
+      <rect x="0" y="0" width="344" height="328" rx="52" fill="url(#panel)"/>
+      <rect x="0" y="0" width="344" height="328" rx="52" fill="none" stroke="#FFFFFF" stroke-opacity="0.14" stroke-width="2"/>
 
-    <!-- Header bar (minimal) -->
-    <rect x="0" y="0" width="344" height="78" rx="52" fill="#0B1220" fill-opacity="0.55"/>
-    <rect x="0" y="62" width="344" height="16" fill="#000000" fill-opacity="0.10"/>
+      <!-- Header bar (minimal) -->
+      <rect x="0" y="0" width="344" height="78" rx="52" fill="#0B1220" fill-opacity="0.55"/>
+      <rect x="0" y="62" width="344" height="16" fill="#000000" fill-opacity="0.10"/>
 
-    <!-- Window dots -->
-    <g transform="translate(30 39)" opacity="0.95">
-      <circle r="7" cx="0" cy="0" fill="#FF5F56"/>
-      <circle r="7" cx="22" cy="0" fill="#FFBD2E"/>
-      <circle r="7" cx="44" cy="0" fill="#27C93F"/>
-    </g>
-
-    <!-- BIG ESC[ badge (readable at small sizes) -->
-    <g transform="translate(30 270)" filter="url(#glow)">
-      <rect x="0" y="-36" width="136" height="52" rx="18" fill="url(#accent)" opacity="0.98"/>
-    </g>
-
-    <!-- ANSI word (large, clean) -->
-    <g transform="translate(30 170)" filter="url(#glow)">
-      <text x="0" y="0"
-            font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace"
-            font-size="100"
-            font-weight="900"
-
-            fill="#F2F7FF"
-            fill-opacity="0.98">--cmd</text>
-
-      <!-- Neon underline -->
-      <rect x="4" y="18" width="280" height="12" rx="6" fill="url(#accent)" opacity="0.92"/>
-    </g>
-
-    <!-- Atom accent (simple, bold) -->
-    <g transform="translate(250 260)" filter="url(#glow)" opacity="0.95">
-      <circle cx="0" cy="0" r="10" fill="#7CFFB2"/>
-      <ellipse cx="0" cy="0" rx="42" ry="16" fill="none" stroke="url(#accent)" stroke-width="6"/>
-      <g transform="rotate(60)">
-        <ellipse cx="0" cy="0" rx="42" ry="16" fill="none" stroke="url(#accent)" stroke-width="6" opacity="0.85"/>
+      <!-- Window dots -->
+      <g transform="translate(30 39)" opacity="0.95">
+        <circle r="7" cx="0" cy="0" fill="#FF5F56"/>
+        <circle r="7" cx="22" cy="0" fill="#FFBD2E"/>
+        <circle r="7" cx="44" cy="0" fill="#27C93F"/>
       </g>
-      <g transform="rotate(120)">
-        <ellipse cx="0" cy="0" rx="42" ry="16" fill="none" stroke="url(#accent)" stroke-width="6" opacity="0.85"/>
+
+      <!-- ANSI word (large, clean) -->
+      <g transform="translate(30 170)" filter="url(#glow)">
+        <text x="0" y="0"
+              font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace"
+              font-size="100"
+              font-weight="900"
+              fill="#F2F7FF"
+              fill-opacity="0.98">--cmd</text>
+
+        <!-- Neon underline -->
+        <rect x="4" y="18" width="280" height="12" rx="6" fill="url(#accent)" opacity="0.92"/>
+      </g>
+
+      <!-- Atom accent (simple, bold) -->
+      <g transform="translate(250 260)" filter="url(#glow)" opacity="0.95">
+        <circle cx="0" cy="0" r="10" fill="#7CFFB2"/>
+        <ellipse cx="0" cy="0" rx="42" ry="16" fill="none" stroke="url(#accent)" stroke-width="6"/>
+        <g transform="rotate(60)">
+          <ellipse cx="0" cy="0" rx="42" ry="16" fill="none" stroke="url(#accent)" stroke-width="6" opacity="0.85"/>
+        </g>
+        <g transform="rotate(120)">
+          <ellipse cx="0" cy="0" rx="42" ry="16" fill="none" stroke="url(#accent)" stroke-width="6" opacity="0.85"/>
+        </g>
       </g>
     </g>
   </g>
