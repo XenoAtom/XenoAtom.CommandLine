@@ -137,7 +137,10 @@ public class CommandApp : Command
         var state = ResolveCompletionState(effectiveTokens, contextTokenCount);
 
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var completion in GetCompletionsForState(state, currentToken))
+        var stateCompletions = new List<string>();
+        GetCompletionsForState(state, currentToken, stateCompletions);
+
+        foreach (var completion in stateCompletions)
         {
             if (seen.Add(completion))
             {
@@ -188,7 +191,10 @@ public class CommandApp : Command
         var state = ResolveCompletionState(tokens, contextTokenCount);
 
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var completion in GetCompletionsForState(state, currentToken))
+        var stateCompletions = new List<string>();
+        GetCompletionsForState(state, currentToken, stateCompletions);
+
+        foreach (var completion in stateCompletions)
         {
             if (seen.Add(completion))
             {
@@ -215,8 +221,10 @@ public class CommandApp : Command
         }
     }
 
-    private IEnumerable<string> GetCompletionsForState(CompletionState state, string currentToken)
+    private void GetCompletionsForState(CompletionState state, string currentToken, List<string> completions)
     {
+        ArgumentNullException.ThrowIfNull(completions);
+
         var hasPrefix = currentToken.Length > 0;
         var isOptionToken = currentToken.Length > 0 && (currentToken[0] == '-' || currentToken[0] == '/');
         var optionPrefix = GetOptionPrefix(currentToken);
@@ -228,20 +236,20 @@ public class CommandApp : Command
             var provider = option.ValueCompleter;
             if (provider is null)
             {
-                yield break;
+                return;
             }
 
             var valueIndex = state.PendingMax - state.PendingRemaining;
             if ((uint)valueIndex >= (uint)state.PendingMax)
             {
-                yield break;
+                return;
             }
 
             foreach (var candidate in FilterByPrefix(provider(valueIndex, currentToken), currentToken))
             {
-                yield return candidate;
+                completions.Add(candidate);
             }
-            yield break;
+            return;
         }
 
         if (!isOptionToken)
@@ -254,7 +262,7 @@ public class CommandApp : Command
 
                 if (!hasPrefix || sub.Name.StartsWith(currentToken, StringComparison.OrdinalIgnoreCase))
                 {
-                    yield return sub.Name;
+                    completions.Add(sub.Name);
                 }
             }
 
@@ -270,7 +278,7 @@ public class CommandApp : Command
                 {
                     if (!hasPrefix || name.StartsWith(currentToken, StringComparison.OrdinalIgnoreCase))
                     {
-                        yield return name;
+                        completions.Add(name);
                     }
                 }
             }
@@ -282,9 +290,9 @@ public class CommandApp : Command
             // Allow positional argument completions as well.
             foreach (var completion in GetArgumentCompletions(state.Command, state.PositionalCount, currentToken))
             {
-                yield return completion;
+                completions.Add(completion);
             }
-            yield break;
+            return;
         }
 
         if (isOptionToken && TryGetOptionParts(currentToken, out var flagLength, out var flag, out var optionNameSpan, out var sepIndex, out var value))
@@ -297,9 +305,9 @@ public class CommandApp : Command
                 {
                     foreach (var candidate in FilterByPrefix(option.ValueCompleter(valueIndex, valuePrefix), valuePrefix))
                     {
-                        yield return inlineTokenPrefix + candidate;
+                        completions.Add(inlineTokenPrefix + candidate);
                     }
-                    yield break;
+                    return;
                 }
             }
         }
@@ -325,7 +333,7 @@ public class CommandApp : Command
                     {
                         if (optionName.Length == 1)
                             continue;
-                        yield return "--" + optionName;
+                        completions.Add("--" + optionName);
                     }
                     else if (optionPrefix == "-")
                     {
@@ -333,19 +341,19 @@ public class CommandApp : Command
                         {
                             if (optionName.Length != 1)
                                 continue;
-                            yield return "-" + optionName;
+                            completions.Add("-" + optionName);
                         }
                         else
                         {
                             if (optionName.Length == 1)
                                 continue;
-                            yield return "--" + optionName;
+                            completions.Add("--" + optionName);
                         }
                     }
                     else
                     {
                         // Keep `/` and other prefixes as-is.
-                        yield return prefix + optionName;
+                        completions.Add(prefix + optionName);
                     }
                 }
                 else
@@ -354,7 +362,7 @@ public class CommandApp : Command
                     if (currentToken.Length != 0)
                         continue;
 
-                    yield return (optionName.Length == 1 ? "-" : "--") + optionName;
+                    completions.Add((optionName.Length == 1 ? "-" : "--") + optionName);
                 }
             }
         }
@@ -363,7 +371,7 @@ public class CommandApp : Command
         {
             foreach (var completion in GetArgumentCompletions(state.Command, state.PositionalCount, currentToken))
             {
-                yield return completion;
+                completions.Add(completion);
             }
         }
     }
