@@ -167,7 +167,21 @@ public abstract class Option : CommandNode, ICommandNodeDescriptor
         catch (Exception e)
         {
             var args = new object[] { c.OptionName! };
-            throw new OptionException(string.Format(c.Command.Config.Localizer($"{e.Message} for option `{{0}}`"), args), c.OptionName!, e);
+            CommandTokenSpan? tokenSpan = null;
+            if (c.OptionIndex >= 0)
+            {
+                tokenSpan = new CommandTokenSpan(c.OptionIndex, 0, Math.Max(1, value?.Length ?? 0));
+            }
+
+            throw new OptionException(string.Format(c.Command.Config.Localizer($"{e.Message} for option `{{0}}`"), args), c.OptionName!, e)
+            {
+                Diagnostic = new CommandDiagnostic(
+                    CommandDiagnosticSource.CommandLine,
+                    null,
+                    c.Option,
+                    c.CommandRunContext.InvocationTokens,
+                    tokenSpan)
+            };
         }
 
         return result;

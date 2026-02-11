@@ -12,7 +12,12 @@ namespace XenoAtom.CommandLine;
 public class CommandException : Exception
 {
     /// <summary>
-    /// Creates a new instance of <see cref="OptionException"/>.
+    /// Gets optional structured diagnostic information associated with this exception.
+    /// </summary>
+    public CommandDiagnostic? Diagnostic { get; init; }
+
+    /// <summary>
+    /// Creates a new instance of <see cref="CommandException"/>.
     /// </summary>
     /// <param name="message">The message of this exception.</param>
     public CommandException(string message)
@@ -21,7 +26,7 @@ public class CommandException : Exception
     }
 
     /// <summary>
-    /// Creates a new instance of <see cref="OptionException"/>.
+    /// Creates a new instance of <see cref="CommandException"/>.
     /// </summary>
     /// <param name="message">The message of this exception.</param>
     /// <param name="innerException">The associated inner exception.</param>

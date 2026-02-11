@@ -160,18 +160,31 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
     public virtual async ValueTask<int> RunAsync(IEnumerable<string> arguments, CommandRunConfig? runConfig = null)
     {
         runConfig ??= new CommandRunConfig();
+        var output = GetOutput(runConfig);
+        return await RunAsyncCore(arguments, runConfig, output).ConfigureAwait(false);
+    }
+
+    private async ValueTask<int> RunAsyncCore(IEnumerable<string> arguments, CommandRunConfig runConfig, ICommandOutput output)
+    {
+        ArgumentNullException.ThrowIfNull(arguments);
+        ArgumentNullException.ThrowIfNull(runConfig);
+        ArgumentNullException.ThrowIfNull(output);
+
+        var invocationTokens = arguments as List<string> ?? new List<string>(arguments);
 
         try
         {
             var commandContext = CreateCommandContext(runConfig);
             commandContext.ShouldShowHelp = false;
             commandContext.ShouldRunAfterParsingOptions = true;
-            
-            var extra = ParseOptions(commandContext, arguments);
+            commandContext.Output = output;
+            commandContext.InvocationTokens = invocationTokens;
+
+            var extra = ParseOptions(commandContext, invocationTokens);
 
             if (commandContext.ShouldShowHelp)
             {
-                ShowHelp(runConfig);
+                ShowHelp(output, runConfig);
                 return 0;
             }
 
@@ -181,43 +194,44 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
                 if (SubCommands.TryGetValue(subCommandName, out var subCommand) && subCommand.IsActive())
                 {
                     extra.RemoveAt(0);
-                    return await subCommand.RunAsync(extra, runConfig);
+                    return await subCommand.RunAsyncCore(extra, runConfig, output).ConfigureAwait(false);
                 }
 
-                WriteUnknownCommandOrOption(runConfig, this, subCommandName);
+                output.WriteUnknownTokens(
+                    this,
+                    runConfig,
+                    UnknownTokenKind.UnknownCommandOrOption,
+                    [CreateUnknownTokenInfo(this, subCommandName, commandContext.InvocationTokens)]);
                 return 1;
             }
 
-            if (commandContext.ShouldRunAfterParsingOptions)
-            {
-                extra = ParseArgumentsAndDefaultOption(commandContext, extra);
-                if (Action == null)
-                {
-                    WriteUnknownOptions(runConfig,this, extra);
-                    return 1;
-                }
-                else
-                {
-                    if (commandContext.ShouldShowLicenseOnRun)
-                    {
-                        var appCommand = GetCommandApp();
-                        var licenseHeader = appCommand?.LicenseHeader;
-                        if (licenseHeader != null)
-                        {
-                            runConfig.Out.WriteLine(licenseHeader());
-                        }
-                    }
-                    return await Action.Invoke(commandContext, extra.ToArray());
-                }
-            }
-            else
+            if (!commandContext.ShouldRunAfterParsingOptions)
             {
                 return 0;
             }
+
+            extra = ParseArgumentsAndDefaultOption(commandContext, extra);
+            if (Action == null)
+            {
+                output.WriteUnknownTokens(this, runConfig, UnknownTokenKind.UnknownOption, CreateUnknownTokenInfos(this, extra, commandContext.InvocationTokens));
+                return 1;
+            }
+
+            if (commandContext.ShouldShowLicenseOnRun)
+            {
+                var appCommand = GetCommandApp();
+                var licenseHeader = appCommand?.LicenseHeader;
+                if (licenseHeader != null)
+                {
+                    output.WriteLicenseHeader(this, runConfig, licenseHeader());
+                }
+            }
+
+            return await Action.Invoke(commandContext, extra.ToArray()).ConfigureAwait(false);
         }
         catch (CommandException e)
         {
-            WriteCommandException(runConfig, e);
+            output.WriteError(this, runConfig, e);
             return 1;
         }
     }
@@ -239,6 +253,13 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
         return null;
     }
 
+    internal ICommandOutput GetOutput(CommandRunConfig runConfig)
+    {
+        ArgumentNullException.ThrowIfNull(runConfig);
+        var output = Config.OutputFactory?.Invoke(runConfig);
+        return output ?? DefaultCommandOutput.Instance;
+    }
+
     /// <summary>
     /// Shows the help for this command.
     /// </summary>
@@ -246,17 +267,34 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
     public void ShowHelp(CommandRunConfig? runConfig = null)
     {
         runConfig ??= new CommandRunConfig();
-        var _ = Config.Localizer;
-        var o = runConfig.Out;
+        ShowHelp(GetOutput(runConfig), runConfig);
+    }
+
+    /// <summary>
+    /// Shows the help for this command using the specified output renderer.
+    /// </summary>
+    /// <param name="output">The output renderer to use.</param>
+    /// <param name="runConfig">The runtime configuration for stdout/stderr.</param>
+    public void ShowHelp(ICommandOutput output, CommandRunConfig? runConfig = null)
+    {
+        ArgumentNullException.ThrowIfNull(output);
+        runConfig ??= new CommandRunConfig();
 
         if (this is CommandApp appCommand)
         {
             var header = appCommand.LicenseHeader;
             if (header != null)
             {
-                o.WriteLine(header());
+                output.WriteLicenseHeader(this, runConfig, header());
             }
         }
+
+        output.WriteHelp(this, runConfig);
+    }
+
+    internal void WriteHelpCore(CommandRunConfig runConfig)
+    {
+        var o = runConfig.Out;
 
         if (!_hasCommandUsage)
         {
@@ -414,7 +452,10 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
                         TryGetOptionParts(argument, out _, out var flag, out _, out _, out _) &&
                         flag != "/")
                     {
-                        throw new OptionException(Config.Localizer($"Unknown option: {argument}"), argument);
+                        throw new OptionException(Config.Localizer($"Unknown option: {argument}"), argument)
+                        {
+                            Diagnostic = CreateDiagnostic(runContext, null, c.OptionIndex, argument.Length)
+                        };
                     }
 
                     unprocessed.Add(argument);
@@ -437,7 +478,11 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
         {
             if (arguments.Count > 0)
             {
-                throw new CommandException(Config.Localizer($"Unexpected argument `{arguments[0]}`."));
+                var unexpected = arguments[0];
+                throw new CommandException(Config.Localizer($"Unexpected argument `{unexpected}`."))
+                {
+                    Diagnostic = CreateDiagnostic(runContext, null, FindTokenIndex(runContext.InvocationTokens, unexpected), unexpected.Length)
+                };
             }
             return arguments;
         }
@@ -454,7 +499,11 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
         {
             if (arguments.Count > 0)
             {
-                throw new CommandException(Config.Localizer($"Unexpected argument `{arguments[0]}`."));
+                var unexpected = arguments[0];
+                throw new CommandException(Config.Localizer($"Unexpected argument `{unexpected}`."))
+                {
+                    Diagnostic = CreateDiagnostic(runContext, null, FindTokenIndex(runContext.InvocationTokens, unexpected), unexpected.Length)
+                };
             }
 
             return arguments;
@@ -467,7 +516,10 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
             if (arguments.Count < fixedCount)
             {
                 var missing = activeArgs[arguments.Count];
-                throw new CommandException(Config.Localizer($"Missing required argument `{missing.GetDisplayName()}`."));
+                throw new CommandException(Config.Localizer($"Missing required argument `{missing.GetDisplayName()}`."))
+                {
+                    Diagnostic = CreateDiagnostic(runContext, missing, -1, 0)
+                };
             }
 
             var argumentContext = new CommandArgumentContext(runContext, this)
@@ -501,7 +553,10 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
             if (arguments.Count < minTotal)
             {
                 var missing = arguments.Count < fixedCount ? activeArgs[arguments.Count] : listArg;
-                throw new CommandException(Config.Localizer($"Missing required argument `{missing.GetDisplayName()}`."));
+                throw new CommandException(Config.Localizer($"Missing required argument `{missing.GetDisplayName()}`."))
+                {
+                    Diagnostic = CreateDiagnostic(runContext, missing, -1, 0)
+                };
             }
 
             var argumentContext = new CommandArgumentContext(runContext, this)
@@ -535,7 +590,10 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
         if (arguments.Count < requiredCount)
         {
             var missing = activeArgs[arguments.Count];
-            throw new CommandException(Config.Localizer($"Missing required argument `{missing.GetDisplayName()}`."));
+            throw new CommandException(Config.Localizer($"Missing required argument `{missing.GetDisplayName()}`."))
+            {
+                Diagnostic = CreateDiagnostic(runContext, missing, -1, 0)
+            };
         }
 
         var ctx = new CommandArgumentContext(runContext, this)
@@ -572,10 +630,39 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
 
         if (remaining.Count > 0)
         {
-            throw new CommandException(Config.Localizer($"Unexpected argument `{remaining[0]}`."));
+            var unexpected = remaining[0];
+            throw new CommandException(Config.Localizer($"Unexpected argument `{unexpected}`."))
+            {
+                Diagnostic = CreateDiagnostic(runContext, null, FindTokenIndex(runContext.InvocationTokens, unexpected), unexpected.Length)
+            };
         }
 
         return new List<string>();
+    }
+
+    private static int FindTokenIndex(IReadOnlyList<string>? tokens, string token)
+    {
+        if (tokens is null)
+            return -1;
+
+        for (var i = 0; i < tokens.Count; i++)
+        {
+            if (string.Equals(tokens[i], token, StringComparison.Ordinal))
+                return i;
+        }
+
+        return -1;
+    }
+
+    private static CommandDiagnostic CreateDiagnostic(CommandRunContext runContext, CommandNode? node, int tokenIndex, int tokenLength, CommandDiagnosticSource source = CommandDiagnosticSource.CommandLine, string? sourceName = null)
+    {
+        CommandTokenSpan? tokenSpan = null;
+        if (tokenIndex >= 0)
+        {
+            tokenSpan = new CommandTokenSpan(tokenIndex, 0, Math.Max(1, tokenLength));
+        }
+
+        return new CommandDiagnostic(source, sourceName, node, runContext.InvocationTokens, tokenSpan);
     }
 
     private bool AddSource(ArgumentEnumerator ae, string argument)
@@ -719,7 +806,10 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
             c.Option.Invoke(c);
         else if (c.OptionValues.Count > c.Option.MaxValueCount)
         {
-            throw new OptionException(Config.Localizer(string.Format("Error: Found {0} option values when expecting {1}.", c.OptionValues.Count, c.Option.MaxValueCount)), c.OptionName!);
+            throw new OptionException(Config.Localizer(string.Format("Error: Found {0} option values when expecting {1}.", c.OptionValues.Count, c.Option.MaxValueCount)), c.OptionName!)
+            {
+                Diagnostic = CreateDiagnostic(c.CommandRunContext, c.Option, c.OptionIndex, option?.Length ?? 0)
+            };
         }
     }
 
@@ -847,7 +937,10 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
             {
                 if (i == 0)
                     return false;
-                throw new OptionException(string.Format(Config.Localizer("Cannot use unregistered option '{0}' in bundle '{1}'."), rn, originalToken), string.Empty);
+                throw new OptionException(string.Format(Config.Localizer("Cannot use unregistered option '{0}' in bundle '{1}'."), rn, originalToken), string.Empty)
+                {
+                    Diagnostic = CreateDiagnostic(c.CommandRunContext, null, c.OptionIndex, originalToken.Length)
+                };
             }
 
             switch (p.OptionValueType)
@@ -880,27 +973,7 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
         option.Invoke(c);
     }
 
-    private void WriteUnknownCommandOrOption(CommandRunConfig runConfig, Command command, string unknownCommand)
-    {
-        var fullCommandName = GetFullCommandPath();
-        runConfig.Error.WriteLine(command.Config.Localizer($"{fullCommandName}: Unknown command or option: {unknownCommand}"));
-
-        if (TryGetUnknownTokenDetails(command, unknownCommand, out var details))
-        {
-            if (details.InactiveExactMatchMessage is not null)
-            {
-                runConfig.Error.WriteLine(command.Config.Localizer(details.InactiveExactMatchMessage));
-            }
-
-            if (details.Suggestions.Count > 0)
-            {
-                runConfig.Error.WriteLine(command.Config.Localizer($"Did you mean: {string.Join(", ", details.Suggestions)}"));
-            }
-        }
-        runConfig.Error.WriteLine(command.Config.Localizer($"Use `{fullCommandName} --help` for usage."));
-    }
-
-    private void WriteCommandException(CommandRunConfig runConfig, CommandException e)
+    internal void WriteCommandExceptionCore(CommandRunConfig runConfig, CommandException e)
     {
         var fullCommandName = GetFullCommandPath();
         runConfig.Error.WriteLine($"{fullCommandName}: {e.Message}");
@@ -922,27 +995,55 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
         runConfig.Error.WriteLine(Config.Localizer($"Use `{fullCommandName} --help` for usage."));
     }
 
-    private void WriteUnknownOptions(CommandRunConfig runConfig, Command command, List<string> unknownOptions)
+    internal void WriteUnknownTokensCore(CommandRunConfig runConfig, UnknownTokenKind kind, IReadOnlyList<UnknownTokenInfo> unknownTokens)
     {
         var fullCommandName = GetFullCommandPath();
-        foreach (var unknownOption in unknownOptions)
+        var message = kind == UnknownTokenKind.UnknownCommandOrOption ? "Unknown command or option" : "Unknown option";
+
+        foreach (var unknownToken in unknownTokens)
         {
-            runConfig.Error.WriteLine(command.Config.Localizer($"{fullCommandName}: Unknown option: {unknownOption}"));
+            runConfig.Error.WriteLine(Config.Localizer($"{fullCommandName}: {message}: {unknownToken.Token}"));
 
-            if (TryGetUnknownTokenDetails(command, unknownOption, out var details))
+            if (unknownToken.InactiveMatchMessage is not null)
             {
-                if (details.InactiveExactMatchMessage is not null)
-                {
-                    runConfig.Error.WriteLine(command.Config.Localizer(details.InactiveExactMatchMessage));
-                }
+                runConfig.Error.WriteLine(Config.Localizer(unknownToken.InactiveMatchMessage));
+            }
 
-                if (details.Suggestions.Count > 0)
-                {
-                    runConfig.Error.WriteLine(command.Config.Localizer($"Did you mean: {string.Join(", ", details.Suggestions)}"));
-                }
+            if (unknownToken.Suggestions.Count > 0)
+            {
+                runConfig.Error.WriteLine(Config.Localizer($"Did you mean: {string.Join(", ", unknownToken.Suggestions)}"));
             }
         }
-        runConfig.Error.WriteLine(command.Config.Localizer($"Use `{fullCommandName} --help` for usage."));
+        runConfig.Error.WriteLine(Config.Localizer($"Use `{fullCommandName} --help` for usage."));
+    }
+
+    internal static UnknownTokenInfo CreateUnknownTokenInfo(Command command, string token, IReadOnlyList<string>? invocationTokens = null)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        ArgumentNullException.ThrowIfNull(token);
+
+        var tokenSpan = FindTokenIndex(invocationTokens, token);
+        var span = tokenSpan >= 0 ? new CommandTokenSpan(tokenSpan, 0, Math.Max(1, token.Length)) : (CommandTokenSpan?)null;
+
+        if (TryGetUnknownTokenDetails(command, token, out var details))
+        {
+            return new UnknownTokenInfo(token, details.Suggestions, details.InactiveExactMatchMessage, span);
+        }
+
+        return new UnknownTokenInfo(token, Array.Empty<string>(), null, span);
+    }
+
+    internal static IReadOnlyList<UnknownTokenInfo> CreateUnknownTokenInfos(Command command, IReadOnlyList<string> unknownTokens, IReadOnlyList<string>? invocationTokens = null)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        ArgumentNullException.ThrowIfNull(unknownTokens);
+
+        var infos = new List<UnknownTokenInfo>(unknownTokens.Count);
+        foreach (var token in unknownTokens)
+        {
+            infos.Add(CreateUnknownTokenInfo(command, token, invocationTokens));
+        }
+        return infos;
     }
 
     private readonly struct UnknownTokenDetails
@@ -1070,7 +1171,7 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
 
     private static IEnumerable<string> GetActiveVisibleAllOptionNames(Command command)
     {
-        foreach (var option in GetActiveVisibleUniqueOptions(command))
+        foreach (var option in GetActiveVisibleUniqueOptionsCore(command))
         {
             foreach (var name in option.GetNames())
             {
@@ -1081,7 +1182,7 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
 
     private static IEnumerable<string> GetActiveVisibleLongOptionNames(Command command)
     {
-        foreach (var option in GetActiveVisibleUniqueOptions(command))
+        foreach (var option in GetActiveVisibleUniqueOptionsCore(command))
         {
             foreach (var name in option.GetNames())
             {
@@ -1092,7 +1193,7 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
 
     private static IEnumerable<string> GetActiveVisibleShortOptionNames(Command command)
     {
-        foreach (var option in GetActiveVisibleUniqueOptions(command))
+        foreach (var option in GetActiveVisibleUniqueOptionsCore(command))
         {
             foreach (var name in option.GetNames())
             {
@@ -1101,7 +1202,7 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
         }
     }
 
-    private static IEnumerable<Option> GetActiveVisibleUniqueOptions(Command command)
+    internal static IEnumerable<Option> GetActiveVisibleUniqueOptionsCore(Command command)
     {
         var seen = new HashSet<Option>();
         foreach (var entry in command.Options)
@@ -1218,7 +1319,7 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
     private void WriteDescription(TextWriter o, string? value, string prefix, int firstWidth, int remWidth)
     {
         bool indent = false;
-        foreach (string line in GetLines(Config.Localizer(GetDescription(value)), firstWidth, remWidth))
+        foreach (string line in GetLines(Config.Localizer(GetDescriptionCore(value)), firstWidth, remWidth))
         {
             if (indent)
                 o.Write(prefix);
@@ -1263,13 +1364,13 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
                 Write(o, ref written, Config.Localizer("["));
             }
 
-            Write(o, ref written, Config.Localizer("=" + GetArgumentName(0, p.MaxValueCount, p.Description)));
+            Write(o, ref written, Config.Localizer("=" + GetArgumentNameCore(0, p.MaxValueCount, p.Description)));
             string sep = p.ValueSeparators != null && p.ValueSeparators.Length > 0
                 ? p.ValueSeparators[0]
                 : " ";
             for (int c = 1; c < p.MaxValueCount; ++c)
             {
-                Write(o, ref written, Config.Localizer(sep + GetArgumentName(c, p.MaxValueCount, p.Description)));
+                Write(o, ref written, Config.Localizer(sep + GetArgumentNameCore(c, p.MaxValueCount, p.Description)));
             }
 
             if (p.OptionValueType == OptionValueType.Optional)
@@ -1287,7 +1388,7 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
         o.Write(s);
     }
     
-    private static string GetArgumentName(int index, int maxIndex, string? description)
+    internal static string GetArgumentNameCore(int index, int maxIndex, string? description)
     {
         if (description is not null)
         {
@@ -1371,7 +1472,7 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
         return maxIndex == 1 ? "VALUE" : "VALUE" + (index + 1);
     }
 
-    private static string GetDescription(string? description)
+    internal static string GetDescriptionCore(string? description)
     {
         if (description is null)
             return string.Empty;

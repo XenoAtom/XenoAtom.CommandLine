@@ -6,6 +6,7 @@ XenoAtom.CommandLine is a library that provides a simple and easy way to create 
 - [Options](#options)
 - [Command Arguments](#command-arguments)
 - [Help Text](#help-text)
+- [Custom Output Rendering](#custom-output-rendering)
 - [Actions](#actions)
 - [Completions](#completions)
 - [Configuration](#configuration)
@@ -392,6 +393,59 @@ await app.RunAsync(args);
 ```
 You can have multiple `CommandUsage` in a `CommandApp` or a `Command`. If no command usages are found, it will display a default one as the first line of the help message, otherwise it will display the `CommandUsage` that are defined.
 
+## Custom Output Rendering
+
+All library-generated output (help, errors, unknown-token diagnostics, version, license header) can be replaced by setting `CommandConfig.OutputFactory`.
+
+```csharp
+var app = new CommandApp("myexe", config: new CommandConfig
+{
+    OutputFactory = runConfig => new MyOutputRenderer()
+})
+{
+    new HelpOption(),
+    new VersionOption("1.2.3"),
+    (ctx, _) => ValueTask.FromResult(0)
+};
+```
+
+`ICommandOutput` receives the current `Command` object, so a renderer can use `command.Options`, `command.Arguments`, `command.SubCommands`, and `command.Nodes` to build plain text, JSON, or UI-specific visual output.
+
+```csharp
+public sealed class MyOutputRenderer : ICommandOutput
+{
+    public void WriteHelp(Command command, CommandRunConfig runConfig)
+    {
+        runConfig.Out.WriteLine($"Help for {command.GetFullCommandPath()}");
+    }
+
+    public void WriteError(Command command, CommandRunConfig runConfig, CommandException exception)
+    {
+        runConfig.Error.WriteLine($"{command.GetFullCommandPath()}: {exception.Message}");
+    }
+
+    public void WriteUnknownTokens(Command command, CommandRunConfig runConfig, UnknownTokenKind kind, IReadOnlyList<UnknownTokenInfo> unknownTokens)
+    {
+        foreach (var token in unknownTokens)
+            runConfig.Error.WriteLine($"{kind}: {token.Token}");
+    }
+
+    public void WriteVersion(Command command, CommandRunConfig runConfig, string version)
+        => runConfig.Out.WriteLine(version);
+
+    public void WriteLicenseHeader(Command command, CommandRunConfig runConfig, string licenseText)
+        => runConfig.Out.WriteLine(licenseText);
+}
+```
+
+You can also render help with a one-off output implementation without changing `CommandConfig`:
+
+```csharp
+app.ShowHelp(new MyOutputRenderer());
+```
+
+`CommandOutputHelper` provides utility methods for common renderer tasks (`GetVisibleOptions`, `GetVisibleArguments`, `GetDescriptionText`, `RenderInvocation`, `RenderUnderline`, ...).
+
 ## Actions
 
 A `CommandApp` and a `Command` are meant to be executed. You can add a single action to a `CommandApp` or a `Command` that will be executed when the command-line after the options and arguments are parsed.
@@ -549,6 +603,7 @@ await app.RunAsync(args, config);
 - `CommandConfig.StrictOptionParsing` (default: `true`) makes unknown `-` / `--` option-like tokens (e.g. `--unknown`) fail early as an error instead of being treated as positional arguments.
   - This does not apply to `/`-prefixed tokens, to allow POSIX-style absolute paths like `/mnt/home` to be passed as positional arguments.
   - Use `--` to pass values that start with `-` (e.g. `myexe -- -5`).
+- `CommandConfig.OutputFactory` lets you replace how library output is rendered (help/errors/version/license). The factory receives the effective `CommandRunConfig` so renderers can use the configured `Out`/`Error` writers.
 - `CommandApp.LicenseHeader` (combined with `CommandRunConfig.ShowLicenseOnRun`) lets you print a license banner once before executing the selected command.
 
 ## ArgumentSource

@@ -2,6 +2,7 @@
 // Licensed under the BSD-Clause 2 license.
 // See license.txt file in the project root for full license information.
 
+using System.Collections.Generic;
 using System.IO;
 
 namespace XenoAtom.CommandLine;
@@ -16,6 +17,10 @@ public class CommandRunContext
         RunConfig = config;
         ShouldShowLicenseOnRun = config.ShowLicenseOnRun;
     }
+
+    internal ICommandOutput Output { get; set; } = DefaultCommandOutput.Instance;
+
+    internal IReadOnlyList<string>? InvocationTokens { get; set; }
 
     /// <summary>
     /// Gets or sets a boolean indicating if the license should be displayed when running the command.

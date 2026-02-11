@@ -188,7 +188,21 @@ public abstract class CommandArgument : CommandNode, ICommandNodeDescriptor
         {
             var name = c.Argument?.Prototype ?? "VALUE";
             var args = new object[] { name };
-            throw new CommandArgumentException(string.Format(c.Command.Config.Localizer($"{e.Message} for argument `{{0}}`"), args), name, e);
+            CommandTokenSpan? tokenSpan = null;
+            if (c.ArgumentIndex >= 0)
+            {
+                tokenSpan = new CommandTokenSpan(c.ArgumentIndex, 0, Math.Max(1, value?.Length ?? 0));
+            }
+
+            throw new CommandArgumentException(string.Format(c.Command.Config.Localizer($"{e.Message} for argument `{{0}}`"), args), name, e)
+            {
+                Diagnostic = new CommandDiagnostic(
+                    CommandDiagnosticSource.CommandLine,
+                    null,
+                    c.Argument,
+                    c.CommandRunContext.InvocationTokens,
+                    tokenSpan)
+            };
         }
 
         return result;

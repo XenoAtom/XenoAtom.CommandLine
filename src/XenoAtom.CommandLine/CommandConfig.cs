@@ -29,4 +29,14 @@ public record CommandConfig()
     /// If you need to pass an argument that starts with <c>-</c> or <c>/</c>, use <c>--</c> to stop option parsing (e.g. <c>mytool -- -5</c>).
     /// </remarks>
     public bool StrictOptionParsing { get; init; } = true;
+
+    /// <summary>
+    /// Gets a factory used to create the output handler that renders help, errors,
+    /// version, and other user-visible output for an invocation.
+    /// </summary>
+    /// <remarks>
+    /// The factory receives the effective <see cref="CommandRunConfig"/> for the current invocation.
+    /// Return a singleton for stateless implementations, or create one instance per invocation for stateful renderers.
+    /// </remarks>
+    public Func<CommandRunConfig, ICommandOutput>? OutputFactory { get; init; }
 }
