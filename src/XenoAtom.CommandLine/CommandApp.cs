@@ -53,7 +53,7 @@ public class CommandApp : Command
     {
         ArgumentNullException.ThrowIfNull(arguments);
         runConfig ??= new CommandRunConfig { Out = TextWriter.Null, Error = TextWriter.Null };
-        return ParseCore(arguments, runConfig, GetOutput(runConfig));
+        return ParseCore(arguments, runConfig, CreateDeferredOutput(runConfig));
     }
 
     /// <summary>

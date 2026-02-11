@@ -43,6 +43,42 @@ public class CommandOutputTests
     }
 
     [TestMethod]
+    public async Task OutputFactory_IsResolved_AfterOptionParsing_ForHelp()
+    {
+        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+
+        var useVisualHelp = false;
+        var defaultOutput = new RecordingOutput();
+        var visualOutput = new RecordingOutput();
+        var factoryCount = 0;
+
+        var app = new CommandApp(
+            "app",
+            config: new CommandConfig
+            {
+                OutputFactory = _ =>
+                {
+                    factoryCount++;
+                    return useVisualHelp ? visualOutput : defaultOutput;
+                }
+            })
+        {
+            { "visual-help", "Enable visual help output", value => useVisualHelp = value is not null },
+            new HelpOption(),
+            (ctx, _) => ValueTask.FromResult(0)
+        };
+
+        var writer = new StringWriter();
+        var result = await app.RunAsync(["--visual-help", "--help"], new CommandRunConfig { Out = writer, Error = writer });
+
+        Assert.AreEqual(0, result);
+        Assert.AreEqual(1, factoryCount);
+        Assert.AreEqual(0, defaultOutput.HelpCalls);
+        Assert.AreEqual(1, visualOutput.HelpCalls);
+        Assert.AreEqual("app", visualOutput.HelpCommands[0]);
+    }
+
+    [TestMethod]
     public async Task VersionAndLicense_AreRoutedThroughOutput()
     {
         CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;

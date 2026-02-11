@@ -160,7 +160,7 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
     public virtual async ValueTask<int> RunAsync(IEnumerable<string> arguments, CommandRunConfig? runConfig = null)
     {
         runConfig ??= new CommandRunConfig();
-        var output = GetOutput(runConfig);
+        var output = CreateDeferredOutput(runConfig);
         return await RunAsyncCore(arguments, runConfig, output).ConfigureAwait(false);
     }
 
@@ -388,6 +388,49 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
         public int ExitCode { get; }
     }
 
+    private sealed class DeferredCommandOutput : ICommandOutput
+    {
+        private readonly Func<ICommandOutput> _factory;
+        private ICommandOutput? _resolvedOutput;
+
+        public DeferredCommandOutput(Func<ICommandOutput> factory)
+        {
+            ArgumentNullException.ThrowIfNull(factory);
+            _factory = factory;
+        }
+
+        public void WriteHelp(Command command, CommandRunConfig runConfig)
+        {
+            Resolve().WriteHelp(command, runConfig);
+        }
+
+        public void WriteError(Command command, CommandRunConfig runConfig, CommandException exception)
+        {
+            Resolve().WriteError(command, runConfig, exception);
+        }
+
+        public void WriteUnknownTokens(Command command, CommandRunConfig runConfig, UnknownTokenKind kind, IReadOnlyList<UnknownTokenInfo> unknownTokens)
+        {
+            Resolve().WriteUnknownTokens(command, runConfig, kind, unknownTokens);
+        }
+
+        public void WriteVersion(Command command, CommandRunConfig runConfig, string version)
+        {
+            Resolve().WriteVersion(command, runConfig, version);
+        }
+
+        public void WriteLicenseHeader(Command command, CommandRunConfig runConfig, string licenseText)
+        {
+            Resolve().WriteLicenseHeader(command, runConfig, licenseText);
+        }
+
+        private ICommandOutput Resolve()
+        {
+            _resolvedOutput ??= _factory();
+            return _resolvedOutput;
+        }
+    }
+
 
     /// <summary>
     /// Gets the root command app from this command.
@@ -410,6 +453,12 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
         ArgumentNullException.ThrowIfNull(runConfig);
         var output = Config.OutputFactory?.Invoke(runConfig);
         return output ?? DefaultCommandOutput.Instance;
+    }
+
+    internal ICommandOutput CreateDeferredOutput(CommandRunConfig runConfig)
+    {
+        ArgumentNullException.ThrowIfNull(runConfig);
+        return new DeferredCommandOutput(() => GetOutput(runConfig));
     }
 
     /// <summary>
