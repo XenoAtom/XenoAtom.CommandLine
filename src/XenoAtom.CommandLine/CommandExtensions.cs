@@ -569,6 +569,37 @@ public static class CommandExtensions
         return command;
     }
 
+    /// <summary>
+    /// Declares that the specified options cannot be used together.
+    /// </summary>
+    /// <typeparam name="TCommand">Type of the command container.</typeparam>
+    /// <param name="command">The command container.</param>
+    /// <param name="optionNames">Two or more option names (without prefix).</param>
+    /// <returns>The command container.</returns>
+    public static TCommand AddMutuallyExclusive<TCommand>(this TCommand command, params string[] optionNames)
+        where TCommand : CommandContainer
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        command.Add(new MutuallyExclusiveConstraint(optionNames));
+        return command;
+    }
+
+    /// <summary>
+    /// Declares that when <paramref name="optionName"/> is present, all <paramref name="requiredOptionNames"/> must also be present.
+    /// </summary>
+    /// <typeparam name="TCommand">Type of the command container.</typeparam>
+    /// <param name="command">The command container.</param>
+    /// <param name="optionName">The option that triggers the requirement (without prefix).</param>
+    /// <param name="requiredOptionNames">One or more required option names (without prefix).</param>
+    /// <returns>The command container.</returns>
+    public static TCommand AddRequires<TCommand>(this TCommand command, string optionName, params string[] requiredOptionNames)
+        where TCommand : CommandContainer
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        command.Add(new RequiresConstraint(optionName, requiredOptionNames));
+        return command;
+    }
+
     private static void ConfigureOptionEnvironment(Option option, string envVar, char? envVarDelimiter)
     {
         ArgumentNullException.ThrowIfNull(option);

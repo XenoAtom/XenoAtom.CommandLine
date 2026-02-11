@@ -189,6 +189,7 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
             }
 
             ApplyEnvironmentVariableFallback(commandContext);
+            ValidateOptionConstraints(commandContext);
 
             if (SubCommands.Count > 0 && extra.Count > 0)
             {
@@ -602,6 +603,110 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
 
         enabled = false;
         return false;
+    }
+
+    private void ValidateOptionConstraints(CommandRunContext runContext)
+    {
+        foreach (var node in Nodes)
+        {
+            if (!node.IsActive() || node is not OptionConstraint constraint)
+                continue;
+
+            switch (constraint)
+            {
+                case MutuallyExclusiveConstraint mutuallyExclusiveConstraint:
+                    ValidateMutuallyExclusiveConstraint(mutuallyExclusiveConstraint, runContext);
+                    break;
+                case RequiresConstraint requiresConstraint:
+                    ValidateRequiresConstraint(requiresConstraint, runContext);
+                    break;
+            }
+        }
+    }
+
+    private void ValidateMutuallyExclusiveConstraint(MutuallyExclusiveConstraint constraint, CommandRunContext runContext)
+    {
+        var setOptions = new List<Option>();
+        foreach (var optionName in constraint.OptionNames)
+        {
+            if (!TryResolveConstraintOption(optionName, out var option))
+                continue;
+
+            if (!option.IsActive())
+                continue;
+
+            if (option.WasSet)
+            {
+                setOptions.Add(option);
+            }
+        }
+
+        if (setOptions.Count < 2)
+            return;
+
+        var optionNames = new List<string>(setOptions.Count);
+        foreach (var option in setOptions)
+        {
+            optionNames.Add($"`{option.GetDisplayName()}`");
+        }
+
+        var message = setOptions.Count == 2
+            ? $"Options {optionNames[0]} and {optionNames[1]} cannot be used together."
+            : $"Options {string.Join(", ", optionNames)} cannot be used together.";
+
+        throw new CommandException(Config.Localizer(message))
+        {
+            Diagnostic = new CommandDiagnostic(CommandDiagnosticSource.Other, null, constraint, runContext.InvocationTokens, null)
+        };
+    }
+
+    private void ValidateRequiresConstraint(RequiresConstraint constraint, CommandRunContext runContext)
+    {
+        if (!TryResolveConstraintOption(constraint.OptionName, out var option))
+            return;
+
+        if (!option.IsActive() || !option.WasSet)
+            return;
+
+        foreach (var requiredOptionName in constraint.RequiredOptionNames)
+        {
+            if (!TryResolveConstraintOption(requiredOptionName, out var requiredOption))
+                continue;
+
+            if (!requiredOption.IsActive())
+                continue;
+
+            if (!requiredOption.WasSet)
+            {
+                var message = Config.Localizer($"Option `{option.GetDisplayName()}` requires `{requiredOption.GetDisplayName()}` to also be specified.");
+                throw new CommandException(message)
+                {
+                    Diagnostic = new CommandDiagnostic(CommandDiagnosticSource.Other, null, constraint, runContext.InvocationTokens, null)
+                };
+            }
+        }
+    }
+
+    private bool TryResolveConstraintOption(string name, [NotNullWhen(true)] out Option? option)
+    {
+        var normalized = NormalizeConstraintOptionName(name);
+        if (normalized.Length == 0)
+        {
+            option = null;
+            return false;
+        }
+
+        return TryGetOption(normalized.AsSpan(), out option);
+    }
+
+    private static string NormalizeConstraintOptionName(string name)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        if (name.StartsWith("--", StringComparison.Ordinal))
+            return name.Substring(2);
+        if (name.StartsWith("-", StringComparison.Ordinal) || name.StartsWith("/", StringComparison.Ordinal))
+            return name.Substring(1);
+        return name;
     }
 
     private List<string> ParseArgumentsAndDefaultOption(CommandRunContext runContext, List<string> arguments)

@@ -368,6 +368,32 @@ Built-in validators include:
 
 Validation errors are formatted consistently and routed through the command output system.
 
+### Option Constraints
+
+You can declare option relationships directly on a command:
+
+```csharp
+var app = new CommandApp("myexe")
+{
+    { "j|json", "Output JSON", _ => { } },
+    { "x|xml", "Output XML", _ => { } },
+    { "u|user=", "User", _ => { } },
+    { "p|password=", "Password", _ => { } },
+    (ctx, _) => ValueTask.FromResult(0)
+};
+
+app.AddMutuallyExclusive("json", "xml");
+app.AddRequires("password", "user");
+```
+
+Constraint checks run after option parsing (and env-var fallback) and before command execution:
+- `MutuallyExclusiveConstraint`: prevents conflicting options.
+- `RequiresConstraint`: requires dependent options when a trigger option is set.
+
+Errors use consistent messages such as:
+- `Options --json and --xml cannot be used together.`
+- `Option --password requires --user to also be specified.`
+
 ## Command Arguments
 
 In addition to options (prefixed with `-`, `--`, `/`), you can declare positional command arguments.
