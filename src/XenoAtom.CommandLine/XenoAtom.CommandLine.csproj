@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Description>XenoAtom.CommandLine is a lightweight, powerful and NativeAOT friendly command line parser.</Description>
+    <Description>XenoAtom.CommandLine is a lightweight, powerful and NativeAOT friendly command line parser for .NET.</Description>
     <Copyright>Alexandre Mutel</Copyright>
     <NeutralLanguage>en-US</NeutralLanguage>
     <Authors>Alexandre Mutel;Jonathan Pryor;Federico Di Gregorio;Rolf Bjarne Kvinge</Authors>

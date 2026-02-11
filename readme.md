@@ -2,7 +2,7 @@
 
 <img align="right" width="256px" height="256px" src="https://raw.githubusercontent.com/XenoAtom/XenoAtom.CommandLine/main/img/icon.png">
 
-**XenoAtom.CommandLine** is a lightweight, powerful and NativeAOT friendly command line parser.
+**XenoAtom.CommandLine** is a lightweight, powerful and NativeAOT friendly command line parser for .NET
 
 It is a fork of the excellent [NDesk.Options](http://www.ndesk.org/Options)/[Mono.Options](https://tirania.org/blog/archive/2008/Oct-14.html) with significant improvements and new features.
 
