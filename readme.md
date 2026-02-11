@@ -25,6 +25,7 @@ It is a fork of the excellent [NDesk.Options](http://www.ndesk.org/Options)/[Mon
 - **Environment variable fallbacks:** bind options to env vars (with optional delimiter splitting)
 - **Option and argument validation:** built-in validators (`Validate.Range`, `Validate.NonEmpty`, `Validate.OneOf`, ...)
 - **Option constraints:** declare mutually-exclusive and requires relationships between options
+- **Test-friendly parse API:** inspect parse results via `CommandApp.Parse(...)` without invoking command actions
 - **Pluggable output rendering:** replace built-in help/error/version/license rendering via `CommandConfig.OutputFactory`
 - **Better errors by default**
   - **Strict unknown `-` / `--` options** (`CommandConfig.StrictOptionParsing`)

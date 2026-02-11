@@ -3,6 +3,7 @@
 XenoAtom.CommandLine is a library that provides a simple and easy way to create command-line applications in .NET. It is a fork of the Mono.Options library with some modifications and improvements.
 
 - [CommandApp and Command](#commandapp-and-command)
+- [Parse API](#parse-api)
 - [Options](#options)
 - [Command Arguments](#command-arguments)
 - [Help Text](#help-text)
@@ -94,6 +95,37 @@ var commandApp = new CommandApp()
 
 await commandApp.RunAsync(args);
 ```
+
+## Parse API
+
+For tests and tooling scenarios, `CommandApp.Parse(...)` runs the same parser pipeline as `RunAsync(...)` but does not invoke the resolved command action.
+
+```csharp
+string? name = null;
+int port = 0;
+
+var app = new CommandApp("myexe")
+{
+    { "n|name=", "Your {NAME}", v => name = v },
+    { "p|port=", "Server {PORT}", (int v) => port = v },
+    new HelpOption(),
+    (ctx, _) => ValueTask.FromResult(0)
+};
+
+var result = app.Parse(["--name", "Alice", "--port", "8080"]);
+
+// result.HasErrors == false
+// result.ResolvedCommandPath == "myexe"
+// result.OptionValues["name"][0] == "Alice"
+// result.OptionValues["port"][0] == "8080"
+```
+
+Behavior:
+- Option and argument actions are invoked during parsing.
+- Command action is not invoked.
+- Help/version requests are surfaced on `ParseResult.HelpRequested` / `ParseResult.VersionRequested`.
+- Errors are collected in `ParseResult.Errors` instead of being thrown.
+- If `runConfig` is null, `Out` and `Error` default to `TextWriter.Null` to minimize output side effects.
 
 ## Options
 

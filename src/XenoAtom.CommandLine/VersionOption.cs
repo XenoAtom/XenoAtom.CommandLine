@@ -24,7 +24,12 @@ public class VersionOption(string? version = null, string prototype = "v|version
     {
         var commandContext = c.CommandRunContext;
         commandContext.ShouldRunAfterParsingOptions = false;
-        commandContext.Output.WriteVersion(c.Command, commandContext.RunConfig, Version);
+        commandContext.VersionRequested = true;
+
+        if (!commandContext.IsParsingOnly)
+        {
+            commandContext.Output.WriteVersion(c.Command, commandContext.RunConfig, Version);
+        }
     }
 
     /// <summary>

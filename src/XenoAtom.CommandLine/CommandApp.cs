@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Reflection;
 
 namespace XenoAtom.CommandLine;
@@ -37,6 +38,23 @@ public class CommandApp : Command
     /// The license header for this command line application.
     /// </summary>
     public Func<string>? LicenseHeader { get; set; }
+
+    /// <summary>
+    /// Parses the specified arguments without invoking the resolved command action.
+    /// Option and argument actions are still invoked.
+    /// </summary>
+    /// <param name="arguments">The arguments to parse.</param>
+    /// <param name="runConfig">
+    /// Optional run configuration. When null, output streams are set to <see cref="TextWriter.Null"/>
+    /// to minimize side effects while parsing.
+    /// </param>
+    /// <returns>A parse result describing resolved command, values, and parsing errors.</returns>
+    public ParseResult Parse(IEnumerable<string> arguments, CommandRunConfig? runConfig = null)
+    {
+        ArgumentNullException.ThrowIfNull(arguments);
+        runConfig ??= new CommandRunConfig { Out = TextWriter.Null, Error = TextWriter.Null };
+        return ParseCore(arguments, runConfig, GetOutput(runConfig));
+    }
 
     /// <summary>
     /// Gets completion candidates for the specified tokenized command line.

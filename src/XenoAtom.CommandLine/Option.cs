@@ -144,6 +144,18 @@ public abstract class Option : CommandNode, ICommandNodeDescriptor
     /// <param name="c">The parsing context.</param>
     public void Invoke(OptionContext c)
     {
+        if (c.CommandRunContext.CaptureParseValues && c.Option is not null)
+        {
+            if (c.OptionValues.Count == 0 && OptionValueType != OptionValueType.None)
+            {
+                c.CommandRunContext.RecordOptionValues(c.Option, [null]);
+            }
+            else
+            {
+                c.CommandRunContext.RecordOptionValues(c.Option, c.OptionValues);
+            }
+        }
+
         WasSet = true;
         OnParseComplete(c);
         c.OptionName = null;

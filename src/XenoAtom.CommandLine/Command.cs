@@ -166,26 +166,63 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
 
     private async ValueTask<int> RunAsyncCore(IEnumerable<string> arguments, CommandRunConfig runConfig, ICommandOutput output)
     {
+        var outcome = await InvokeCoreAsync(arguments, runConfig, output, executeAction: true, parseState: null).ConfigureAwait(false);
+        return outcome.ExitCode;
+    }
+
+    internal ParseResult ParseCore(IEnumerable<string> arguments, CommandRunConfig runConfig, ICommandOutput output)
+    {
+        var parseState = new ParseState();
+        var outcome = InvokeCoreAsync(arguments, runConfig, output, executeAction: false, parseState).GetAwaiter().GetResult();
+
+        var optionValues = new Dictionary<string, IReadOnlyList<string?>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var entry in parseState.OptionValues)
+        {
+            optionValues.Add(entry.Key, entry.Value.AsReadOnly());
+        }
+
+        return new ParseResult(
+            outcome.ResolvedCommand,
+            outcome.ResolvedCommand.GetFullCommandPath(),
+            optionValues,
+            parseState.ArgumentValues,
+            outcome.RemainingArguments,
+            parseState.Errors,
+            parseState.HelpRequested,
+            parseState.VersionRequested);
+    }
+
+    private async ValueTask<InvocationOutcome> InvokeCoreAsync(
+        IEnumerable<string> arguments,
+        CommandRunConfig runConfig,
+        ICommandOutput output,
+        bool executeAction,
+        ParseState? parseState)
+    {
         ArgumentNullException.ThrowIfNull(arguments);
         ArgumentNullException.ThrowIfNull(runConfig);
         ArgumentNullException.ThrowIfNull(output);
 
         var invocationTokens = arguments as List<string> ?? new List<string>(arguments);
+        var commandContext = CreateCommandContext(runConfig);
+        commandContext.ShouldShowHelp = false;
+        commandContext.ShouldRunAfterParsingOptions = true;
+        commandContext.Output = output;
+        commandContext.InvocationTokens = invocationTokens;
+        commandContext.CaptureParseValues = parseState is not null;
+        commandContext.IsParsingOnly = !executeAction;
 
         try
         {
-            var commandContext = CreateCommandContext(runConfig);
-            commandContext.ShouldShowHelp = false;
-            commandContext.ShouldRunAfterParsingOptions = true;
-            commandContext.Output = output;
-            commandContext.InvocationTokens = invocationTokens;
-
             var extra = ParseOptions(commandContext, invocationTokens);
 
             if (commandContext.ShouldShowHelp)
             {
-                ShowHelp(output, runConfig);
-                return 0;
+                if (executeAction)
+                {
+                    ShowHelp(output, runConfig);
+                }
+                return new InvocationOutcome(this, extra, 0);
             }
 
             ApplyEnvironmentVariableFallback(commandContext);
@@ -197,30 +234,28 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
                 if (SubCommands.TryGetValue(subCommandName, out var subCommand) && subCommand.IsActive())
                 {
                     extra.RemoveAt(0);
-                    return await subCommand.RunAsyncCore(extra, runConfig, output).ConfigureAwait(false);
+                    return await subCommand.InvokeCoreAsync(extra, runConfig, output, executeAction, parseState).ConfigureAwait(false);
                 }
 
-                output.WriteUnknownTokens(
-                    this,
-                    runConfig,
-                    UnknownTokenKind.UnknownCommandOrOption,
-                    [CreateUnknownTokenInfo(this, subCommandName, commandContext.InvocationTokens)]);
-                return 1;
+                var unknownTokens = CreateUnknownTokenInfos(this, [subCommandName], commandContext.InvocationTokens);
+                HandleUnknownTokens(runConfig, output, UnknownTokenKind.UnknownCommandOrOption, unknownTokens, commandContext.InvocationTokens, parseState);
+                return new InvocationOutcome(this, extra, 1);
             }
 
             if (!commandContext.ShouldRunAfterParsingOptions)
             {
-                return 0;
+                return new InvocationOutcome(this, extra, 0);
             }
 
             extra = ParseArgumentsAndDefaultOption(commandContext, extra);
             if (Action == null)
             {
-                output.WriteUnknownTokens(this, runConfig, UnknownTokenKind.UnknownOption, CreateUnknownTokenInfos(this, extra, commandContext.InvocationTokens));
-                return 1;
+                var unknownTokens = CreateUnknownTokenInfos(this, extra, commandContext.InvocationTokens);
+                HandleUnknownTokens(runConfig, output, UnknownTokenKind.UnknownOption, unknownTokens, commandContext.InvocationTokens, parseState);
+                return new InvocationOutcome(this, extra, 1);
             }
 
-            if (commandContext.ShouldShowLicenseOnRun)
+            if (commandContext.ShouldShowLicenseOnRun && executeAction)
             {
                 var appCommand = GetCommandApp();
                 var licenseHeader = appCommand?.LicenseHeader;
@@ -230,13 +265,127 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
                 }
             }
 
-            return await Action.Invoke(commandContext, extra.ToArray()).ConfigureAwait(false);
+            if (!executeAction)
+            {
+                return new InvocationOutcome(this, extra, 0);
+            }
+
+            var resultCode = await Action.Invoke(commandContext, extra.ToArray()).ConfigureAwait(false);
+            return new InvocationOutcome(this, extra, resultCode);
         }
         catch (CommandException e)
         {
-            output.WriteError(this, runConfig, e);
-            return 1;
+            if (parseState is null)
+            {
+                output.WriteError(this, runConfig, e);
+            }
+            else
+            {
+                parseState.Errors.Add(e);
+            }
+
+            return new InvocationOutcome(this, new List<string>(), 1);
         }
+        finally
+        {
+            parseState?.Merge(commandContext);
+        }
+    }
+
+    private void HandleUnknownTokens(
+        CommandRunConfig runConfig,
+        ICommandOutput output,
+        UnknownTokenKind kind,
+        IReadOnlyList<UnknownTokenInfo> unknownTokens,
+        IReadOnlyList<string>? invocationTokens,
+        ParseState? parseState)
+    {
+        if (parseState is null)
+        {
+            output.WriteUnknownTokens(this, runConfig, kind, unknownTokens);
+            return;
+        }
+
+        foreach (var unknownToken in unknownTokens)
+        {
+            parseState.Errors.Add(CreateUnknownTokenException(kind, unknownToken, invocationTokens));
+        }
+    }
+
+    private CommandException CreateUnknownTokenException(UnknownTokenKind kind, UnknownTokenInfo unknownToken, IReadOnlyList<string>? invocationTokens)
+    {
+        var prefix = kind == UnknownTokenKind.UnknownCommandOrOption ? "Unknown command or option" : "Unknown option";
+        var message = Config.Localizer($"{prefix}: {unknownToken.Token}");
+
+        if (unknownToken.InactiveMatchMessage is not null)
+        {
+            message = $"{message} {Config.Localizer(unknownToken.InactiveMatchMessage)}";
+        }
+
+        if (unknownToken.Suggestions.Count > 0)
+        {
+            message = $"{message} {Config.Localizer($"Did you mean: {string.Join(", ", unknownToken.Suggestions)}")}";
+        }
+
+        return new CommandException(message)
+        {
+            Diagnostic = new CommandDiagnostic(
+                CommandDiagnosticSource.CommandLine,
+                null,
+                null,
+                invocationTokens,
+                unknownToken.TokenSpan)
+        };
+    }
+
+    private sealed class ParseState
+    {
+        public Dictionary<string, List<string?>> OptionValues { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+        public List<string> ArgumentValues { get; } = new();
+
+        public List<CommandException> Errors { get; } = new();
+
+        public bool HelpRequested { get; private set; }
+
+        public bool VersionRequested { get; private set; }
+
+        public void Merge(CommandRunContext runContext)
+        {
+            ArgumentNullException.ThrowIfNull(runContext);
+
+            foreach (var entry in runContext.ParsedOptionValues)
+            {
+                if (!OptionValues.TryGetValue(entry.Key, out var values))
+                {
+                    values = new List<string?>(entry.Value);
+                    OptionValues.Add(entry.Key, values);
+                    continue;
+                }
+
+                values.InsertRange(0, entry.Value);
+            }
+
+            ArgumentValues.AddRange(runContext.ParsedArgumentValues);
+            HelpRequested |= runContext.ShouldShowHelp;
+            VersionRequested |= runContext.VersionRequested;
+        }
+    }
+
+    private readonly struct InvocationOutcome
+    {
+        public InvocationOutcome(Command resolvedCommand, List<string> remainingArguments, int exitCode)
+        {
+            ResolvedCommand = resolvedCommand;
+            RemainingArguments = remainingArguments;
+            ExitCode = exitCode;
+        }
+
+        public Command ResolvedCommand { get; }
+
+        public List<string> RemainingArguments { get; }
+
+        public int ExitCode { get; }
     }
 
 
@@ -766,10 +915,7 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
 
             for (var i = 0; i < fixedCount; i++)
             {
-                argumentContext.Argument = activeArgs[i];
-                argumentContext.ArgumentValue = arguments[i];
-                argumentContext.ArgumentIndex = i;
-                activeArgs[i].Invoke(argumentContext);
+                InvokeArgument(runContext, argumentContext, activeArgs[i], arguments[i], i);
             }
 
             var remainingArguments = new List<string>();
@@ -803,18 +949,12 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
 
             for (var i = 0; i < fixedCount; i++)
             {
-                argumentContext.Argument = activeArgs[i];
-                argumentContext.ArgumentValue = arguments[i];
-                argumentContext.ArgumentIndex = i;
-                activeArgs[i].Invoke(argumentContext);
+                InvokeArgument(runContext, argumentContext, activeArgs[i], arguments[i], i);
             }
 
             for (var i = fixedCount; i < arguments.Count; i++)
             {
-                argumentContext.Argument = listArg;
-                argumentContext.ArgumentValue = arguments[i];
-                argumentContext.ArgumentIndex = i;
-                listArg.Invoke(argumentContext);
+                InvokeArgument(runContext, argumentContext, listArg, arguments[i], i);
             }
 
             return new List<string>();
@@ -841,10 +981,7 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
         var consumed = Math.Min(arguments.Count, activeArgs.Count);
         for (var i = 0; i < consumed; i++)
         {
-            ctx.Argument = activeArgs[i];
-            ctx.ArgumentValue = arguments[i];
-            ctx.ArgumentIndex = i;
-            activeArgs[i].Invoke(ctx);
+            InvokeArgument(runContext, ctx, activeArgs[i], arguments[i], i);
         }
 
         for (var i = consumed; i < activeArgs.Count; i++)
@@ -853,10 +990,7 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
             if (!argument.Optional)
                 throw new InvalidOperationException($"Missing required argument `{argument.Prototype}` should have been detected.");
 
-            ctx.Argument = argument;
-            ctx.ArgumentValue = null;
-            ctx.ArgumentIndex = i;
-            argument.Invoke(ctx);
+            InvokeArgument(runContext, ctx, argument, null, i);
         }
 
         var remaining = new List<string>();
@@ -875,6 +1009,29 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
         }
 
         return new List<string>();
+    }
+
+    private static void InvokeArgument(
+        CommandRunContext runContext,
+        CommandArgumentContext argumentContext,
+        CommandArgument argument,
+        string? value,
+        int argumentIndex)
+    {
+        ArgumentNullException.ThrowIfNull(runContext);
+        ArgumentNullException.ThrowIfNull(argumentContext);
+        ArgumentNullException.ThrowIfNull(argument);
+
+        argumentContext.Argument = argument;
+        argumentContext.ArgumentValue = value;
+        argumentContext.ArgumentIndex = argumentIndex;
+
+        if (runContext.CaptureParseValues)
+        {
+            runContext.RecordArgumentValue(value);
+        }
+
+        argument.Invoke(argumentContext);
     }
 
     private static int FindTokenIndex(IReadOnlyList<string>? tokens, string token)
