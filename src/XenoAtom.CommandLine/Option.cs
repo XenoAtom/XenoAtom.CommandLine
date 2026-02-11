@@ -120,11 +120,31 @@ public abstract class Option : CommandNode, ICommandNodeDescriptor
     }
 
     /// <summary>
+    /// Gets or sets the environment variable used as a fallback when this option
+    /// is not provided explicitly on the command line.
+    /// </summary>
+    public string? EnvironmentVariable { get; set; }
+
+    /// <summary>
+    /// Gets or sets the delimiter used to split an environment variable value into
+    /// multiple occurrences of this option.
+    /// </summary>
+    /// <remarks>
+    /// When null, the environment variable value is treated as a single occurrence.
+    /// </remarks>
+    public char? EnvironmentVariableDelimiter { get; set; }
+
+    internal bool WasSetOnCommandLine { get; set; }
+
+    internal bool WasSet { get; set; }
+
+    /// <summary>
     /// Invoke this option after the parsing is complete.
     /// </summary>
     /// <param name="c">The parsing context.</param>
     public void Invoke(OptionContext c)
     {
+        WasSet = true;
         OnParseComplete(c);
         c.OptionName = null;
         c.Option = null;
@@ -142,6 +162,12 @@ public abstract class Option : CommandNode, ICommandNodeDescriptor
     /// </summary>
     /// <param name="c">The parsing context.</param>
     protected abstract void OnParseComplete(OptionContext c);
+
+    internal void ResetParsingState()
+    {
+        WasSetOnCommandLine = false;
+        WasSet = false;
+    }
 
     /// <summary>
     /// Parses a value for this option.
@@ -176,8 +202,8 @@ public abstract class Option : CommandNode, ICommandNodeDescriptor
             throw new OptionException(string.Format(c.Command.Config.Localizer($"{e.Message} for option `{{0}}`"), args), c.OptionName!, e)
             {
                 Diagnostic = new CommandDiagnostic(
-                    CommandDiagnosticSource.CommandLine,
-                    null,
+                    c.DiagnosticSource,
+                    c.DiagnosticSourceName,
                     c.Option,
                     c.CommandRunContext.InvocationTokens,
                     tokenSpan)
@@ -185,6 +211,28 @@ public abstract class Option : CommandNode, ICommandNodeDescriptor
         }
 
         return result;
+    }
+
+    internal string GetCanonicalName()
+    {
+        string? longName = null;
+        foreach (var name in Names)
+        {
+            if (name.Length <= 1)
+                continue;
+            if (longName is null || name.Length > longName.Length)
+            {
+                longName = name;
+            }
+        }
+
+        return longName ?? Names[0];
+    }
+
+    internal string GetDisplayName()
+    {
+        var name = GetCanonicalName();
+        return name.Length == 1 ? "-" + name : "--" + name;
     }
     
     private OptionValueType ParsePrototype(out string[]? separators)

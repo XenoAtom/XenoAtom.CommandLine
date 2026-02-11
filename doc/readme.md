@@ -311,6 +311,34 @@ Random other tidbits:
     ```
     It will extract the version from the Assembly Informational Version attribute or the Assembly Version attribute and will display it on the standard output when the option is used.
 
+### Environment Variable Fallback
+
+You can bind an option to an environment variable fallback. The environment variable is only used when the option is not provided explicitly on the command line.
+
+```csharp
+int port = 0;
+var includes = new List<string>();
+
+var app = new CommandApp("myexe")
+{
+    { "p|port=", "Server {PORT}", (int v) => port = v, envVar: "MY_PORT" },
+    { "i|include=", "Include {PATH}", includes, envVar: "MY_INCLUDES", envVarDelimiter: Path.PathSeparator },
+    (ctx, _) => ValueTask.FromResult(0)
+};
+```
+
+Rules:
+- Fallback applies to options only (not positional arguments).
+- For value options, fallback values run through the same parse pipeline as command-line values.
+- For flag options (`OptionValueType.None`), accepted values are `true`/`false`, `1`/`0`, `yes`/`no` (case-insensitive).
+- Fallback is skipped when `--help` is requested.
+
+Default help output includes the environment variable name:
+
+```
+  -p, --port=PORT            Server PORT [env: MY_PORT]
+```
+
 ## Command Arguments
 
 In addition to options (prefixed with `-`, `--`, `/`), you can declare positional command arguments.
@@ -603,6 +631,7 @@ await app.RunAsync(args, config);
 - `CommandConfig.StrictOptionParsing` (default: `true`) makes unknown `-` / `--` option-like tokens (e.g. `--unknown`) fail early as an error instead of being treated as positional arguments.
   - This does not apply to `/`-prefixed tokens, to allow POSIX-style absolute paths like `/mnt/home` to be passed as positional arguments.
   - Use `--` to pass values that start with `-` (e.g. `myexe -- -5`).
+- `CommandConfig.EnvironmentVariableResolver` lets you customize environment-variable lookup for option fallbacks (defaults to `Environment.GetEnvironmentVariable`).
 - `CommandConfig.OutputFactory` lets you replace how library output is rendered (help/errors/version/license). The factory receives the effective `CommandRunConfig` so renderers can use the configured `Out`/`Error` writers.
 - `CommandApp.LicenseHeader` (combined with `CommandRunConfig.ShowLicenseOnRun`) lets you print a license banner once before executing the selected command.
 

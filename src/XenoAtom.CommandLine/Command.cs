@@ -188,6 +188,8 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
                 return 0;
             }
 
+            ApplyEnvironmentVariableFallback(commandContext);
+
             if (SubCommands.Count > 0 && extra.Count > 0)
             {
                 var subCommandName = extra[0];
@@ -370,13 +372,20 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
 
             if (p is ICommandNodeDescriptor descriptor)
             {
+                var description = descriptor.Description;
+                if (p is Option optionDescriptor && !string.IsNullOrWhiteSpace(optionDescriptor.EnvironmentVariable))
+                {
+                    description = description is null
+                        ? $"[env: {optionDescriptor.EnvironmentVariable}]"
+                        : $"{description} [env: {optionDescriptor.EnvironmentVariable}]";
+                }
+
                 if (isIndented)
                 {
-                    WriteDescription(o, descriptor.Description, new string(' ', runConfig.OptionWidth + 2), runConfig.DescriptionFirstWidth, runConfig.DescriptionRemWidth);
+                    WriteDescription(o, description, new string(' ', runConfig.OptionWidth + 2), runConfig.DescriptionFirstWidth, runConfig.DescriptionRemWidth);
                 }
                 else
                 {
-                    var description = descriptor.Description;
                     if (description is null && descriptor is CommandUsage)
                     {
                         description = GetDefaultUsage(runConfig);
@@ -407,6 +416,7 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
     private List<string> ParseOptions(CommandRunContext runContext, IEnumerable<string> arguments)
     {
         ArgumentNullException.ThrowIfNull(arguments);
+        ResetOptionParsingState();
 
         OptionContext c = CreateOptionContext(runContext);
         c.OptionIndex = -1;
@@ -470,6 +480,128 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
             c.Option.Invoke(c);
 
         return unprocessed;
+    }
+
+    private void ResetOptionParsingState()
+    {
+        foreach (var option in GetUniqueOptionsCore(this))
+        {
+            option.ResetParsingState();
+        }
+    }
+
+    private void ApplyEnvironmentVariableFallback(CommandRunContext runContext)
+    {
+        var optionContext = CreateOptionContext(runContext);
+        optionContext.OptionIndex = -1;
+
+        foreach (var option in GetUniqueOptionsCore(this))
+        {
+            if (option.WasSetOnCommandLine)
+                continue;
+            if (!option.IsActive())
+                continue;
+
+            var envVarName = option.EnvironmentVariable;
+            if (string.IsNullOrWhiteSpace(envVarName))
+                continue;
+
+            var envValue = Config.EnvironmentVariableResolver(envVarName);
+            if (string.IsNullOrWhiteSpace(envValue))
+                continue;
+
+            optionContext.DiagnosticSource = CommandDiagnosticSource.EnvironmentVariable;
+            optionContext.DiagnosticSourceName = envVarName;
+            optionContext.OptionName = option.GetDisplayName();
+            optionContext.Option = option;
+            optionContext.OptionValues.Clear();
+
+            try
+            {
+                if (option.OptionValueType == OptionValueType.None)
+                {
+                    if (!TryParseBooleanEnvironmentValue(envValue!, out var enabled))
+                    {
+                        throw CreateEnvironmentOptionException(
+                            option,
+                            envVarName,
+                            runContext.InvocationTokens,
+                            Config.Localizer("The value must be a boolean (`true`, `false`, `1`, `0`, `yes`, `no`)."));
+                    }
+
+                    if (!enabled)
+                        continue;
+
+                    optionContext.OptionValues.Add(option.GetCanonicalName());
+                    option.Invoke(optionContext);
+                    continue;
+                }
+
+                if (option.EnvironmentVariableDelimiter is not char delimiter)
+                {
+                    ParseValue(envValue, optionContext);
+                }
+                else
+                {
+                    var values = envValue!.Split(delimiter, StringSplitOptions.RemoveEmptyEntries);
+                    if (values.Length == 0)
+                        continue;
+
+                    foreach (var value in values)
+                    {
+                        optionContext.Option ??= option;
+                        optionContext.OptionName ??= option.GetDisplayName();
+                        ParseValue(value, optionContext);
+                    }
+                }
+
+                if (optionContext.Option != null)
+                {
+                    optionContext.Option.Invoke(optionContext);
+                }
+            }
+            catch (OptionException ex)
+            {
+                throw CreateEnvironmentOptionException(option, envVarName, runContext.InvocationTokens, ex.Message, ex);
+            }
+        }
+    }
+
+    private OptionException CreateEnvironmentOptionException(Option option, string environmentVariableName, IReadOnlyList<string>? tokens, string message, Exception? innerException = null)
+    {
+        var optionDisplayName = option.GetDisplayName();
+        var formattedMessage = Config.Localizer($"Invalid value for option `{optionDisplayName}` (from environment variable `{environmentVariableName}`): {message}");
+        var diagnostic = new CommandDiagnostic(
+            CommandDiagnosticSource.EnvironmentVariable,
+            environmentVariableName,
+            option,
+            tokens,
+            null);
+        return innerException == null
+            ? new OptionException(formattedMessage, optionDisplayName) { Diagnostic = diagnostic }
+            : new OptionException(formattedMessage, optionDisplayName, innerException) { Diagnostic = diagnostic };
+    }
+
+    private static bool TryParseBooleanEnvironmentValue(string value, out bool enabled)
+    {
+        if (value.Equals("true", StringComparison.OrdinalIgnoreCase) ||
+            value.Equals("1", StringComparison.OrdinalIgnoreCase) ||
+            value.Equals("yes", StringComparison.OrdinalIgnoreCase))
+        {
+            enabled = true;
+            return true;
+        }
+
+        if (value.Equals("false", StringComparison.OrdinalIgnoreCase) ||
+            value.Equals("0", StringComparison.OrdinalIgnoreCase) ||
+            value.Equals("no", StringComparison.OrdinalIgnoreCase))
+        {
+            enabled = false;
+            return true;
+        }
+
+        enabled = false;
+        return false;
     }
 
     private List<string> ParseArgumentsAndDefaultOption(CommandRunContext runContext, List<string> arguments)
@@ -760,6 +892,7 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
         Option? p;
         if (TryGetOption(name, out p) && p.IsActive())
         {
+            p.WasSetOnCommandLine = true;
             c.OptionName = sepIndex < 0 ? argument : argument.Substring(0, flagLength + name.Length);
             c.Option = p;
             switch (p.OptionValueType)
@@ -826,6 +959,7 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
         if (!TryGetOption(baseName, out var p) || !p.IsActive())
             return false;
 
+        p.WasSetOnCommandLine = true;
         string? v = last == '+' ? option : null;
         c.OptionName = option;
         c.Option = p;
@@ -946,12 +1080,14 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
             switch (p.OptionValueType)
             {
                 case OptionValueType.None:
+                    p.WasSetOnCommandLine = true;
                     bundleString ??= bundle.ToString();
                     Invoke(c, string.Concat('-', shortName), bundleString, p);
                     break;
                 case OptionValueType.Optional:
                 case OptionValueType.Required:
                     {
+                        p.WasSetOnCommandLine = true;
                         string v = bundle[(i + 1)..].ToString();
                         c.Option = p;
                         c.OptionName = string.Concat('-', shortName);
@@ -1204,13 +1340,21 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
 
     internal static IEnumerable<Option> GetActiveVisibleUniqueOptionsCore(Command command)
     {
+        foreach (var option in GetUniqueOptionsCore(command))
+        {
+            if (!option.IsActive() || option.Hidden)
+                continue;
+            yield return option;
+        }
+    }
+
+    internal static IEnumerable<Option> GetUniqueOptionsCore(Command command)
+    {
         var seen = new HashSet<Option>();
         foreach (var entry in command.Options)
         {
             var option = entry.Value;
             if (!seen.Add(option))
-                continue;
-            if (!option.IsActive() || option.Hidden)
                 continue;
             yield return option;
         }

@@ -40,6 +40,10 @@ public class OptionContext
     /// </summary>
     public int OptionIndex { get; set; }
 
+    internal CommandDiagnosticSource DiagnosticSource { get; set; } = CommandDiagnosticSource.CommandLine;
+
+    internal string? DiagnosticSourceName { get; set; }
+
     /// <summary>
     /// Gets the associated command.
     /// </summary>

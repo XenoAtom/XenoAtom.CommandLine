@@ -31,6 +31,11 @@ public record CommandConfig()
     public bool StrictOptionParsing { get; init; } = true;
 
     /// <summary>
+    /// Gets a delegate used to resolve environment variables for option fallbacks.
+    /// </summary>
+    public Func<string, string?> EnvironmentVariableResolver { get; init; } = Environment.GetEnvironmentVariable;
+
+    /// <summary>
     /// Gets a factory used to create the output handler that renders help, errors,
     /// version, and other user-visible output for an invocation.
     /// </summary>

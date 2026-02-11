@@ -22,6 +22,7 @@ It is a fork of the excellent [NDesk.Options](http://www.ndesk.org/Options)/[Mon
   - **Multiple values:** `-i foo -i bar`
   - **Key/value pairs:** `-DMACRO=VALUE`
 - **Built-ins:** `--help` and `--version`
+- **Environment variable fallbacks:** bind options to env vars (with optional delimiter splitting)
 - **Pluggable output rendering:** replace built-in help/error/version/license rendering via `CommandConfig.OutputFactory`
 - **Better errors by default**
   - **Strict unknown `-` / `--` options** (`CommandConfig.StrictOptionParsing`)

@@ -151,6 +151,38 @@ public static class CommandExtensions
     }
 
     /// <summary>
+    /// Adds an option to this command container with an environment variable fallback.
+    /// </summary>
+    /// <typeparam name="TCommand">Type of the command container.</typeparam>
+    /// <param name="command">The command to add the option to.</param>
+    /// <param name="prototype">The prototype of the option. E.g. "v|version".</param>
+    /// <param name="description">The help description for this option.</param>
+    /// <param name="action">The associated action.</param>
+    /// <param name="envVar">The environment variable used as a fallback value.</param>
+    /// <param name="envVarDelimiter">Optional delimiter used to split multiple fallback values.</param>
+    /// <param name="hidden">A boolean indicating if this option is hidden from help.</param>
+    /// <returns>The command container.</returns>
+    public static TCommand Add<TCommand>(
+        this TCommand command,
+        string prototype,
+        string? description,
+        Action<string?> action,
+        string envVar,
+        char? envVarDelimiter = null,
+        bool hidden = false)
+        where TCommand : CommandContainer
+    {
+        ArgumentNullException.ThrowIfNull(action);
+        if (CommandArgument.IsArgumentPrototype(prototype))
+            throw new ArgumentException("Environment variable fallback is only supported for options, not positional arguments.", nameof(prototype));
+
+        var option = new ActionOption(prototype, description, 1, delegate (OptionValueCollection v) { action(v[0]); }, hidden);
+        ConfigureOptionEnvironment(option, envVar, envVarDelimiter);
+        command.Add(option);
+        return command;
+    }
+
+    /// <summary>
     /// Adds to this command container an option which expect a pair of string value.
     /// </summary>
     /// <typeparam name="TCommand">Type of the command container.</typeparam>
@@ -239,6 +271,38 @@ public static class CommandExtensions
     }
 
     /// <summary>
+    /// Adds an option which expects a specified type for its value with an environment variable fallback.
+    /// </summary>
+    /// <typeparam name="TCommand">Type of the command container.</typeparam>
+    /// <typeparam name="T">The value type of the option.</typeparam>
+    /// <param name="command">The command to add the option to.</param>
+    /// <param name="prototype">The prototype of the option. E.g "v|version".</param>
+    /// <param name="description">The help description for this option.</param>
+    /// <param name="action">The associated action.</param>
+    /// <param name="envVar">The environment variable used as a fallback value.</param>
+    /// <param name="envVarDelimiter">Optional delimiter used to split multiple fallback values.</param>
+    /// <returns>The command container.</returns>
+    public static TCommand Add<TCommand, T>(
+        this TCommand command,
+        string prototype,
+        string? description,
+        Action<T> action,
+        string envVar,
+        char? envVarDelimiter = null)
+        where TCommand : CommandContainer
+        where T : ISpanParsable<T>
+    {
+        ArgumentNullException.ThrowIfNull(action);
+        if (CommandArgument.IsArgumentPrototype(prototype))
+            throw new ArgumentException("Environment variable fallback is only supported for options, not positional arguments.", nameof(prototype));
+
+        var option = new ActionOption<T>(prototype, description, action);
+        ConfigureOptionEnvironment(option, envVar, envVarDelimiter);
+        command.Add(option);
+        return command;
+    }
+
+    /// <summary>
     /// Adds to this command container an option which expects a specified type and will add the value to the specified list.
     /// </summary>
     /// <typeparam name="TCommand">Type of the command container.</typeparam>
@@ -277,6 +341,39 @@ public static class CommandExtensions
         }
 
         command.Add(new ActionOption<T>(prototype, description, list.Add));
+        return command;
+    }
+
+    /// <summary>
+    /// Adds an option which expects a specified type and appends parsed values to the specified list,
+    /// with an environment variable fallback.
+    /// </summary>
+    /// <typeparam name="TCommand">Type of the command container.</typeparam>
+    /// <typeparam name="T">The value type of the option.</typeparam>
+    /// <param name="command">The command to add the option to.</param>
+    /// <param name="prototype">The prototype of the option. E.g "v|version".</param>
+    /// <param name="description">The help description for this option.</param>
+    /// <param name="list">The associated list receiving option values.</param>
+    /// <param name="envVar">The environment variable used as a fallback value.</param>
+    /// <param name="envVarDelimiter">Optional delimiter used to split multiple fallback values.</param>
+    /// <returns>The command container.</returns>
+    public static TCommand Add<TCommand, T>(
+        this TCommand command,
+        string prototype,
+        string? description,
+        ICollection<T> list,
+        string envVar,
+        char? envVarDelimiter = null)
+        where TCommand : CommandContainer
+        where T : ISpanParsable<T>
+    {
+        ArgumentNullException.ThrowIfNull(list);
+        if (CommandArgument.IsArgumentPrototype(prototype))
+            throw new ArgumentException("Environment variable fallback is only supported for options, not positional arguments.", nameof(prototype));
+
+        var option = new ActionOption<T>(prototype, description, list.Add);
+        ConfigureOptionEnvironment(option, envVar, envVarDelimiter);
+        command.Add(option);
         return command;
     }
 
@@ -330,6 +427,14 @@ public static class CommandExtensions
         ArgumentNullException.ThrowIfNull(source);
         command.Add(source);
         return command;
+    }
+
+    private static void ConfigureOptionEnvironment(Option option, string envVar, char? envVarDelimiter)
+    {
+        ArgumentNullException.ThrowIfNull(option);
+        ArgumentException.ThrowIfNullOrWhiteSpace(envVar);
+        option.EnvironmentVariable = envVar;
+        option.EnvironmentVariableDelimiter = envVarDelimiter;
     }
     
     private sealed class ActionOption<T> : Option
