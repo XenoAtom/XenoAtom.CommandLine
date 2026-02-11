@@ -16,10 +16,13 @@
   <Folder Name="/20-samples/">
     <Project Path="../samples/AdvancedApp/AdvancedApp.csproj" />
     <Project Path="../samples/HelloWorld/HelloWorld.csproj" />
+    <Project Path="../samples/TerminalVisualHelp/TerminalVisualHelp.csproj" />
   </Folder>
   <Folder Name="/30-src/">
     <Project Path="XenoAtom.CommandLine.Benchmarks/XenoAtom.CommandLine.Benchmarks.csproj" />
     <Project Path="XenoAtom.CommandLine.Tests/XenoAtom.CommandLine.Tests.csproj" />
+    <Project Path="XenoAtom.CommandLine.Terminal.Tests/XenoAtom.CommandLine.Terminal.Tests.csproj" />
+    <Project Path="XenoAtom.CommandLine.Terminal/XenoAtom.CommandLine.Terminal.csproj" />
     <Project Path="XenoAtom.CommandLine/XenoAtom.CommandLine.csproj" />
   </Folder>
 </Solution>

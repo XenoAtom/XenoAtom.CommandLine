@@ -561,6 +561,51 @@ app.ShowHelp(new MyOutputRenderer());
 
 `CommandOutputHelper` provides utility methods for common renderer tasks (`GetVisibleOptions`, `GetVisibleArguments`, `GetDescriptionText`, `RenderInvocation`, `RenderUnderline`, ...).
 
+### Terminal and Terminal.UI output package
+
+For colored help/errors and visual help rendering, use the optional `XenoAtom.CommandLine.Terminal` package (targets `net10.0`):
+
+```csharp
+using XenoAtom.CommandLine;
+using XenoAtom.CommandLine.Terminal;
+using TerminalHost = XenoAtom.Terminal.Terminal;
+
+using var session = TerminalHost.Open();
+
+var app = new CommandApp("myexe", config: new CommandConfig
+{
+    OutputFactory = _ => new TerminalVisualCommandOutput(new TerminalVisualOutputOptions
+    {
+        Help = new TerminalHelpVisualOptions
+        {
+            UseTableForOptions = true,
+            UseTableForArguments = true,
+            UseTableForCommands = true,
+        }
+    })
+});
+```
+
+Available renderers:
+
+- `TerminalMarkupCommandOutput`: colored markup output for help/errors/version/license
+- `TerminalVisualCommandOutput`: visual help rendering via `Terminal.Write(Visual)` and markup-based errors
+
+You can also generate a standalone visual for fullscreen apps:
+
+```csharp
+var helpVisual = app.ToHelpVisual(new TerminalHelpVisualOptions
+{
+    OptionMarkupStyle = "[accent]",
+});
+
+TerminalHost.Write(helpVisual);
+```
+
+Related sample:
+
+- `samples/TerminalVisualHelp/Program.cs`
+
 ## Actions
 
 A `CommandApp` and a `Command` are meant to be executed. You can add a single action to a `CommandApp` or a `Command` that will be executed when the command-line after the options and arguments are parsed.

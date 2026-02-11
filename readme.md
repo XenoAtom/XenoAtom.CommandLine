@@ -27,6 +27,7 @@ It is a fork of the excellent [NDesk.Options](http://www.ndesk.org/Options)/[Mon
 - **Option constraints:** declare mutually-exclusive and requires relationships between options
 - **Test-friendly parse API:** inspect parse results via `CommandApp.Parse(...)` without invoking command actions
 - **Pluggable output rendering:** replace built-in help/error/version/license rendering via `CommandConfig.OutputFactory`
+  - Optional **`XenoAtom.CommandLine.Terminal`** package (`net10.0`) for colored markup output and Terminal.UI visual help (`TerminalVisualCommandOutput`, `Command.ToHelpVisual()`)
 - **Better errors by default**
   - **Strict unknown `-` / `--` options** (`CommandConfig.StrictOptionParsing`)
   - **Helpful diagnostics:** suggestions + “inactive in this context” hints
@@ -156,6 +157,25 @@ Committing with name=John, age=50
 Commit message: Hello!
 Commit message: World!
 ```
+
+## 🎨 Terminal / Visual Output
+
+For richer CLI output, use the optional `XenoAtom.CommandLine.Terminal` package:
+
+```csharp
+using XenoAtom.CommandLine;
+using XenoAtom.CommandLine.Terminal;
+using TerminalHost = XenoAtom.Terminal.Terminal;
+
+using var session = TerminalHost.Open();
+
+var app = new CommandApp("myexe", config: new CommandConfig
+{
+    OutputFactory = _ => new TerminalVisualCommandOutput()
+});
+```
+
+This package also provides `command.ToHelpVisual(...)` for embedding help in Terminal.UI apps.
 
 ## 📃 User Guide
 

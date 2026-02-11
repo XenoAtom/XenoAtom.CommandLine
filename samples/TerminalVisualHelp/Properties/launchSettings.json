@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "TerminalVisualHelp": {
+      "commandName": "Project",
+      "commandLineArgs": "--visual-help hello --help"
+    }
+  }
+}
