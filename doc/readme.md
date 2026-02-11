@@ -339,6 +339,35 @@ Default help output includes the environment variable name:
   -p, --port=PORT            Server PORT [env: MY_PORT]
 ```
 
+### Value Validation
+
+You can validate parsed option and argument values at parse time by using the `validate` parameter:
+
+```csharp
+int port = 0;
+string? email = null;
+string? input = null;
+
+var app = new CommandApp("myexe")
+{
+    { "p|port=", "Server {PORT}", (int v) => port = v, validate: Validate.Range(1, 65535) },
+    { "e|email=", "Contact {EMAIL}", v => email = v, validate: Validate.That<string>(v => v.Contains('@'), "The value must be a valid email address.") },
+    { "<input>", "Input {FILE}", v => input = v, validate: Validate.FileExists() },
+    (ctx, _) => ValueTask.FromResult(0)
+};
+```
+
+Built-in validators include:
+- `Validate.Range(min, max)`
+- `Validate.Positive<T>()` / `Validate.NonNegative<T>()`
+- `Validate.NonEmpty()`
+- `Validate.Matches(...)`
+- `Validate.OneOf(...)`
+- `Validate.FileExists()` / `Validate.DirectoryExists()` / `Validate.PathExists()`
+- `Validate.Chain(...)` for composition
+
+Validation errors are formatted consistently and routed through the command output system.
+
 ## Command Arguments
 
 In addition to options (prefixed with `-`, `--`, `/`), you can declare positional command arguments.

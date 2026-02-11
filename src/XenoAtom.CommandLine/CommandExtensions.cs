@@ -183,6 +183,52 @@ public static class CommandExtensions
     }
 
     /// <summary>
+    /// Adds an option or argument with validation.
+    /// </summary>
+    /// <typeparam name="TCommand">Type of the command container.</typeparam>
+    /// <param name="command">The command to add the option or argument to.</param>
+    /// <param name="prototype">The prototype of the option or argument.</param>
+    /// <param name="description">The help description.</param>
+    /// <param name="action">The associated action.</param>
+    /// <param name="validate">The optional validator.</param>
+    /// <param name="envVar">The optional environment variable fallback (options only).</param>
+    /// <param name="envVarDelimiter">Optional delimiter used to split multiple fallback values.</param>
+    /// <param name="hidden">A boolean indicating if this option or argument is hidden from help.</param>
+    /// <returns>The command container.</returns>
+    public static TCommand Add<TCommand>(
+        this TCommand command,
+        string prototype,
+        string? description,
+        Action<string?> action,
+        OptionValidator<string>? validate,
+        string? envVar = null,
+        char? envVarDelimiter = null,
+        bool hidden = false)
+        where TCommand : CommandContainer
+    {
+        ArgumentNullException.ThrowIfNull(action);
+        if (string.Equals(prototype, "<>", StringComparison.Ordinal))
+            throw new ArgumentException("The remainder argument '<>' cannot be bound to an action. Add it with { \"<>\", \"description\" } and read it from the command action arguments.", nameof(prototype));
+
+        if (CommandArgument.IsArgumentPrototype(prototype))
+        {
+            if (!string.IsNullOrWhiteSpace(envVar))
+                throw new ArgumentException("Environment variable fallback is only supported for options, not positional arguments.", nameof(envVar));
+
+            command.Add(new ActionArgument(prototype, description, action, hidden, validate));
+            return command;
+        }
+
+        var option = new ActionOption(prototype, description, 1, delegate (OptionValueCollection v) { action(v[0]); }, hidden, validate);
+        if (!string.IsNullOrWhiteSpace(envVar))
+        {
+            ConfigureOptionEnvironment(option, envVar, envVarDelimiter);
+        }
+        command.Add(option);
+        return command;
+    }
+
+    /// <summary>
     /// Adds to this command container an option which expect a pair of string value.
     /// </summary>
     /// <typeparam name="TCommand">Type of the command container.</typeparam>
@@ -303,6 +349,53 @@ public static class CommandExtensions
     }
 
     /// <summary>
+    /// Adds an option or argument with validation for typed values.
+    /// </summary>
+    /// <typeparam name="TCommand">Type of the command container.</typeparam>
+    /// <typeparam name="T">The value type.</typeparam>
+    /// <param name="command">The command to add the node to.</param>
+    /// <param name="prototype">The prototype of the option or argument.</param>
+    /// <param name="description">The help description.</param>
+    /// <param name="action">The associated action.</param>
+    /// <param name="validate">The optional validator.</param>
+    /// <param name="envVar">The optional environment variable fallback (options only).</param>
+    /// <param name="envVarDelimiter">Optional delimiter used to split multiple fallback values.</param>
+    /// <returns>The command container.</returns>
+    public static TCommand Add<TCommand, T>(
+        this TCommand command,
+        string prototype,
+        string? description,
+        Action<T> action,
+        OptionValidator<T>? validate,
+        string? envVar = null,
+        char? envVarDelimiter = null)
+        where TCommand : CommandContainer
+        where T : ISpanParsable<T>
+    {
+        ArgumentNullException.ThrowIfNull(action);
+
+        if (string.Equals(prototype, "<>", StringComparison.Ordinal))
+            throw new ArgumentException("The remainder argument '<>' cannot be bound to an action. Add it with { \"<>\", \"description\" } and read it from the command action arguments.", nameof(prototype));
+
+        if (CommandArgument.IsArgumentPrototype(prototype))
+        {
+            if (!string.IsNullOrWhiteSpace(envVar))
+                throw new ArgumentException("Environment variable fallback is only supported for options, not positional arguments.", nameof(envVar));
+            command.Add(new ActionArgument<T>(prototype, description, action, validate));
+            return command;
+        }
+
+        var option = new ActionOption<T>(prototype, description, action, validate);
+        if (!string.IsNullOrWhiteSpace(envVar))
+        {
+            ConfigureOptionEnvironment(option, envVar, envVarDelimiter);
+        }
+
+        command.Add(option);
+        return command;
+    }
+
+    /// <summary>
     /// Adds to this command container an option which expects a specified type and will add the value to the specified list.
     /// </summary>
     /// <typeparam name="TCommand">Type of the command container.</typeparam>
@@ -378,6 +471,53 @@ public static class CommandExtensions
     }
 
     /// <summary>
+    /// Adds an option or argument that appends values to a list with optional validation.
+    /// </summary>
+    /// <typeparam name="TCommand">Type of the command container.</typeparam>
+    /// <typeparam name="T">The value type.</typeparam>
+    /// <param name="command">The command to add the node to.</param>
+    /// <param name="prototype">The prototype of the option or argument.</param>
+    /// <param name="description">The help description.</param>
+    /// <param name="list">The list that receives parsed values.</param>
+    /// <param name="validate">The optional validator.</param>
+    /// <param name="envVar">The optional environment variable fallback (options only).</param>
+    /// <param name="envVarDelimiter">Optional delimiter used to split multiple fallback values.</param>
+    /// <returns>The command container.</returns>
+    public static TCommand Add<TCommand, T>(
+        this TCommand command,
+        string prototype,
+        string? description,
+        ICollection<T> list,
+        OptionValidator<T>? validate,
+        string? envVar = null,
+        char? envVarDelimiter = null)
+        where TCommand : CommandContainer
+        where T : ISpanParsable<T>
+    {
+        ArgumentNullException.ThrowIfNull(list);
+
+        if (string.Equals(prototype, "<>", StringComparison.Ordinal))
+            throw new ArgumentException("The remainder argument '<>' cannot be bound to a list. Add it with { \"<>\", \"description\" } and read it from the command action arguments.", nameof(prototype));
+
+        if (CommandArgument.IsArgumentPrototype(prototype))
+        {
+            if (!string.IsNullOrWhiteSpace(envVar))
+                throw new ArgumentException("Environment variable fallback is only supported for options, not positional arguments.", nameof(envVar));
+            command.Add(new ActionArgument<T>(prototype, description, list.Add, validate));
+            return command;
+        }
+
+        var option = new ActionOption<T>(prototype, description, list.Add, validate);
+        if (!string.IsNullOrWhiteSpace(envVar))
+        {
+            ConfigureOptionEnvironment(option, envVar, envVarDelimiter);
+        }
+
+        command.Add(option);
+        return command;
+    }
+
+    /// <summary>
     /// Adds to this command container an option which expect a pair of key/value.
     /// </summary>
     /// <typeparam name="TCommand">Type of the command container.</typeparam>
@@ -441,17 +581,31 @@ public static class CommandExtensions
         where T : ISpanParsable<T>
     {
         private readonly Action<T> _action;
+        private readonly OptionValidator<T>? _validate;
 
-        public ActionOption(string prototype, string? description, Action<T> action)
-            : base(prototype, description, 1)
+        public ActionOption(string prototype, string? description, Action<T> action, OptionValidator<T>? validate = null, bool hidden = false)
+            : base(prototype, description, 1, hidden)
         {
             ArgumentNullException.ThrowIfNull(action);
             _action = action;
+            _validate = validate;
         }
 
         protected override void OnParseComplete(OptionContext c)
         {
-            _action(Parse<T>(c.OptionValues[0], c));
+            var rawValue = c.OptionValues[0];
+            var parsedValue = Parse<T>(rawValue, c);
+
+            if (_validate is not null && rawValue is not null)
+            {
+                var validationError = _validate(parsedValue);
+                if (validationError is not null)
+                {
+                    throw CreateOptionValidationException(c, validationError);
+                }
+            }
+
+            _action(parsedValue);
         }
     }
 
@@ -477,16 +631,27 @@ public static class CommandExtensions
     private sealed class ActionOption : Option
     {
         private readonly Action<OptionValueCollection> _action;
+        private readonly OptionValidator<string>? _validate;
 
-        public ActionOption(string prototype, string? description, int count, Action<OptionValueCollection> action, bool hidden)
+        public ActionOption(string prototype, string? description, int count, Action<OptionValueCollection> action, bool hidden, OptionValidator<string>? validate = null)
             : base(prototype, description, count, hidden)
         {
             ArgumentNullException.ThrowIfNull(action);
             this._action = action;
+            _validate = validate;
         }
 
         protected override void OnParseComplete(OptionContext c)
         {
+            if (_validate is not null && c.OptionValues.Count > 0 && c.OptionValues[0] is not null)
+            {
+                var validationError = _validate(c.OptionValues[0]!);
+                if (validationError is not null)
+                {
+                    throw CreateOptionValidationException(c, validationError);
+                }
+            }
+
             _action(c.OptionValues);
         }
     }
@@ -499,15 +664,26 @@ public static class CommandExtensions
     private sealed class ActionArgument : CommandArgument
     {
         private readonly Action<string?> _action;
+        private readonly OptionValidator<string>? _validate;
 
-        public ActionArgument(string prototype, string? description, Action<string?> action, bool hidden) : base(prototype, description, hidden)
+        public ActionArgument(string prototype, string? description, Action<string?> action, bool hidden, OptionValidator<string>? validate = null) : base(prototype, description, hidden)
         {
             ArgumentNullException.ThrowIfNull(action);
             _action = action;
+            _validate = validate;
         }
 
         protected override void OnParseComplete(CommandArgumentContext c)
         {
+            if (_validate is not null && c.ArgumentValue is not null)
+            {
+                var validationError = _validate(c.ArgumentValue);
+                if (validationError is not null)
+                {
+                    throw CreateArgumentValidationException(c, validationError);
+                }
+            }
+
             _action(c.ArgumentValue);
         }
     }
@@ -516,11 +692,13 @@ public static class CommandExtensions
         where T : ISpanParsable<T>
     {
         private readonly Action<T> _action;
+        private readonly OptionValidator<T>? _validate;
 
-        public ActionArgument(string prototype, string? description, Action<T> action) : base(prototype, description)
+        public ActionArgument(string prototype, string? description, Action<T> action, OptionValidator<T>? validate = null) : base(prototype, description)
         {
             ArgumentNullException.ThrowIfNull(action);
             _action = action;
+            _validate = validate;
         }
 
         protected override void OnParseComplete(CommandArgumentContext c)
@@ -530,7 +708,17 @@ public static class CommandExtensions
                 return;
             }
 
-            _action(Parse<T>(c.ArgumentValue, c));
+            var parsedValue = Parse<T>(c.ArgumentValue, c);
+            if (_validate is not null)
+            {
+                var validationError = _validate(parsedValue);
+                if (validationError is not null)
+                {
+                    throw CreateArgumentValidationException(c, validationError);
+                }
+            }
+
+            _action(parsedValue);
         }
     }
 
@@ -543,5 +731,61 @@ public static class CommandExtensions
         protected override void OnParseComplete(CommandArgumentContext c)
         {
         }
+    }
+
+    private static OptionException CreateOptionValidationException(OptionContext context, string validationError)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentException.ThrowIfNullOrWhiteSpace(validationError);
+
+        var option = context.Option;
+        var optionDisplayName = option?.GetDisplayName() ?? context.OptionName ?? "option";
+        var fromEnvironment = context.DiagnosticSource == CommandDiagnosticSource.EnvironmentVariable &&
+                              !string.IsNullOrWhiteSpace(context.DiagnosticSourceName);
+
+        var message = fromEnvironment
+            ? context.Command.Config.Localizer($"Invalid value for option `{optionDisplayName}` (from environment variable `{context.DiagnosticSourceName}`): {validationError}")
+            : context.Command.Config.Localizer($"Invalid value for option `{optionDisplayName}`: {validationError}");
+
+        CommandTokenSpan? span = null;
+        if (context.OptionIndex >= 0)
+        {
+            var raw = context.OptionValues.Count > 0 ? context.OptionValues[0] : null;
+            span = new CommandTokenSpan(context.OptionIndex, 0, Math.Max(1, raw?.Length ?? 0));
+        }
+
+        return new OptionException(message, optionDisplayName)
+        {
+            Diagnostic = new CommandDiagnostic(
+                context.DiagnosticSource,
+                context.DiagnosticSourceName,
+                option,
+                context.CommandRunContext.InvocationTokens,
+                span)
+        };
+    }
+
+    private static CommandArgumentException CreateArgumentValidationException(CommandArgumentContext context, string validationError)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentException.ThrowIfNullOrWhiteSpace(validationError);
+
+        var argumentDisplayName = context.Argument?.GetDisplayName() ?? context.Argument?.Prototype ?? "argument";
+        var message = context.Command.Config.Localizer($"Invalid value for argument `{argumentDisplayName}`: {validationError}");
+        CommandTokenSpan? span = null;
+        if (context.ArgumentIndex >= 0)
+        {
+            span = new CommandTokenSpan(context.ArgumentIndex, 0, Math.Max(1, context.ArgumentValue?.Length ?? 0));
+        }
+
+        return new CommandArgumentException(message, argumentDisplayName)
+        {
+            Diagnostic = new CommandDiagnostic(
+                CommandDiagnosticSource.CommandLine,
+                null,
+                context.Argument,
+                context.CommandRunContext.InvocationTokens,
+                span)
+        };
     }
 }
