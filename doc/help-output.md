@@ -259,6 +259,7 @@ For custom outputs and custom command nodes, the following contracts apply:
 - `ICommandNodeDescriptor.Description` should be plain help text intent (not renderer-specific markup).
 - `IHelpPreformattedContent.WriteTo(...)` is the preformatted contract for verbatim text output.
 - If a node provides both interfaces, text outputs should prefer `IHelpPreformattedContent` and use `Description` as fallback when preformatted rendering is not supported.
+- Public extensibility is centered on `ICommandOutput` and these descriptor interfaces; broader custom node internals are intentionally kept as an implementation boundary for official package integrations.
 
 ## Terminal Package
 
