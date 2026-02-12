@@ -118,7 +118,7 @@ var app = new CommandApp("myexe")
 {
     { "D:", "Define {0:NAME} and optional {1:VALUE}", (key, value) =>
     {
-        if (key is null) throw new OptionException("Missing macro name", "D");
+        if (key is null) throw new CommandOptionException("Missing macro name", "D");
         Console.WriteLine($"Macro: {key} = {value}");
     }},
     { "I|macro=", "Define {0:NAME} and required {1:VALUE}", (key, value) =>

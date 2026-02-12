@@ -167,7 +167,7 @@ public class CommandOutputTests
 
         Assert.AreEqual(1, result);
         Assert.AreEqual(1, output.ErrorCalls);
-        Assert.IsInstanceOfType<OptionException>(output.Errors[0]);
+        Assert.IsInstanceOfType<CommandOptionException>(output.Errors[0]);
         Assert.IsNotNull(output.Errors[0].Diagnostic);
         var diagnostic = output.Errors[0].Diagnostic!.Value;
         Assert.AreEqual(CommandDiagnosticSource.CommandLine, diagnostic.Source);

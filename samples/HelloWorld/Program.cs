@@ -35,7 +35,7 @@ var commandApp = new CommandApp("myexe", config: new CommandConfig
     { "visual", "Render help/errors with terminal visual output", v => showVisual = v is not null },
     { "D:", "Defines a {0:name} and optional {1:value}", (key, value) =>
         {
-            if (key is null) throw new OptionException("The key is mandatory for a define", "D");
+            if (key is null) throw new CommandOptionException("The key is mandatory for a define", "D");
             keyValues.Add((key, value));
         }},
     {"n|name=", "Your {NAME}", v => name = v},
@@ -57,8 +57,8 @@ var commandApp = new CommandApp("myexe", config: new CommandConfig
         { "<files>*", "Files to commit", commitFiles },
         (ctx, _) =>
         {
-            if (name is null) throw new OptionException("Missing name argument", nameof(name));
-            if (age == 0) throw new OptionException("Missing age argument", nameof(age));
+            if (name is null) throw new CommandOptionException("Missing name argument", nameof(name));
+            if (age == 0) throw new CommandOptionException("Missing age argument", nameof(age));
 
             ctx.Out.WriteLine($"Committing with name={name}, age={age}");
             foreach (var message in commitMessages)
@@ -76,8 +76,8 @@ var commandApp = new CommandApp("myexe", config: new CommandConfig
     // Default action if no command is specified
     (ctx, _) =>
     {
-        if (name is null) throw new OptionException("Missing name argument", nameof(name));
-        if (age == 0) throw new OptionException("Missing age argument", nameof(age));
+        if (name is null) throw new CommandOptionException("Missing name argument", nameof(name));
+        if (age == 0) throw new CommandOptionException("Missing age argument", nameof(age));
 
         ctx.Out.WriteLine($"Hello {name}! You are {age} years old.");
         foreach (var keyValue in keyValues)

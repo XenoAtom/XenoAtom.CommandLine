@@ -57,7 +57,7 @@ public class OptionValueCollection : IList<string?>
             throw new ArgumentOutOfRangeException("index");
         if (_optionContext.Option.OptionValueType == OptionValueType.Required &&
             index >= _values.Count)
-            throw new OptionException(string.Format(_optionContext.Command.Config.Localizer("Missing required value for option '{0}'."), _optionContext.OptionName), _optionContext.OptionName!);
+            throw new CommandOptionException(string.Format(_optionContext.Command.Config.Localizer("Missing required value for option '{0}'."), _optionContext.OptionName), _optionContext.OptionName!);
     }
 
     /// <inheritdoc />

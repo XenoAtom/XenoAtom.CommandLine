@@ -764,7 +764,7 @@ public static class CommandExtensions
         }
     }
 
-    private static OptionException CreateOptionValidationException(OptionContext context, string validationError)
+    private static CommandOptionException CreateOptionValidationException(OptionContext context, string validationError)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentException.ThrowIfNullOrWhiteSpace(validationError);
@@ -785,7 +785,7 @@ public static class CommandExtensions
             span = new CommandTokenSpan(context.OptionIndex, 0, Math.Max(1, raw?.Length ?? 0));
         }
 
-        return new OptionException(message, optionDisplayName)
+        return new CommandOptionException(message, optionDisplayName)
         {
             Diagnostic = new CommandDiagnostic(
                 context.DiagnosticSource,

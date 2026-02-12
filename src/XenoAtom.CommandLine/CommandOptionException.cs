@@ -9,26 +9,26 @@ namespace XenoAtom.CommandLine;
 /// <summary>
 /// Represents an exception that is thrown when an error occurs while parsing options.
 /// </summary>
-public class OptionException : CommandException
+public class CommandOptionException : CommandException
 {
     /// <summary>
-    /// Creates a new instance of <see cref="OptionException"/>.
+    /// Creates a new instance of <see cref="CommandOptionException"/>.
     /// </summary>
     /// <param name="message">The message of this exception.</param>
     /// <param name="optionName">The associated option.</param>
-    public OptionException(string message, string optionName)
+    public CommandOptionException(string message, string optionName)
         : base(message)
     {
         OptionName = optionName;
     }
 
     /// <summary>
-    /// Creates a new instance of <see cref="OptionException"/>.
+    /// Creates a new instance of <see cref="CommandOptionException"/>.
     /// </summary>
     /// <param name="message">The message of this exception.</param>
     /// <param name="optionName">The associated option.</param>
     /// <param name="innerException">The associated inner exception.</param>
-    public OptionException(string message, string optionName, Exception innerException)
+    public CommandOptionException(string message, string optionName, Exception innerException)
         : base(message, innerException)
     {
         OptionName = optionName;

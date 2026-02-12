@@ -188,7 +188,7 @@ public abstract class Option : CommandNode, ICommandNodeDescriptor
     /// <param name="value">A string representation of the value.</param>
     /// <param name="c">The parsing context.</param>
     /// <returns>The parsed value</returns>
-    /// <exception cref="OptionException">If an exception occured while parsing.</exception>
+    /// <exception cref="CommandOptionException">If an exception occured while parsing.</exception>
     protected static T Parse<T>(string? value, OptionContext c) where T : ISpanParsable<T>
     {
         if (typeof(T) == typeof(string))
@@ -211,7 +211,7 @@ public abstract class Option : CommandNode, ICommandNodeDescriptor
                 tokenSpan = new CommandTokenSpan(c.OptionIndex, 0, Math.Max(1, value?.Length ?? 0));
             }
 
-            throw new OptionException(string.Format(c.Command.Config.Localizer($"{e.Message} for option `{{0}}`"), args), c.OptionName!, e)
+            throw new CommandOptionException(string.Format(c.Command.Config.Localizer($"{e.Message} for option `{{0}}`"), args), c.OptionName!, e)
             {
                 Diagnostic = new CommandDiagnostic(
                     c.DiagnosticSource,

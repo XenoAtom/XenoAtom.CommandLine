@@ -62,13 +62,13 @@ public sealed class CompletionCommands : CommandGroup
                 if (tokens.Count > 0)
                 {
                     if (tokenIndex < 0)
-                        throw new OptionException("Missing required value for option 'index' when using token mode.", "index");
+                        throw new CommandOptionException("Missing required value for option 'index' when using token mode.", "index");
                     candidates = app.GetCompletionsForTokens(tokens, tokenIndex, commandName);
                 }
                 else
                 {
                     if (line is null)
-                        throw new OptionException("Missing required value for option 'line'.", "line");
+                        throw new CommandOptionException("Missing required value for option 'line'.", "line");
                     candidates = app.GetCompletionsForLine(line, cursor, commandName);
                 }
 

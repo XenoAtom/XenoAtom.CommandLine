@@ -17,13 +17,13 @@ public abstract class CommandNode
     /// <param name="active">A callback that indicates if this node is active.</param> 
     internal CommandNode(Func<bool>? active = null)
     {
-        IsThisNodeActive = active ?? (static () => true);
+        ActivePredicate = active ?? (static () => true);
     }
 
     /// <summary>
     /// Gets the callback that indicates if this node is active. Default is true.
     /// </summary>
-    public Func<bool> IsThisNodeActive { get; }
+    public Func<bool> ActivePredicate { get; }
 
     /// <summary>
     /// Check if this node or any of its parent is inactive.
@@ -35,7 +35,7 @@ public abstract class CommandNode
 
         while (node != null)
         {
-            if (!node.IsThisNodeActive())
+            if (!node.ActivePredicate())
             {
                 return false;
             }

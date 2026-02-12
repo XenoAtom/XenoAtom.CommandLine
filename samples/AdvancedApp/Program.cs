@@ -46,7 +46,7 @@ var app = new CommandApp("multi", config: new CommandConfig
     // gcc-like options
     { "D:", "Add a marco {0:NAME} and optional {1:VALUE}", (k, v) =>
         {
-            if (k is null) throw new OptionException("Name is required", "D");
+            if (k is null) throw new CommandOptionException("Name is required", "D");
             keyValues.Add((k, v));
         }
     },

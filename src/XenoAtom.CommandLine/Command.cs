@@ -41,7 +41,7 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
         Arguments = new ReadOnlyCollection<CommandArgument>(_arguments);
 
         Name = NormalizeCommandName(name);
-        OptionsName = "Options";
+        OptionsSectionName = "Options";
         Description = help;
         Config = CommandConfig.Default;
     }
@@ -69,7 +69,7 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
     /// <summary>
     /// Gets the name of the options used when creating the usage help for this command.
     /// </summary>
-    public string OptionsName { get; set; }
+    public string OptionsSectionName { get; set; }
 
     /// <summary>
     /// Gets the sub-commands of this command.
@@ -667,7 +667,7 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
                         TryGetOptionParts(argument, out _, out var flag, out _, out _, out _) &&
                         flag != "/")
                     {
-                        throw new OptionException(Config.Localizer($"Unknown option: {argument}"), argument)
+                        throw new CommandOptionException(Config.Localizer($"Unknown option: {argument}"), argument)
                         {
                             Diagnostic = CreateDiagnostic(runContext, null, c.OptionIndex, argument.Length)
                         };
@@ -765,14 +765,14 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
                     optionContext.Option.Invoke(optionContext);
                 }
             }
-            catch (OptionException ex)
+            catch (CommandOptionException ex)
             {
                 throw CreateEnvironmentOptionException(option, envVarName, runContext.InvocationTokens, ex.Message, ex);
             }
         }
     }
 
-    private OptionException CreateEnvironmentOptionException(Option option, string environmentVariableName, IReadOnlyList<string>? tokens, string message, Exception? innerException = null)
+    private CommandOptionException CreateEnvironmentOptionException(Option option, string environmentVariableName, IReadOnlyList<string>? tokens, string message, Exception? innerException = null)
     {
         var optionDisplayName = option.GetDisplayName();
         var formattedMessage = Config.Localizer($"Invalid value for option `{optionDisplayName}` (from environment variable `{environmentVariableName}`): {message}");
@@ -783,8 +783,8 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
             tokens,
             null);
         return innerException == null
-            ? new OptionException(formattedMessage, optionDisplayName) { Diagnostic = diagnostic }
-            : new OptionException(formattedMessage, optionDisplayName, innerException) { Diagnostic = diagnostic };
+            ? new CommandOptionException(formattedMessage, optionDisplayName) { Diagnostic = diagnostic }
+            : new CommandOptionException(formattedMessage, optionDisplayName, innerException) { Diagnostic = diagnostic };
     }
 
     private static bool TryParseBooleanEnvironmentValue(string value, out bool enabled)
@@ -1256,7 +1256,7 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
             c.Option.Invoke(c);
         else if (c.OptionValues.Count > c.Option.MaxValueCount)
         {
-            throw new OptionException(Config.Localizer(string.Format("Error: Found {0} option values when expecting {1}.", c.OptionValues.Count, c.Option.MaxValueCount)), c.OptionName!)
+            throw new CommandOptionException(Config.Localizer(string.Format("Error: Found {0} option values when expecting {1}.", c.OptionValues.Count, c.Option.MaxValueCount)), c.OptionName!)
             {
                 Diagnostic = CreateDiagnostic(c.CommandRunContext, c.Option, c.OptionIndex, option?.Length ?? 0)
             };
@@ -1388,7 +1388,7 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
             {
                 if (i == 0)
                     return false;
-                throw new OptionException(string.Format(Config.Localizer("Cannot use unregistered option '{0}' in bundle '{1}'."), rn, originalToken), string.Empty)
+                throw new CommandOptionException(string.Format(Config.Localizer("Cannot use unregistered option '{0}' in bundle '{1}'."), rn, originalToken), string.Empty)
                 {
                     Diagnostic = CreateDiagnostic(c.CommandRunContext, null, c.OptionIndex, originalToken.Length)
                 };
@@ -1431,7 +1431,7 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
         var fullCommandName = GetFullCommandPath();
         runConfig.Error.WriteLine($"{fullCommandName}: {e.Message}");
 
-        if (e is OptionException optionException &&
+        if (e is CommandOptionException optionException &&
             !string.IsNullOrWhiteSpace(optionException.OptionName) &&
             TryGetUnknownTokenDetails(this, optionException.OptionName, out var details))
         {

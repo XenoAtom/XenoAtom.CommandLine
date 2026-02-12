@@ -54,7 +54,7 @@ var commandApp = new CommandApp("myexe")
     _,
     {"D:", "Defines a {0:name} and optional {1:value}", (key, value) =>
     {
-        if (key is null) throw new OptionException("The key is mandatory for a define", "D");
+        if (key is null) throw new CommandOptionException("The key is mandatory for a define", "D");
         keyValues.Add((key, value));
     }},
     {"n|name=", "Your {NAME}", v => name = v},
