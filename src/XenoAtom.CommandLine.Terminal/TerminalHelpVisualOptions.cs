@@ -30,27 +30,27 @@ public sealed record TerminalHelpVisualOptions
     /// <summary>
     /// Gets the markup style for usage lines.
     /// </summary>
-    public string UsageMarkupStyle { get; init; } = "[bold primary]";
+    public string UsageMarkupStyle { get; init; } = "[bold]";
 
     /// <summary>
     /// Gets the markup style for option prototypes.
     /// </summary>
-    public string OptionMarkupStyle { get; init; } = "[accent]";
+    public string OptionMarkupStyle { get; init; } = "[bright-yellow]";
 
     /// <summary>
     /// Gets the markup style for argument prototypes.
     /// </summary>
-    public string ArgumentMarkupStyle { get; init; } = "[accent]";
+    public string ArgumentMarkupStyle { get; init; } = "[bright-yellow]";
 
     /// <summary>
     /// Gets the markup style for command names.
     /// </summary>
-    public string CommandNameMarkupStyle { get; init; } = "[accent]";
+    public string CommandNameMarkupStyle { get; init; } = "[cyan]";
 
     /// <summary>
     /// Gets the markup style for dim/muted text.
     /// </summary>
-    public string DimMarkupStyle { get; init; } = "[muted]";
+    public string DimMarkupStyle { get; init; } = "[dim]";
 
     /// <summary>
     /// Gets an optional table style override.
