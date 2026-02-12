@@ -123,7 +123,7 @@ public abstract class Option : CommandNode, ICommandNodeDescriptor
     /// Gets or sets the environment variable used as a fallback when this option
     /// is not provided explicitly on the command line.
     /// </summary>
-    public string? EnvironmentVariable { get; set; }
+    public string? EnvironmentVariable { get; init; }
 
     /// <summary>
     /// Gets or sets the delimiter used to split an environment variable value into
@@ -132,7 +132,7 @@ public abstract class Option : CommandNode, ICommandNodeDescriptor
     /// <remarks>
     /// When null, the environment variable value is treated as a single occurrence.
     /// </remarks>
-    public char? EnvironmentVariableDelimiter { get; set; }
+    public char? EnvironmentVariableDelimiter { get; init; }
 
     internal bool WasSetOnCommandLine { get; set; }
 

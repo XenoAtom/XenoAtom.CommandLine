@@ -24,16 +24,12 @@ public sealed class TerminalMarkupCommandOutputTests
                 {
                     UseTerminalWindowWidth = false,
                 })
-            })
-        {
-            new CommandUsage(),
-            "Options:",
-            { "n|name=", "The {NAME}", _ => { } },
-            new HelpOption(),
-            (ctx, _) => ValueTask.FromResult(0)
-        };
-
-        app.Options["name"].EnvironmentVariable = "APP_NAME";
+            });
+        app.Add(new CommandUsage());
+        app.Add("Options:");
+        app.Add("n|name=", "The {NAME}", _ => { }, envVar: "APP_NAME", hidden: false);
+        app.Add(new HelpOption());
+        app.Add((ctx, _) => ValueTask.FromResult(0));
 
         var result = await app.RunAsync(["--help"], new CommandRunConfig(Width: 80));
         Assert.AreEqual(0, result);
@@ -120,12 +116,9 @@ public sealed class TerminalMarkupCommandOutputTests
             {
                 EnvironmentVariableResolver = _ => "oops",
                 OutputFactory = _ => new TerminalMarkupCommandOutput()
-            })
-        {
-            { "a|age=", "Age", (int _) => { } },
-            (ctx, _) => ValueTask.FromResult(0)
-        };
-        app.Options["age"].EnvironmentVariable = "APP_AGE";
+            });
+        app.Add("a|age=", "Age", (int _) => { }, envVar: "APP_AGE");
+        app.Add((ctx, _) => ValueTask.FromResult(0));
 
         var result = await app.RunAsync([]);
         Assert.AreEqual(1, result);
@@ -149,9 +142,9 @@ public sealed class TerminalMarkupCommandOutputTests
 
         var hiddenCommand = new Command("hidden-cmd", hiddenCommandDescription)
         {
-            (ctx, _) => ValueTask.FromResult(0)
+            Hidden = true,
         };
-        hiddenCommand.Hidden = true;
+        hiddenCommand.Add((ctx, _) => ValueTask.FromResult(0));
 
         var app = new CommandApp(
             "app",

@@ -54,7 +54,7 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
     /// <summary>
     /// Gets or sets a boolean indicating if this command is hidden from help.
     /// </summary>
-    public bool Hidden { get; set; }
+    public bool Hidden { get; init; }
 
     /// <summary>
     /// Gets the description of this command.
@@ -69,7 +69,7 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
     /// <summary>
     /// Gets the name of the options used when creating the usage help for this command.
     /// </summary>
-    public string OptionsSectionName { get; set; }
+    public string OptionsSectionName { get; init; }
 
     /// <summary>
     /// Gets the sub-commands of this command.

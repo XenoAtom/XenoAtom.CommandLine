@@ -238,9 +238,9 @@ public sealed class TerminalVisualCommandOutputTests
 
         var hiddenCommand = new Command("hidden-cmd", hiddenCommandDescription)
         {
-            (ctx, _) => ValueTask.FromResult(0)
+            Hidden = true,
         };
-        hiddenCommand.Hidden = true;
+        hiddenCommand.Add((ctx, _) => ValueTask.FromResult(0));
 
         var app = new CommandApp(
             "app",

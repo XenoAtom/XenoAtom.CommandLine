@@ -217,8 +217,12 @@ public static class CommandExtensions
         if (CommandArgument.IsArgumentPrototype(prototype))
             throw new ArgumentException("Environment variable fallback is only supported for options, not positional arguments.", nameof(prototype));
 
-        var option = new ActionOption(prototype, description, 1, delegate (OptionValueCollection v) { action(v[0]); }, hidden);
-        ConfigureOptionEnvironment(option, envVar, envVarDelimiter);
+        ArgumentException.ThrowIfNullOrWhiteSpace(envVar);
+        var option = new ActionOption(prototype, description, 1, delegate (OptionValueCollection v) { action(v[0]); }, hidden)
+        {
+            EnvironmentVariable = envVar,
+            EnvironmentVariableDelimiter = envVarDelimiter
+        };
         command.Add(option);
         return command;
     }
@@ -260,11 +264,12 @@ public static class CommandExtensions
             return command;
         }
 
-        var option = new ActionOption(prototype, description, 1, delegate (OptionValueCollection v) { action(v[0]); }, hidden, validate);
-        if (!string.IsNullOrWhiteSpace(envVar))
+        var normalizedEnvVar = string.IsNullOrWhiteSpace(envVar) ? null : envVar;
+        var option = new ActionOption(prototype, description, 1, delegate (OptionValueCollection v) { action(v[0]); }, hidden, validate)
         {
-            ConfigureOptionEnvironment(option, envVar, envVarDelimiter);
-        }
+            EnvironmentVariable = normalizedEnvVar,
+            EnvironmentVariableDelimiter = normalizedEnvVar is null ? null : envVarDelimiter
+        };
         command.Add(option);
         return command;
     }
@@ -747,11 +752,12 @@ public static class CommandExtensions
             return command;
         }
 
-        var option = new ActionOption<T>(prototype, description, action, validate, hidden);
-        if (!string.IsNullOrWhiteSpace(envVar))
+        var normalizedEnvVar = string.IsNullOrWhiteSpace(envVar) ? null : envVar;
+        var option = new ActionOption<T>(prototype, description, action, validate, hidden)
         {
-            ConfigureOptionEnvironment(option, envVar, envVarDelimiter);
-        }
+            EnvironmentVariable = normalizedEnvVar,
+            EnvironmentVariableDelimiter = normalizedEnvVar is null ? null : envVarDelimiter
+        };
 
         command.Add(option);
         return command;
@@ -781,11 +787,12 @@ public static class CommandExtensions
             return command;
         }
 
-        var option = new ActionOption<T>(prototype, description, list.Add, validate, hidden);
-        if (!string.IsNullOrWhiteSpace(envVar))
+        var normalizedEnvVar = string.IsNullOrWhiteSpace(envVar) ? null : envVar;
+        var option = new ActionOption<T>(prototype, description, list.Add, validate, hidden)
         {
-            ConfigureOptionEnvironment(option, envVar, envVarDelimiter);
-        }
+            EnvironmentVariable = normalizedEnvVar,
+            EnvironmentVariableDelimiter = normalizedEnvVar is null ? null : envVarDelimiter
+        };
 
         command.Add(option);
         return command;
@@ -800,14 +807,6 @@ public static class CommandExtensions
         }
     }
 
-    private static void ConfigureOptionEnvironment(Option option, string envVar, char? envVarDelimiter)
-    {
-        ArgumentNullException.ThrowIfNull(option);
-        ArgumentException.ThrowIfNullOrWhiteSpace(envVar);
-        option.EnvironmentVariable = envVar;
-        option.EnvironmentVariableDelimiter = envVarDelimiter;
-    }
-    
     private sealed class ActionOption<T> : Option
         where T : ISpanParsable<T>
     {
