@@ -223,4 +223,62 @@ public sealed class TerminalVisualCommandOutputTests
         StringAssert.Contains(output, "^");
         StringAssert.Contains(output, "╭");
     }
+
+    [TestMethod]
+    public async Task VisualOutput_Help_DoesNotRenderHiddenOptionsArgumentsAndCommands()
+    {
+        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+
+        var backend = new InMemoryTerminalBackend(new TerminalSize(120, 40));
+        using var session = TerminalHost.Open(backend, new TerminalOptions { ImplicitStartInput = true }, force: true);
+
+        var hiddenOptionDescription = "Hidden option description";
+        var hiddenArgumentDescription = "Hidden argument description";
+        var hiddenCommandDescription = "Hidden command description";
+
+        var hiddenCommand = new Command("hidden-cmd", hiddenCommandDescription)
+        {
+            (ctx, _) => ValueTask.FromResult(0)
+        };
+        hiddenCommand.Hidden = true;
+
+        var app = new CommandApp(
+            "app",
+            config: new CommandConfig
+            {
+                OutputFactory = _ => new TerminalVisualCommandOutput()
+            })
+        {
+            new CommandUsage(),
+            "Options:",
+            { "v|visible", "Visible option", _ => { } },
+            { "hidden-opt=", hiddenOptionDescription, _ => { }, true },
+            "Arguments:",
+            { "<visibleArg>", "Visible argument", _ => { } },
+            { "<hiddenArg>", hiddenArgumentDescription, _ => { }, true },
+            "Available commands:",
+            new Command("visible-cmd", "Visible command")
+            {
+                (ctx, _) => ValueTask.FromResult(0)
+            },
+            hiddenCommand,
+            new HelpOption(),
+            (ctx, _) => ValueTask.FromResult(0)
+        };
+
+        var result = await app.RunAsync(["--help"]);
+        Assert.AreEqual(0, result);
+
+        var output = backend.GetOutText();
+        StringAssert.Contains(output, "Visible option");
+        StringAssert.Contains(output, "Visible argument");
+        StringAssert.Contains(output, "visible-cmd");
+
+        Assert.IsFalse(output.Contains(hiddenOptionDescription, StringComparison.Ordinal));
+        Assert.IsFalse(output.Contains(hiddenArgumentDescription, StringComparison.Ordinal));
+        Assert.IsFalse(output.Contains(hiddenCommandDescription, StringComparison.Ordinal));
+        Assert.IsFalse(output.Contains("--hidden-opt", StringComparison.Ordinal));
+        Assert.IsFalse(output.Contains("hidden-cmd", StringComparison.Ordinal));
+        Assert.IsFalse(output.Contains("<hiddenArg>", StringComparison.Ordinal));
+    }
 }

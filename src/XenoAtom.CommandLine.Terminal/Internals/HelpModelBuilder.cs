@@ -84,6 +84,11 @@ internal static class HelpModelBuilder
                     continue;
 
                 case ICommandNodeDescriptor descriptor:
+                    if (IsHiddenDescriptorNode(node))
+                    {
+                        continue;
+                    }
+
                     AddDescriptorLine(lines, descriptor.Description);
                     continue;
             }
@@ -242,4 +247,15 @@ internal static class HelpModelBuilder
     private static string GetDescription(string? description) => CommandOutputHelper.GetDescriptionText(description);
 
     private static string GetText(string? text) => text ?? string.Empty;
+
+    private static bool IsHiddenDescriptorNode(CommandNode node)
+    {
+        return node switch
+        {
+            Option option => option.Hidden,
+            CommandArgument argument => argument.Hidden,
+            Command command => command.Hidden,
+            _ => false,
+        };
+    }
 }
