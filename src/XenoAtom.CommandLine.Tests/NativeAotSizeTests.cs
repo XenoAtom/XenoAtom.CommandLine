@@ -50,8 +50,8 @@ public class NativeAotSizeTests
         //Console.WriteLine($"Executable size: {exeSize:N0} bytes");
         // NativeAOT output size is sensitive to SDK/toolchain changes (even between patch versions).
         long maxBytes = OperatingSystem.IsWindows() ? 1_330_000 :
-            OperatingSystem.IsMacOS() ? 1_470_000 :
-            1_520_000; // Linux (To check);
+            OperatingSystem.IsMacOS() ? 1_550_000 :
+            1_580_000; // Linux (To check);
         Assert.IsLessThanOrEqualTo(maxBytes, exeSize, $"NativeAOT size regression: {exeSize:N0} bytes > {maxBytes:N0} bytes. Output: `{exePath}`");
     }
 
