@@ -138,6 +138,7 @@ public class CommandOutputTests
         Assert.AreEqual(1, output.UnknownCalls);
         Assert.AreEqual(UnknownTokenKind.UnknownCommandOrOption, output.UnknownKinds[0]);
         Assert.HasCount(1, output.UnknownTokens[0]);
+        CollectionAssert.AreEqual(new[] { "he" }, output.UnknownInvocationTokens[0]!.ToArray());
         var unknown = output.UnknownTokens[0][0];
         Assert.AreEqual("he", unknown.Token);
         CollectionAssert.Contains(unknown.Suggestions.ToArray(), "hello");
@@ -216,6 +217,7 @@ public class CommandOutputTests
         public readonly List<CommandException> Errors = new();
         public readonly List<UnknownTokenKind> UnknownKinds = new();
         public readonly List<IReadOnlyList<UnknownTokenInfo>> UnknownTokens = new();
+        public readonly List<IReadOnlyList<string>?> UnknownInvocationTokens = new();
         public readonly List<string> Versions = new();
         public readonly List<string> LicenseHeaders = new();
 
@@ -231,11 +233,12 @@ public class CommandOutputTests
             Errors.Add(exception);
         }
 
-        public void WriteUnknownTokens(Command command, CommandRunConfig runConfig, UnknownTokenKind kind, IReadOnlyList<UnknownTokenInfo> unknownTokens)
+        public void WriteUnknownTokens(Command command, CommandRunConfig runConfig, UnknownTokenReport report)
         {
             UnknownCalls++;
-            UnknownKinds.Add(kind);
-            UnknownTokens.Add(unknownTokens.ToArray());
+            UnknownKinds.Add(report.Kind);
+            UnknownTokens.Add(report.UnknownTokens.ToArray());
+            UnknownInvocationTokens.Add(report.InvocationTokens is null ? null : report.InvocationTokens.ToArray());
         }
 
         public void WriteVersion(Command command, CommandRunConfig runConfig, string version)

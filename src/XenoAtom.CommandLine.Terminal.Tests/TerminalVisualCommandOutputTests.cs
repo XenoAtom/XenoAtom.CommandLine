@@ -207,7 +207,6 @@ public sealed class TerminalVisualCommandOutputTests
                     new TerminalVisualOutputOptions
                     {
                         UseErrorGroups = true,
-                        InvocationTokensProvider = () => invocationTokens,
                     })
             })
         {

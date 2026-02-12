@@ -2,9 +2,6 @@
 // Licensed under the BSD-Clause 2 license.
 // See license.txt file in the project root for full license information.
 
-using System;
-using System.Collections.Generic;
-
 namespace XenoAtom.CommandLine.Terminal;
 
 /// <summary>
@@ -67,12 +64,4 @@ public record TerminalMarkupOutputOptions
     /// </summary>
     public bool ShowDiagnosticUnderline { get; init; } = true;
 
-    /// <summary>
-    /// Gets an optional provider for the current invocation tokens, used by unknown-token rendering.
-    /// </summary>
-    /// <remarks>
-    /// <see cref="ICommandOutput.WriteUnknownTokens"/> provides token spans but not the full invocation token list.
-    /// This provider enables full invocation+underline rendering for unknown tokens.
-    /// </remarks>
-    public Func<IReadOnlyList<string>?>? InvocationTokensProvider { get; init; }
 }

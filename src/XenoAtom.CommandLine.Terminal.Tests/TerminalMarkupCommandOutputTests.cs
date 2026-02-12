@@ -74,7 +74,7 @@ public sealed class TerminalMarkupCommandOutputTests
     }
 
     [TestMethod]
-    public async Task UnknownToken_UsesSuggestions_AndInvocationProvider()
+    public async Task UnknownToken_UsesSuggestions_AndInvocationTokens()
     {
         CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
 
@@ -89,7 +89,7 @@ public sealed class TerminalMarkupCommandOutputTests
                 OutputFactory = _ => new TerminalMarkupCommandOutput(
                     new TerminalMarkupOutputOptions
                     {
-                        InvocationTokensProvider = () => invocationTokens,
+                        UseTerminalWindowWidth = false,
                     })
             })
         {

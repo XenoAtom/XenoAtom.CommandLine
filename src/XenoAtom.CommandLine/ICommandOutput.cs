@@ -89,6 +89,17 @@ public readonly record struct UnknownTokenInfo(
     CommandTokenSpan? TokenSpan = null);
 
 /// <summary>
+/// Represents an unknown-token output report with optional invocation tokens.
+/// </summary>
+/// <param name="Kind">The kind of unknown-token report.</param>
+/// <param name="UnknownTokens">One or more unknown-token entries.</param>
+/// <param name="InvocationTokens">The invocation tokens used to build diagnostics, when available.</param>
+public readonly record struct UnknownTokenReport(
+    UnknownTokenKind Kind,
+    IReadOnlyList<UnknownTokenInfo> UnknownTokens,
+    IReadOnlyList<string>? InvocationTokens = null);
+
+/// <summary>
 /// Defines the output handler for all user-visible output produced by the command-line parser:
 /// help text, error messages, version display, and license headers.
 /// </summary>
@@ -114,9 +125,8 @@ public interface ICommandOutput
     /// </summary>
     /// <param name="command">The command context where the unknown token was encountered.</param>
     /// <param name="runConfig">The run configuration providing output streams.</param>
-    /// <param name="kind">The kind of unknown-token report to render.</param>
-    /// <param name="unknownTokens">One or more unknown tokens.</param>
-    void WriteUnknownTokens(Command command, CommandRunConfig runConfig, UnknownTokenKind kind, IReadOnlyList<UnknownTokenInfo> unknownTokens);
+    /// <param name="report">The unknown-token report to render.</param>
+    void WriteUnknownTokens(Command command, CommandRunConfig runConfig, UnknownTokenReport report);
 
     /// <summary>
     /// Renders the version string.

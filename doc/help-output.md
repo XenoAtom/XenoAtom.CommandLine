@@ -179,8 +179,7 @@ public interface ICommandOutput
 {
     void WriteHelp(Command command, CommandRunConfig runConfig);
     void WriteError(Command command, CommandRunConfig runConfig, CommandException exception);
-    void WriteUnknownTokens(Command command, CommandRunConfig runConfig, UnknownTokenKind kind,
-        IReadOnlyList<UnknownTokenInfo> unknownTokens);
+    void WriteUnknownTokens(Command command, CommandRunConfig runConfig, UnknownTokenReport report);
     void WriteVersion(Command command, CommandRunConfig runConfig, string version);
     void WriteLicenseHeader(Command command, CommandRunConfig runConfig, string licenseText);
 }
@@ -202,10 +201,9 @@ public sealed class JsonOutputRenderer : ICommandOutput
         runConfig.Error.WriteLine($"{{ \"error\": \"{exception.Message}\" }}");
     }
 
-    public void WriteUnknownTokens(Command command, CommandRunConfig runConfig,
-        UnknownTokenKind kind, IReadOnlyList<UnknownTokenInfo> unknownTokens)
+    public void WriteUnknownTokens(Command command, CommandRunConfig runConfig, UnknownTokenReport report)
     {
-        foreach (var token in unknownTokens)
+        foreach (var token in report.UnknownTokens)
             runConfig.Error.WriteLine($"{{ \"unknown\": \"{token.Token}\" }}");
     }
 

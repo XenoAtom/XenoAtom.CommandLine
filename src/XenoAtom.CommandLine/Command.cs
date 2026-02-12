@@ -302,7 +302,7 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
     {
         if (parseState is null)
         {
-            output.WriteUnknownTokens(this, runConfig, kind, unknownTokens);
+            output.WriteUnknownTokens(this, runConfig, new UnknownTokenReport(kind, unknownTokens, invocationTokens));
             return;
         }
 
@@ -409,9 +409,9 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
             Resolve().WriteError(command, runConfig, exception);
         }
 
-        public void WriteUnknownTokens(Command command, CommandRunConfig runConfig, UnknownTokenKind kind, IReadOnlyList<UnknownTokenInfo> unknownTokens)
+        public void WriteUnknownTokens(Command command, CommandRunConfig runConfig, UnknownTokenReport report)
         {
-            Resolve().WriteUnknownTokens(command, runConfig, kind, unknownTokens);
+            Resolve().WriteUnknownTokens(command, runConfig, report);
         }
 
         public void WriteVersion(Command command, CommandRunConfig runConfig, string version)
@@ -1448,8 +1448,12 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
         runConfig.Error.WriteLine(Config.Localizer($"Use `{fullCommandName} --help` for usage."));
     }
 
-    internal void WriteUnknownTokensCore(CommandRunConfig runConfig, UnknownTokenKind kind, IReadOnlyList<UnknownTokenInfo> unknownTokens)
+    internal void WriteUnknownTokensCore(CommandRunConfig runConfig, UnknownTokenReport report)
     {
+        ArgumentNullException.ThrowIfNull(report.UnknownTokens);
+
+        var kind = report.Kind;
+        var unknownTokens = report.UnknownTokens;
         var fullCommandName = GetFullCommandPath();
         var message = kind == UnknownTokenKind.UnknownCommandOrOption ? "Unknown command or option" : "Unknown option";
 

@@ -3,8 +3,6 @@
 // See license.txt file in the project root for full license information.
 
 using System;
-using System.Collections.Generic;
-
 namespace XenoAtom.CommandLine.Terminal.Internals;
 
 internal static class ErrorMarkupWriter
@@ -34,19 +32,18 @@ internal static class ErrorMarkupWriter
     public static void WriteUnknownTokens(
         Command command,
         TerminalMarkupOutputOptions options,
-        UnknownTokenKind kind,
-        IReadOnlyList<UnknownTokenInfo> unknownTokens)
+        UnknownTokenReport report)
     {
         ArgumentNullException.ThrowIfNull(command);
         ArgumentNullException.ThrowIfNull(options);
-        ArgumentNullException.ThrowIfNull(unknownTokens);
+        ArgumentNullException.ThrowIfNull(report.UnknownTokens);
 
-        var messagePrefix = kind == UnknownTokenKind.UnknownCommandOrOption ? "Unknown command or option" : "Unknown option";
-        var invocationTokens = options.InvocationTokensProvider?.Invoke();
+        var messagePrefix = report.Kind == UnknownTokenKind.UnknownCommandOrOption ? "Unknown command or option" : "Unknown option";
+        var invocationTokens = report.InvocationTokens;
 
         MarkupAtomicWriter.Write(writer =>
         {
-            foreach (var unknownToken in unknownTokens)
+            foreach (var unknownToken in report.UnknownTokens)
             {
                 writer.WriteMarkupLine(
                     $"{MarkupStyleHelper.ApplyStyle(options.ErrorStyle, "Error:")} {messagePrefix}: {MarkupStyleHelper.Escape(unknownToken.Token)}");

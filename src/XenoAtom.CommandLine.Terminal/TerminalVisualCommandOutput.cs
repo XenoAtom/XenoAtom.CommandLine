@@ -67,25 +67,25 @@ public sealed class TerminalVisualCommandOutput : TerminalMarkupCommandOutput
     }
 
     /// <inheritdoc />
-    public override void WriteUnknownTokens(Command command, CommandRunConfig runConfig, UnknownTokenKind kind, IReadOnlyList<UnknownTokenInfo> unknownTokens)
+    public override void WriteUnknownTokens(Command command, CommandRunConfig runConfig, UnknownTokenReport report)
     {
         ArgumentNullException.ThrowIfNull(command);
         ArgumentNullException.ThrowIfNull(runConfig);
-        ArgumentNullException.ThrowIfNull(unknownTokens);
+        ArgumentNullException.ThrowIfNull(report.UnknownTokens);
 
         if (!_options.UseErrorGroups)
         {
-            base.WriteUnknownTokens(command, runConfig, kind, unknownTokens);
+            base.WriteUnknownTokens(command, runConfig, report);
             return;
         }
 
-        var messagePrefix = kind == UnknownTokenKind.UnknownCommandOrOption ? "Unknown command or option" : "Unknown option";
-        var invocationTokens = _options.InvocationTokensProvider?.Invoke();
+        var messagePrefix = report.Kind == UnknownTokenKind.UnknownCommandOrOption ? "Unknown command or option" : "Unknown option";
+        var invocationTokens = report.InvocationTokens;
 
         var content = new VStack();
-        for (var index = 0; index < unknownTokens.Count; index++)
+        for (var index = 0; index < report.UnknownTokens.Count; index++)
         {
-            var unknownToken = unknownTokens[index];
+            var unknownToken = report.UnknownTokens[index];
 
             if (index > 0)
             {

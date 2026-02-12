@@ -50,13 +50,13 @@ public class TerminalMarkupCommandOutput : ICommandOutput
     }
 
     /// <inheritdoc />
-    public virtual void WriteUnknownTokens(Command command, CommandRunConfig runConfig, UnknownTokenKind kind, IReadOnlyList<UnknownTokenInfo> unknownTokens)
+    public virtual void WriteUnknownTokens(Command command, CommandRunConfig runConfig, UnknownTokenReport report)
     {
         ArgumentNullException.ThrowIfNull(command);
         ArgumentNullException.ThrowIfNull(runConfig);
-        ArgumentNullException.ThrowIfNull(unknownTokens);
+        ArgumentNullException.ThrowIfNull(report.UnknownTokens);
 
-        ErrorMarkupWriter.WriteUnknownTokens(command, _options, kind, unknownTokens);
+        ErrorMarkupWriter.WriteUnknownTokens(command, _options, report);
     }
 
     /// <inheritdoc />

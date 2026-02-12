@@ -39,12 +39,12 @@ public sealed class DefaultCommandOutput : ICommandOutput
     }
 
     /// <inheritdoc />
-    public void WriteUnknownTokens(Command command, CommandRunConfig runConfig, UnknownTokenKind kind, IReadOnlyList<UnknownTokenInfo> unknownTokens)
+    public void WriteUnknownTokens(Command command, CommandRunConfig runConfig, UnknownTokenReport report)
     {
         ArgumentNullException.ThrowIfNull(command);
         ArgumentNullException.ThrowIfNull(runConfig);
-        ArgumentNullException.ThrowIfNull(unknownTokens);
-        command.WriteUnknownTokensCore(runConfig, kind, unknownTokens);
+        ArgumentNullException.ThrowIfNull(report.UnknownTokens);
+        command.WriteUnknownTokensCore(runConfig, report);
     }
 
     /// <inheritdoc />
