@@ -113,7 +113,7 @@ app.AddRemainder("Extra arguments");
 
 ## Inline Visual Nodes
 
-When using `XenoAtom.CommandLine.Terminal`, you can add [Terminal.UI `Visual` controls](https://xenoatom.github.io/terminal/docs/controls/) directly in command initializers.
+When using `XenoAtom.CommandLine.Terminal`, you can add [XenoAtom.Terminal.UI](https://xenoatom.github.io/terminal) `Visual` controls directly in command initializers.
 
 ```csharp
 using XenoAtom.CommandLine;
@@ -291,7 +291,7 @@ var app = new CommandApp("myexe", config: new CommandConfig
 
 ### TerminalVisualCommandOutput
 
-Renders help and errors as Terminal.UI visuals with borders, tables, and structured layout:
+Renders help and errors as [XenoAtom.Terminal.UI](https://xenoatom.github.io/terminal) visuals with borders, tables, and structured layout:
 
 ```csharp
 using XenoAtom.CommandLine;
@@ -336,7 +336,7 @@ var app = new CommandApp("myexe", config: new CommandConfig
 
 ### Standalone Visual Help
 
-Generate a help visual for embedding in fullscreen Terminal.UI applications:
+Generate a help visual for embedding in fullscreen [XenoAtom.Terminal.UI](https://xenoatom.github.io/terminal) applications:
 
 ```csharp
 var helpVisual = app.ToHelpVisual(new TerminalVisualOutputOptions
