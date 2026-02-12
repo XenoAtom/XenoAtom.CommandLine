@@ -3,7 +3,6 @@
 // See license.txt file in the project root for full license information.
 using XenoAtom.CommandLine;
 using XenoAtom.CommandLine.Terminal;
-using TerminalHost = XenoAtom.Terminal.Terminal;
 
 // Demonstrate a command line application with a sub-command
 const string _ = "";
@@ -14,14 +13,6 @@ int age = 0;
 var keyValues = new List<(string Key, string? Value)>();
 var commitMessages = new List<string>();
 var commitFiles = new List<string>();
-
-var enableTerminalOutput = args.Any(static arg =>
-    string.Equals(arg, "--markup", StringComparison.OrdinalIgnoreCase) ||
-    string.Equals(arg, "--visual", StringComparison.OrdinalIgnoreCase) ||
-    string.Equals(arg, "/markup", StringComparison.OrdinalIgnoreCase) ||
-    string.Equals(arg, "/visual", StringComparison.OrdinalIgnoreCase));
-
-using var session = enableTerminalOutput ? TerminalHost.Open() : null;
 
 var commandApp = new CommandApp("myexe", config: new CommandConfig
 {
@@ -51,11 +42,12 @@ var commandApp = new CommandApp("myexe", config: new CommandConfig
     new Command("commit")
     {
         _,
+        "Options:",
         {"m|message=", "Add a {MESSAGE} to this commit", commitMessages},
+        new HelpOption(),
         _,
         "Arguments:",
         { "<files>*", "Files to commit", commitFiles },
-        new HelpOption(),
         (ctx, _) =>
         {
             if (name is null) throw new OptionException("Missing name argument", nameof(name));

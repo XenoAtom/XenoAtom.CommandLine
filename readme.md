@@ -66,11 +66,12 @@ var commandApp = new CommandApp("myexe")
     new Command("commit")
     {
         _,
+        "Options:",
         {"m|message=", "Add a {MESSAGE} to this commit", messages},
+        new HelpOption(),
         _,
         "Arguments:",
         { "<files>*", "Files to commit", commitFiles },
-        new HelpOption(),
 
         // Action for the commit command
         (ctx, _) =>
@@ -143,6 +144,7 @@ Running `myexe commit --help` will output:
 ```
 Usage: myexe commit [options] <files>*
 
+Options:
   -m, --message=MESSAGE      Add a MESSAGE to this commit
   -h, -?, --help             Show this message and exit
 
