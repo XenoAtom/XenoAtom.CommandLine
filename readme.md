@@ -4,11 +4,11 @@
 
 **XenoAtom.CommandLine** is a lightweight, powerful and NativeAOT friendly command line parser for .NET
 
-## ✨ Features 
+## ✨ Features
 
 - **Lightweight and NativeAOT-friendly** (`net8.0`+), with **zero dependencies**
-- **Composition-first API:** declare commands/options with collection initializers (**no attributes, no base classes, no required “command classes”**)
-- **Auto-generated usage/help:** “what you declare is what you get”
+- **Composition-first API:** declare commands/options with collection initializers (**no attributes, no base classes, no required "command classes"**)
+- **Auto-generated usage/help:** "what you declare is what you get"
 - **Commands and sub-commands** (e.g. `git commit -m "message"`)
 - **Strict positional arguments by default** (named args + remainder): `<arg>`, `<arg>?`, `<arg>*`, `<arg>+`, `<>`
 - **Fast parsing:** optimized hot paths (**no regex**), **low GC allocations**
@@ -28,7 +28,7 @@
   - Optional **`XenoAtom.CommandLine.Terminal`** package (`net10.0`) for colored markup output and Terminal.UI visual help (`TerminalVisualCommandOutput`, `Command.ToHelpVisual()`)
 - **Better errors by default**
   - **Strict unknown `-` / `--` options** (`CommandConfig.StrictOptionParsing`)
-  - **Helpful diagnostics:** suggestions + “inactive in this context” hints
+  - **Helpful diagnostics:** suggestions + "inactive in this context" hints
   - Use `--` to pass values starting with `-` (e.g. `myexe -- -5`); `/mnt/home` is treated as a positional value (not an option)
 - **Response files:** `@file.txt` (supports quotes, `#` comments, and basic escaping on non-Windows)
 - **Conditional groups:** declare commands/options that are only active when a condition is met
@@ -177,17 +177,17 @@ var app = new CommandApp("myexe", config: new CommandConfig
 
 This package also provides `command.ToHelpVisual(...)` for embedding help in Terminal.UI apps.
 
-Screenshot placeholders (to be added later):
+## 📃 Documentation
 
-- Plain help: `img/screenshots/hello-help-plain.png`
-- Markup help: `img/screenshots/hello-help-markup.png`
-- Visual help: `img/screenshots/hello-help-visual.png`
-- Markup error: `img/screenshots/hello-error-markup.png`
-- Visual error: `img/screenshots/hello-error-visual.png`
-
-## 📃 User Guide
-
-For more details on how to use XenoAtom.CommandLine, please visit the [user guide](https://github.com/XenoAtom/XenoAtom.CommandLine/blob/main/doc/readme.md).
+| Guide | Description |
+|---|---|
+| [Getting Started](doc/getting-started.md) | Installation, first application, running and testing |
+| [Options](doc/options.md) | Option prototypes, values, flags, aliases, bundling, key/value pairs, typed parsing |
+| [Commands](doc/commands.md) | Commands, sub-commands, actions, and conditional groups |
+| [Arguments](doc/arguments.md) | Positional arguments, cardinality, remainder arguments |
+| [Validation & Constraints](doc/validation.md) | Value validation, mutually exclusive options, requires constraints |
+| [Help & Output](doc/help-output.md) | Help text, `CommandUsage`, custom output rendering, Terminal package |
+| [Advanced Topics](doc/advanced.md) | Parse API, shell completions, response files, configuration, environment variables, performance |
 
 ## 🏗️ Build
 
@@ -201,7 +201,7 @@ $ dotnet build src -c Release
 
 This software is released under the [BSD-2-Clause license](https://opensource.org/licenses/BSD-2-Clause).
 
-This library is a fork of the excellent [NDesk.Options](http://www.ndesk.org/Options)/[Mono.Options](https://tirania.org/blog/archive/2008/Oct-14.html) with significant improvements and new features.
+It is a fork of the excellent [NDesk.Options](http://www.ndesk.org/Options)/[Mono.Options](https://tirania.org/blog/archive/2008/Oct-14.html) with significant improvements and new features.
 
 The license also integrate the original MIT license from [Mono.Options](https://github.com/mono/mono/blob/main/mcs/class/Mono.Options/Mono.Options/Options.cs).
 
