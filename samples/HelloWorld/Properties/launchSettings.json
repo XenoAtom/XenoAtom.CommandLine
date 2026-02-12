@@ -1,8 +1,36 @@
 {
   "profiles": {
-    "HelloWorld": {
+    "HelloWorldHelp": {
       "commandName": "Project",
       "commandLineArgs": "--help"
+    },
+    "HelloWorldMarkupHelp": {
+      "commandName": "Project",
+      "commandLineArgs": "--markup --help"
+    },
+    "HelloWorldVisualHelp": {
+      "commandName": "Project",
+      "commandLineArgs": "--visual --help"
+    },
+    "HelloWorldMarkupError": {
+      "commandName": "Project",
+      "commandLineArgs": "--markup --age 42"
+    },
+    "HelloWorldVisualError": {
+      "commandName": "Project",
+      "commandLineArgs": "--visual --age 42"
+    },
+    "HelloWorldCommitHelp": {
+      "commandName": "Project",
+      "commandLineArgs": "commit --help"
+    },
+    "HelloWorldMarkupCommitHelp": {
+      "commandName": "Project",
+      "commandLineArgs": "--markup commit --help"
+    },
+    "HelloWorldVisualCommitHelp": {
+      "commandName": "Project",
+      "commandLineArgs": "--visual commit --help"
     }
   }
 }

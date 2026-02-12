@@ -177,6 +177,14 @@ var app = new CommandApp("myexe", config: new CommandConfig
 
 This package also provides `command.ToHelpVisual(...)` for embedding help in Terminal.UI apps.
 
+Screenshot placeholders (to be added later):
+
+- Plain help: `img/screenshots/hello-help-plain.png`
+- Markup help: `img/screenshots/hello-help-markup.png`
+- Visual help: `img/screenshots/hello-help-visual.png`
+- Markup error: `img/screenshots/hello-error-markup.png`
+- Visual error: `img/screenshots/hello-error-visual.png`
+
 ## 📃 User Guide
 
 For more details on how to use XenoAtom.CommandLine, please visit the [user guide](https://github.com/XenoAtom/XenoAtom.CommandLine/blob/main/doc/readme.md).
