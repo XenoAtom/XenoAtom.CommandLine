@@ -273,7 +273,7 @@ For rich colored and visual help output, install the optional `XenoAtom.CommandL
 dotnet add package XenoAtom.CommandLine.Terminal
 ```
 
-> **Note:** This package targets `net10.0` and depends on `XenoAtom.Terminal`.
+> **Note:** This package targets `net10.0` and depends on `XenoAtom.Terminal.UI` (which pulls `XenoAtom.Terminal` transitively).
 
 ### TerminalMarkupCommandOutput
 
@@ -365,7 +365,7 @@ XenoAtom.CommandLine provides informative error messages by default:
 
 ```
 myexe: Unknown option: --unkown
-Did you mean '--unknown'?
+Did you mean: --unknown
 Use `myexe --help` for usage.
 ```
 
@@ -375,7 +375,7 @@ When an option exists but is inside an inactive `CommandGroup`:
 
 ```
 myexe: Unknown option: --special1
-Note: option '--special1' exists but is inactive in the current context.
+Note: `--special1` matches an option that is currently inactive in this context.
 Use `myexe --help` for usage.
 ```
 

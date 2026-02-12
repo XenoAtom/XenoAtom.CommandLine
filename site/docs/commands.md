@@ -91,7 +91,7 @@ Available commands:
 Running `myexe commit --help`:
 
 ```
-Usage: myexe commit [options] [<files>]...
+Usage: myexe commit [options] <files>*
 
 Options:
   -m, --message=MESSAGE      Commit MESSAGE
@@ -306,12 +306,14 @@ If no version string is provided, it extracts the version from the assembly's in
 
 Understanding the parsing flow helps debug complex scenarios:
 
-1. Parse options (tokens starting with `-`, `--`, or `/`), applying option callbacks as values are consumed.
-2. If sub-commands exist and a token matches a sub-command name, dispatch to that sub-command.
-3. Parse positional arguments (`CommandArgument`) for the selected command.
+1. Parse options for the current command (tokens starting with `-`, `--`, or `/`), applying option callbacks as values are consumed.
+2. If help/version is requested for the current command, stop and render output.
+3. Apply environment-variable fallbacks for options not set on the command line.
 4. Run option constraint checks (mutually exclusive, requires).
-5. Invoke the command action and return its exit code.
-6. On error, the error is reported to `Error` and `RunAsync` returns `1`.
+5. If sub-commands exist and the next token matches an active sub-command, dispatch to that sub-command and repeat.
+6. Parse positional arguments (`CommandArgument`) for the resolved command.
+7. Invoke the command action and return its exit code.
+8. On error, the error is reported to `Error` and `RunAsync` returns `1`.
 
 If the parser is currently expecting a value for an option, the next token is **always** consumed as that value — even if it looks like `--` or matches a sub-command name.
 

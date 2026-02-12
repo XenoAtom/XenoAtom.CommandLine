@@ -91,8 +91,10 @@ var app = new CommandApp("myexe")
 ```
 
 This adds two sub-commands:
-- `completion <shell>` — generates the shell completion script
+- `completion <shell>` (hidden) — generates the shell completion script
 - `__complete` (hidden) — handles completion requests from the shell
+
+Both commands are hidden from default help output, but callable directly.
 
 ### Installing Completions
 
@@ -348,9 +350,10 @@ dotnet run -c Release --project src/XenoAtom.CommandLine.Benchmarks
 
 XenoAtom.CommandLine is fully compatible with NativeAOT publishing:
 
-- No reflection usage
+- No runtime code generation, dynamic proxies, or runtime binding
 - All types are trimmer-safe
 - `EnumWrapper<T>` avoids runtime reflection for enum parsing
+- Built-in defaults use only lightweight assembly metadata lookups (for example command name/version discovery)
 
 Publish with NativeAOT:
 

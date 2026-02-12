@@ -137,7 +137,7 @@ var app = new CommandApp("myexe")
 Running `myexe --help`:
 
 ```
-Usage: myexe [options] <input> [<output>] [<extra>]...
+Usage: myexe [options] <input> [<output>] <extra>*
 
   -h, -?, --help             Show this message and exit
 

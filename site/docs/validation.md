@@ -28,7 +28,8 @@ var app = new CommandApp("myexe")
 If validation fails, a clear error message is shown:
 
 ```
-myexe: The value '99999' is not valid for option '--port'. The value must be between 1 and 65535.
+myexe: Invalid value for option `--port`: The value must be between 1 and 65535.
+Use `myexe --help` for usage.
 ```
 
 ## Built-in Validators
@@ -129,7 +130,8 @@ app.AddMutuallyExclusive("json", "xml", "csv");
 If the user passes `--json --xml`, the error is:
 
 ```
-myexe: Options --json and --xml cannot be used together.
+myexe: Options `--json` and `--xml` cannot be used together.
+Use `myexe --help` for usage.
 ```
 
 ### Requires Constraint
@@ -150,7 +152,8 @@ app.AddRequires("password", "user");
 If the user passes `--password secret` without `--user`, the error is:
 
 ```
-myexe: Option --password requires --user to also be specified.
+myexe: Option `--password` requires `--user` to also be specified.
+Use `myexe --help` for usage.
 ```
 
 ### Combining Constraints
