@@ -109,6 +109,7 @@ await commandApp.RunAsync(args);
 Notes:
 - `CommandUsage()` defaults to `Usage: {NAME} {SYNTAX}` and `{SYNTAX}` is derived from your declared options/commands/arguments.
 - Positional arguments are strict by default: declare `<arg>` / `<arg>?` / `<arg>*` / `<arg>+`, or declare `<>` to forward remaining arguments to the command action.
+- Convenience helpers are available when not using collection initializers: `AddRemainder(...)`, `AddSection(...)`, and `AddText(...)`.
 
 Running `myexe --help` will output:
 

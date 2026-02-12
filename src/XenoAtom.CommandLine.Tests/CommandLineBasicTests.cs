@@ -371,4 +371,89 @@ public class CommandLineBasicTests
         Assert.HasCount(1, args);
         Assert.AreEqual("/mnt/home", args[0]);
     }
+
+    [TestMethod]
+    public async Task TypedHiddenOverloads_HideOptionAndArgumentFromHelp()
+    {
+        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+
+        var writer = new StringWriter();
+        var app = new CommandApp("app");
+        app.Add(new CommandUsage());
+        app.Add("Options:");
+        app.Add("v|visible=", "Visible {VALUE}", (int _) => { });
+        app.Add("x|hidden=", "Hidden {VALUE}", (int _) => { }, hidden: true);
+        app.Add("Arguments:");
+        app.Add("<visible>", "Visible argument", (int _) => { });
+        app.Add("<hidden>", "Hidden argument", (int _) => { }, hidden: true);
+        app.Add(new HelpOption());
+        app.Add((ctx, _) => ValueTask.FromResult(0));
+
+        var result = await app.RunAsync(["--help"], new CommandRunConfig { Out = writer, Error = writer });
+
+        Assert.AreEqual(0, result);
+        var output = writer.ToString();
+        StringAssert.Contains(output, "--visible=VALUE");
+        StringAssert.Contains(output, "<visible>");
+        Assert.IsFalse(output.Contains("--hidden=VALUE", StringComparison.Ordinal));
+        Assert.IsFalse(output.Contains("<hidden>", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public async Task TypedListHiddenEnvVarOverload_RemainsHiddenAndParsesFallback()
+    {
+        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+
+        var values = new List<int>();
+        var writer = new StringWriter();
+        var app = new CommandApp(
+            "app",
+            config: new CommandConfig
+            {
+                EnvironmentVariableResolver = static name => name == "APP_VALUES" ? "1;2" : null
+            });
+
+        app.Add("i|include=", "Include {VALUE}", values, envVar: "APP_VALUES", envVarDelimiter: ';', hidden: true);
+        app.Add(new HelpOption());
+        app.Add((ctx, _) => ValueTask.FromResult(0));
+
+        var helpResult = await app.RunAsync(["--help"], new CommandRunConfig { Out = writer, Error = writer });
+        Assert.AreEqual(0, helpResult);
+        Assert.IsFalse(writer.ToString().Contains("--include=VALUE", StringComparison.Ordinal));
+
+        var runResult = await app.RunAsync([], new CommandRunConfig { Out = TextWriter.Null, Error = TextWriter.Null });
+        Assert.AreEqual(0, runResult);
+        CollectionAssert.AreEqual(new[] { 1, 2 }, values);
+    }
+
+    [TestMethod]
+    public async Task AddRemainderAddTextAndAddSection_WorkAsExplicitHelpers()
+    {
+        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+
+        string[] captured = [];
+        var writer = new StringWriter();
+        var app = new CommandApp("app");
+        app.Add(new CommandUsage());
+        app.AddSection("Custom");
+        app.AddText("A custom help line.");
+        app.AddRemainder("Extra arguments");
+        app.Add(new HelpOption());
+        app.Add((ctx, args) =>
+        {
+            captured = args;
+            return ValueTask.FromResult(0);
+        });
+
+        var helpResult = await app.RunAsync(["--help"], new CommandRunConfig { Out = writer, Error = writer });
+        Assert.AreEqual(0, helpResult);
+        var helpOutput = writer.ToString();
+        StringAssert.Contains(helpOutput, "Custom:");
+        StringAssert.Contains(helpOutput, "A custom help line.");
+        StringAssert.Contains(helpOutput, "[args]...");
+
+        var runResult = await app.RunAsync(["one", "two"], new CommandRunConfig { Out = TextWriter.Null, Error = TextWriter.Null });
+        Assert.AreEqual(0, runResult);
+        CollectionAssert.AreEqual(new[] { "one", "two" }, captured);
+    }
 }

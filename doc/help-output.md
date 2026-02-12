@@ -99,6 +99,14 @@ var app = new CommandApp("myexe")
 };
 ```
 
+You can also use explicit helper methods when building commands without collection initializers:
+
+```csharp
+app.AddSection("Options");  // Adds "Options:"
+app.AddText("Additional help text");
+app.AddRemainder("Extra arguments");
+```
+
 ## Inline Visual Nodes
 
 When using `XenoAtom.CommandLine.Terminal`, you can add [Terminal.UI `Visual` controls](https://xenoatom.github.io/terminal/docs/controls/) directly in command initializers.

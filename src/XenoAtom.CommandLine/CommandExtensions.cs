@@ -57,6 +57,48 @@ public static class CommandExtensions
     }
 
     /// <summary>
+    /// Adds a plain text line to the command.
+    /// </summary>
+    /// <typeparam name="TCommand">Type of the command container.</typeparam>
+    /// <param name="command">The command container.</param>
+    /// <param name="text">The text line to add.</param>
+    /// <returns>The command container.</returns>
+    public static TCommand AddText<TCommand>(this TCommand command, string text)
+        where TCommand : CommandContainer =>
+        Add(command, text);
+
+    /// <summary>
+    /// Adds a section header line to the command help.
+    /// </summary>
+    /// <typeparam name="TCommand">Type of the command container.</typeparam>
+    /// <param name="command">The command container.</param>
+    /// <param name="header">The section header text.</param>
+    /// <returns>The command container.</returns>
+    public static TCommand AddSection<TCommand>(this TCommand command, string header)
+        where TCommand : CommandContainer
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(header);
+        var normalizedHeader = header.EndsWith(':') ? header : $"{header}:";
+        return Add(command, normalizedHeader);
+    }
+
+    /// <summary>
+    /// Adds a remainder positional argument (<c>&lt;&gt;</c>) to this command container.
+    /// All remaining arguments are forwarded to the command action callback.
+    /// </summary>
+    /// <typeparam name="TCommand">Type of the command container.</typeparam>
+    /// <param name="command">The command container.</param>
+    /// <param name="description">The help description for this remainder argument.</param>
+    /// <returns>The command container.</returns>
+    public static TCommand AddRemainder<TCommand>(this TCommand command, string? description = null)
+        where TCommand : CommandContainer
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        command.Add(new RemainderArgument(description));
+        return command;
+    }
+
+    /// <summary>
     /// Adds the remainder positional argument (<c>&lt;&gt;</c>) to this command container.
     /// All remaining arguments are passed unprocessed to the command action.
     /// </summary>
@@ -73,8 +115,7 @@ public static class CommandExtensions
         if (!string.Equals(prototype, "<>", StringComparison.Ordinal))
             throw new ArgumentException("This overload can only be used with the remainder argument '<>'.", nameof(prototype));
 
-        command.Add(new RemainderArgument(description));
-        return command;
+        return AddRemainder(command, description);
     }
 
     /// <summary>
@@ -304,16 +345,25 @@ public static class CommandExtensions
         where TCommand : CommandContainer
         where T : ISpanParsable<T>
     {
-        if (string.Equals(prototype, "<>", StringComparison.Ordinal))
-            throw new ArgumentException("The remainder argument '<>' cannot be bound to an action. Add it with { \"<>\", \"description\" } and read it from the command action arguments.", nameof(prototype));
+        return AddTypedAction(command, prototype, description, action, validate: null, envVar: null, envVarDelimiter: null, hidden: false);
+    }
 
-        if (CommandArgument.IsArgumentPrototype(prototype))
-        {
-            command.Add(new ActionArgument<T>(prototype, description, action));
-            return command;
-        }
-
-        return Add(command, new ActionOption<T>(prototype, description, action));
+    /// <summary>
+    /// Adds to this command container an option which expects a specified type for its value.
+    /// </summary>
+    /// <typeparam name="TCommand">Type of the command container.</typeparam>
+    /// <typeparam name="T">The value of the option.</typeparam>
+    /// <param name="command">The command to add the action to.</param>
+    /// <param name="prototype">The prototype of the option. E.g "v|version".</param>
+    /// <param name="description">The help description for this option.</param>
+    /// <param name="action">The associated action</param>
+    /// <param name="hidden">A boolean indicating if this option or argument is hidden from help.</param>
+    /// <returns>The command container.</returns>
+    public static TCommand Add<TCommand, T>(this TCommand command, string prototype, string? description, Action<T> action, bool hidden)
+        where TCommand : CommandContainer
+        where T : ISpanParsable<T>
+    {
+        return AddTypedAction(command, prototype, description, action, validate: null, envVar: null, envVarDelimiter: null, hidden);
     }
 
     /// <summary>
@@ -338,14 +388,34 @@ public static class CommandExtensions
         where TCommand : CommandContainer
         where T : ISpanParsable<T>
     {
-        ArgumentNullException.ThrowIfNull(action);
-        if (CommandArgument.IsArgumentPrototype(prototype))
-            throw new ArgumentException("Environment variable fallback is only supported for options, not positional arguments.", nameof(prototype));
+        return AddTypedAction(command, prototype, description, action, validate: null, envVar, envVarDelimiter, hidden: false);
+    }
 
-        var option = new ActionOption<T>(prototype, description, action);
-        ConfigureOptionEnvironment(option, envVar, envVarDelimiter);
-        command.Add(option);
-        return command;
+    /// <summary>
+    /// Adds an option which expects a specified type for its value with an environment variable fallback.
+    /// </summary>
+    /// <typeparam name="TCommand">Type of the command container.</typeparam>
+    /// <typeparam name="T">The value type of the option.</typeparam>
+    /// <param name="command">The command to add the option to.</param>
+    /// <param name="prototype">The prototype of the option. E.g "v|version".</param>
+    /// <param name="description">The help description for this option.</param>
+    /// <param name="action">The associated action.</param>
+    /// <param name="envVar">The environment variable used as a fallback value.</param>
+    /// <param name="envVarDelimiter">Optional delimiter used to split multiple fallback values.</param>
+    /// <param name="hidden">A boolean indicating if this option is hidden from help.</param>
+    /// <returns>The command container.</returns>
+    public static TCommand Add<TCommand, T>(
+        this TCommand command,
+        string prototype,
+        string? description,
+        Action<T> action,
+        string envVar,
+        char? envVarDelimiter,
+        bool hidden)
+        where TCommand : CommandContainer
+        where T : ISpanParsable<T>
+    {
+        return AddTypedAction(command, prototype, description, action, validate: null, envVar, envVarDelimiter, hidden);
     }
 
     /// <summary>
@@ -372,27 +442,36 @@ public static class CommandExtensions
         where TCommand : CommandContainer
         where T : ISpanParsable<T>
     {
-        ArgumentNullException.ThrowIfNull(action);
+        return AddTypedAction(command, prototype, description, action, validate, envVar, envVarDelimiter, hidden: false);
+    }
 
-        if (string.Equals(prototype, "<>", StringComparison.Ordinal))
-            throw new ArgumentException("The remainder argument '<>' cannot be bound to an action. Add it with { \"<>\", \"description\" } and read it from the command action arguments.", nameof(prototype));
-
-        if (CommandArgument.IsArgumentPrototype(prototype))
-        {
-            if (!string.IsNullOrWhiteSpace(envVar))
-                throw new ArgumentException("Environment variable fallback is only supported for options, not positional arguments.", nameof(envVar));
-            command.Add(new ActionArgument<T>(prototype, description, action, validate));
-            return command;
-        }
-
-        var option = new ActionOption<T>(prototype, description, action, validate);
-        if (!string.IsNullOrWhiteSpace(envVar))
-        {
-            ConfigureOptionEnvironment(option, envVar, envVarDelimiter);
-        }
-
-        command.Add(option);
-        return command;
+    /// <summary>
+    /// Adds an option or argument with validation for typed values.
+    /// </summary>
+    /// <typeparam name="TCommand">Type of the command container.</typeparam>
+    /// <typeparam name="T">The value type.</typeparam>
+    /// <param name="command">The command to add the node to.</param>
+    /// <param name="prototype">The prototype of the option or argument.</param>
+    /// <param name="description">The help description.</param>
+    /// <param name="action">The associated action.</param>
+    /// <param name="validate">The optional validator.</param>
+    /// <param name="hidden">A boolean indicating if this option or argument is hidden from help.</param>
+    /// <param name="envVar">The optional environment variable fallback (options only).</param>
+    /// <param name="envVarDelimiter">Optional delimiter used to split multiple fallback values.</param>
+    /// <returns>The command container.</returns>
+    public static TCommand Add<TCommand, T>(
+        this TCommand command,
+        string prototype,
+        string? description,
+        Action<T> action,
+        OptionValidator<T>? validate,
+        bool hidden,
+        string? envVar = null,
+        char? envVarDelimiter = null)
+        where TCommand : CommandContainer
+        where T : ISpanParsable<T>
+    {
+        return AddTypedAction(command, prototype, description, action, validate, envVar, envVarDelimiter, hidden);
     }
 
     /// <summary>
@@ -424,17 +503,25 @@ public static class CommandExtensions
         where TCommand : CommandContainer
         where T : ISpanParsable<T>
     {
-        if (string.Equals(prototype, "<>", StringComparison.Ordinal))
-            throw new ArgumentException("The remainder argument '<>' cannot be bound to a list. Add it with { \"<>\", \"description\" } and read it from the command action arguments.", nameof(prototype));
+        return AddTypedList(command, prototype, description, list, validate: null, envVar: null, envVarDelimiter: null, hidden: false);
+    }
 
-        if (CommandArgument.IsArgumentPrototype(prototype))
-        {
-            command.Add(new ActionArgument<T>(prototype, description, list.Add));
-            return command;
-        }
-
-        command.Add(new ActionOption<T>(prototype, description, list.Add));
-        return command;
+    /// <summary>
+    /// Adds to this command container an option which expects a specified type and will add the value to the specified list.
+    /// </summary>
+    /// <typeparam name="TCommand">Type of the command container.</typeparam>
+    /// <typeparam name="T">The value of the option.</typeparam>
+    /// <param name="command">The command to add the action to.</param>
+    /// <param name="prototype">The prototype of the option. E.g "v|version".</param>
+    /// <param name="description">The help description for this option.</param>
+    /// <param name="list">The associated list to receive the value of this option.</param>
+    /// <param name="hidden">A boolean indicating if this option or argument is hidden from help.</param>
+    /// <returns>The command container.</returns>
+    public static TCommand Add<TCommand, T>(this TCommand command, string prototype, string? description, ICollection<T> list, bool hidden)
+        where TCommand : CommandContainer
+        where T : ISpanParsable<T>
+    {
+        return AddTypedList(command, prototype, description, list, validate: null, envVar: null, envVarDelimiter: null, hidden);
     }
 
     /// <summary>
@@ -460,14 +547,35 @@ public static class CommandExtensions
         where TCommand : CommandContainer
         where T : ISpanParsable<T>
     {
-        ArgumentNullException.ThrowIfNull(list);
-        if (CommandArgument.IsArgumentPrototype(prototype))
-            throw new ArgumentException("Environment variable fallback is only supported for options, not positional arguments.", nameof(prototype));
+        return AddTypedList(command, prototype, description, list, validate: null, envVar, envVarDelimiter, hidden: false);
+    }
 
-        var option = new ActionOption<T>(prototype, description, list.Add);
-        ConfigureOptionEnvironment(option, envVar, envVarDelimiter);
-        command.Add(option);
-        return command;
+    /// <summary>
+    /// Adds an option which expects a specified type and appends parsed values to the specified list,
+    /// with an environment variable fallback.
+    /// </summary>
+    /// <typeparam name="TCommand">Type of the command container.</typeparam>
+    /// <typeparam name="T">The value type of the option.</typeparam>
+    /// <param name="command">The command to add the option to.</param>
+    /// <param name="prototype">The prototype of the option. E.g "v|version".</param>
+    /// <param name="description">The help description for this option.</param>
+    /// <param name="list">The associated list receiving option values.</param>
+    /// <param name="envVar">The environment variable used as a fallback value.</param>
+    /// <param name="envVarDelimiter">Optional delimiter used to split multiple fallback values.</param>
+    /// <param name="hidden">A boolean indicating if this option is hidden from help.</param>
+    /// <returns>The command container.</returns>
+    public static TCommand Add<TCommand, T>(
+        this TCommand command,
+        string prototype,
+        string? description,
+        ICollection<T> list,
+        string envVar,
+        char? envVarDelimiter,
+        bool hidden)
+        where TCommand : CommandContainer
+        where T : ISpanParsable<T>
+    {
+        return AddTypedList(command, prototype, description, list, validate: null, envVar, envVarDelimiter, hidden);
     }
 
     /// <summary>
@@ -494,27 +602,36 @@ public static class CommandExtensions
         where TCommand : CommandContainer
         where T : ISpanParsable<T>
     {
-        ArgumentNullException.ThrowIfNull(list);
+        return AddTypedList(command, prototype, description, list, validate, envVar, envVarDelimiter, hidden: false);
+    }
 
-        if (string.Equals(prototype, "<>", StringComparison.Ordinal))
-            throw new ArgumentException("The remainder argument '<>' cannot be bound to a list. Add it with { \"<>\", \"description\" } and read it from the command action arguments.", nameof(prototype));
-
-        if (CommandArgument.IsArgumentPrototype(prototype))
-        {
-            if (!string.IsNullOrWhiteSpace(envVar))
-                throw new ArgumentException("Environment variable fallback is only supported for options, not positional arguments.", nameof(envVar));
-            command.Add(new ActionArgument<T>(prototype, description, list.Add, validate));
-            return command;
-        }
-
-        var option = new ActionOption<T>(prototype, description, list.Add, validate);
-        if (!string.IsNullOrWhiteSpace(envVar))
-        {
-            ConfigureOptionEnvironment(option, envVar, envVarDelimiter);
-        }
-
-        command.Add(option);
-        return command;
+    /// <summary>
+    /// Adds an option or argument that appends values to a list with optional validation.
+    /// </summary>
+    /// <typeparam name="TCommand">Type of the command container.</typeparam>
+    /// <typeparam name="T">The value type.</typeparam>
+    /// <param name="command">The command to add the node to.</param>
+    /// <param name="prototype">The prototype of the option or argument.</param>
+    /// <param name="description">The help description.</param>
+    /// <param name="list">The list that receives parsed values.</param>
+    /// <param name="validate">The optional validator.</param>
+    /// <param name="hidden">A boolean indicating if this option or argument is hidden from help.</param>
+    /// <param name="envVar">The optional environment variable fallback (options only).</param>
+    /// <param name="envVarDelimiter">Optional delimiter used to split multiple fallback values.</param>
+    /// <returns>The command container.</returns>
+    public static TCommand Add<TCommand, T>(
+        this TCommand command,
+        string prototype,
+        string? description,
+        ICollection<T> list,
+        OptionValidator<T>? validate,
+        bool hidden,
+        string? envVar = null,
+        char? envVarDelimiter = null)
+        where TCommand : CommandContainer
+        where T : ISpanParsable<T>
+    {
+        return AddTypedList(command, prototype, description, list, validate, envVar, envVarDelimiter, hidden);
     }
 
     /// <summary>
@@ -527,6 +644,9 @@ public static class CommandExtensions
     /// <param name="prototype">The prototype of the option. E.g "v|version".</param>
     /// <param name="action">The associated action</param>
     /// <returns>The command container.</returns>
+    /// <remarks>
+    /// Environment-variable fallback and validation delegates are intentionally not supported for key/value option overloads.
+    /// </remarks>
     public static TCommand Add<TCommand, TKey, TValue>(this TCommand command, string prototype, Action<TKey, TValue> action)
         where TCommand : CommandContainer
         where TKey : ISpanParsable<TKey>
@@ -544,6 +664,9 @@ public static class CommandExtensions
     /// <param name="description">The help description for this option.</param>
     /// <param name="action">The associated action</param>
     /// <returns>The command container.</returns>
+    /// <remarks>
+    /// Environment-variable fallback and validation delegates are intentionally not supported for key/value option overloads.
+    /// </remarks>
     public static TCommand Add<TCommand, TKey, TValue>(this TCommand command, string prototype, string? description, Action<TKey, TValue> action)
         where TCommand : CommandContainer
         where TKey : ISpanParsable<TKey>
@@ -598,6 +721,83 @@ public static class CommandExtensions
         ArgumentNullException.ThrowIfNull(command);
         command.Add(new RequiresConstraint(optionName, requiredOptionNames));
         return command;
+    }
+
+    private static TCommand AddTypedAction<TCommand, T>(
+        TCommand command,
+        string prototype,
+        string? description,
+        Action<T> action,
+        OptionValidator<T>? validate,
+        string? envVar,
+        char? envVarDelimiter,
+        bool hidden)
+        where TCommand : CommandContainer
+        where T : ISpanParsable<T>
+    {
+        ArgumentNullException.ThrowIfNull(action);
+        EnsurePrototypeIsNotRemainder(prototype, isListBinding: false);
+
+        if (CommandArgument.IsArgumentPrototype(prototype))
+        {
+            if (!string.IsNullOrWhiteSpace(envVar))
+                throw new ArgumentException("Environment variable fallback is only supported for options, not positional arguments.", nameof(envVar));
+
+            command.Add(new ActionArgument<T>(prototype, description, action, hidden, validate));
+            return command;
+        }
+
+        var option = new ActionOption<T>(prototype, description, action, validate, hidden);
+        if (!string.IsNullOrWhiteSpace(envVar))
+        {
+            ConfigureOptionEnvironment(option, envVar, envVarDelimiter);
+        }
+
+        command.Add(option);
+        return command;
+    }
+
+    private static TCommand AddTypedList<TCommand, T>(
+        TCommand command,
+        string prototype,
+        string? description,
+        ICollection<T> list,
+        OptionValidator<T>? validate,
+        string? envVar,
+        char? envVarDelimiter,
+        bool hidden)
+        where TCommand : CommandContainer
+        where T : ISpanParsable<T>
+    {
+        ArgumentNullException.ThrowIfNull(list);
+        EnsurePrototypeIsNotRemainder(prototype, isListBinding: true);
+
+        if (CommandArgument.IsArgumentPrototype(prototype))
+        {
+            if (!string.IsNullOrWhiteSpace(envVar))
+                throw new ArgumentException("Environment variable fallback is only supported for options, not positional arguments.", nameof(envVar));
+
+            command.Add(new ActionArgument<T>(prototype, description, list.Add, hidden, validate));
+            return command;
+        }
+
+        var option = new ActionOption<T>(prototype, description, list.Add, validate, hidden);
+        if (!string.IsNullOrWhiteSpace(envVar))
+        {
+            ConfigureOptionEnvironment(option, envVar, envVarDelimiter);
+        }
+
+        command.Add(option);
+        return command;
+    }
+
+    private static void EnsurePrototypeIsNotRemainder(string prototype, bool isListBinding)
+    {
+        if (string.Equals(prototype, "<>", StringComparison.Ordinal))
+        {
+            var bindingKind = isListBinding ? "list" : "action";
+            throw new ArgumentException($"The remainder argument '<>' cannot be bound to a {bindingKind}. Add it with {{ \"<>\", \"description\" }} and read it from the command action arguments.", nameof(prototype));
+        }
     }
 
     private static void ConfigureOptionEnvironment(Option option, string envVar, char? envVarDelimiter)
@@ -725,7 +925,8 @@ public static class CommandExtensions
         private readonly Action<T> _action;
         private readonly OptionValidator<T>? _validate;
 
-        public ActionArgument(string prototype, string? description, Action<T> action, OptionValidator<T>? validate = null) : base(prototype, description)
+        public ActionArgument(string prototype, string? description, Action<T> action, bool hidden = false, OptionValidator<T>? validate = null)
+            : base(prototype, description, hidden)
         {
             ArgumentNullException.ThrowIfNull(action);
             _action = action;

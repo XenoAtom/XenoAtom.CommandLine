@@ -80,6 +80,12 @@ List arguments must be the **last** declared argument.
 { "<>", "Extra arguments passed to the action" }
 ```
 
+Or with the explicit helper:
+
+```csharp
+app.AddRemainder("Extra arguments passed to the action");
+```
+
 The `<>` prototype forwards all remaining positional arguments to the command action's `arguments` array instead of binding them to a specific variable or list:
 
 ```csharp

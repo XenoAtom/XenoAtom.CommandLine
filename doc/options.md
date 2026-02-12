@@ -149,6 +149,8 @@ The default key/value separators are `=` and `:`. You can use a custom separator
 
 Now `-PKey->Value` splits into `Key` and `Value`.
 
+> **Note:** Key/value overloads intentionally do not support `envVar` fallback or `validate` delegates. If you need those behaviors, use a single-value option and parse the pair in your callback.
+
 ## Typed Options
 
 Any type that implements `ISpanParsable<TSelf>` can be used directly:
