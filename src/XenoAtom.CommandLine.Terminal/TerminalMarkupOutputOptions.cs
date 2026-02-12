@@ -6,7 +6,7 @@ namespace XenoAtom.CommandLine.Terminal;
 /// <summary>
 /// Configuration options for <see cref="TerminalMarkupCommandOutput"/>.
 /// </summary>
-public sealed record TerminalMarkupOutputOptions
+public record TerminalMarkupOutputOptions
 {
     /// <summary>
     /// Gets a value indicating whether the output should use <c>Terminal.WindowWidth</c> for layout when available.

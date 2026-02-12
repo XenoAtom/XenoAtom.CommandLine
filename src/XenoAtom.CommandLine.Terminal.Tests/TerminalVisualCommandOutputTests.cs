@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 using XenoAtom.Terminal;
 using XenoAtom.Terminal.Backends;
@@ -24,12 +25,9 @@ public sealed class TerminalVisualCommandOutputTests
                 OutputFactory = _ => new TerminalVisualCommandOutput(
                     new TerminalVisualOutputOptions
                     {
-                        Help = new TerminalHelpVisualOptions
-                        {
-                            UseTableForOptions = true,
-                            UseTableForArguments = true,
-                            UseTableForCommands = true,
-                        }
+                        UseTableForOptions = true,
+                        UseTableForArguments = true,
+                        UseTableForCommands = true,
                     })
             })
         {
@@ -50,8 +48,12 @@ public sealed class TerminalVisualCommandOutputTests
 
         var output = backend.GetOutText();
         StringAssert.Contains(output, "Usage: app [options] <command>");
+        StringAssert.Contains(output, "Options");
         StringAssert.Contains(output, "-n, --name=NAME");
-        StringAssert.Contains(output, "Available commands:");
+        Assert.IsFalse(output.Contains("Options:", StringComparison.Ordinal));
+        StringAssert.Contains(output, "Available commands");
+        Assert.IsFalse(output.Contains("Available commands:", StringComparison.Ordinal));
+        StringAssert.Contains(output, "╭");
         StringAssert.Contains(output, "hello");
     }
 
@@ -74,7 +76,7 @@ public sealed class TerminalVisualCommandOutputTests
             (ctx, _) => ValueTask.FromResult(0)
         };
 
-        var visual = command.ToHelpVisual(new TerminalHelpVisualOptions
+        var visual = command.ToHelpVisual(new TerminalVisualOutputOptions
         {
             UseTableForOptions = true,
             UseTableForArguments = true,
@@ -85,9 +87,140 @@ public sealed class TerminalVisualCommandOutputTests
 
         var output = backend.GetOutText();
         StringAssert.Contains(output, "Usage: tool [options] <paths>*");
-        StringAssert.Contains(output, "Options:");
+        StringAssert.Contains(output, "Options");
+        Assert.IsFalse(output.Contains("Options:", StringComparison.Ordinal));
         StringAssert.Contains(output, "-f, --file=FILE");
-        StringAssert.Contains(output, "Arguments:");
+        StringAssert.Contains(output, "Arguments");
+        Assert.IsFalse(output.Contains("Arguments:", StringComparison.Ordinal));
+        StringAssert.Contains(output, "╭");
         StringAssert.Contains(output, "<paths>*");
+    }
+
+    [TestMethod]
+    public void ToHelpVisual_SectionGroups_CanUseMinimumWidth()
+    {
+        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+
+        var backend = new InMemoryTerminalBackend(new TerminalSize(120, 40));
+        using var session = TerminalHost.Open(backend, new TerminalOptions { ImplicitStartInput = true }, force: true);
+
+        var command = new Command("tool")
+        {
+            new CommandUsage(),
+            "Options:",
+            { "f|file=", "Input {FILE}", _ => { } },
+            { "v|verbose", "Verbose output", _ => { } },
+            new HelpOption(),
+            "Arguments:",
+            { "<paths>*", "Input paths", new List<string>() },
+            (ctx, _) => ValueTask.FromResult(0)
+        };
+
+        var visual = command.ToHelpVisual(new TerminalVisualOutputOptions
+        {
+            UseTableForOptions = true,
+            UseTableForArguments = true,
+            PreserveNodeOrder = true,
+            UseSectionGroups = true,
+            SectionGroupMinWidth = 80,
+        });
+
+        TerminalHost.Write(visual);
+
+        var output = backend.GetOutText();
+        var lines = output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
+        string? optionsLine = null;
+        string? argumentsLine = null;
+
+        foreach (var line in lines)
+        {
+            if (line.Contains("Options", StringComparison.Ordinal))
+            {
+                optionsLine = line;
+            }
+            else if (line.Contains("Arguments", StringComparison.Ordinal))
+            {
+                argumentsLine = line;
+            }
+        }
+
+        Assert.IsNotNull(optionsLine);
+        Assert.IsNotNull(argumentsLine);
+
+        var optionsWidth = optionsLine!.TrimEnd().Length;
+        var argumentsWidth = argumentsLine!.TrimEnd().Length;
+
+        Assert.IsGreaterThanOrEqualTo(80, optionsWidth);
+        Assert.AreEqual(optionsWidth, argumentsWidth);
+    }
+
+    [TestMethod]
+    public async Task VisualOutput_RendersErrors_InsideGroup()
+    {
+        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+
+        var backend = new InMemoryTerminalBackend(new TerminalSize(120, 40));
+        using var session = TerminalHost.Open(backend, new TerminalOptions { ImplicitStartInput = true }, force: true);
+
+        var app = new CommandApp(
+            "app",
+            config: new CommandConfig
+            {
+                OutputFactory = _ => new TerminalVisualCommandOutput(
+                    new TerminalVisualOutputOptions
+                    {
+                        UseErrorGroups = true,
+                        ErrorGroupMinWidth = 70,
+                    })
+            })
+        {
+            { "a|age=", "Age", (int _) => { } },
+            (ctx, _) => ValueTask.FromResult(0)
+        };
+
+        var result = await app.RunAsync(["--age", "oops"]);
+        Assert.AreEqual(1, result);
+
+        var output = backend.GetOutText();
+        StringAssert.Contains(output, "Error");
+        StringAssert.Contains(output, "app --age oops");
+        StringAssert.Contains(output, "^");
+        StringAssert.Contains(output, "Use `app --help` for usage.");
+        StringAssert.Contains(output, "╭");
+    }
+
+    [TestMethod]
+    public async Task VisualOutput_RendersUnknownTokens_InsideGroup()
+    {
+        CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+
+        var backend = new InMemoryTerminalBackend(new TerminalSize(120, 40));
+        using var session = TerminalHost.Open(backend, new TerminalOptions { ImplicitStartInput = true }, force: true);
+
+        var invocationTokens = new[] { "--verbos" };
+        var app = new CommandApp(
+            "app",
+            config: new CommandConfig
+            {
+                OutputFactory = _ => new TerminalVisualCommandOutput(
+                    new TerminalVisualOutputOptions
+                    {
+                        UseErrorGroups = true,
+                        InvocationTokensProvider = () => invocationTokens,
+                    })
+            })
+        {
+            { "v|verbose", "Enable verbose output", _ => { } },
+            (ctx, _) => ValueTask.FromResult(0)
+        };
+
+        var result = await app.RunAsync(invocationTokens);
+        Assert.AreEqual(1, result);
+
+        var output = backend.GetOutText();
+        StringAssert.Contains(output, "Unknown option: --verbos");
+        StringAssert.Contains(output, "app --verbos");
+        StringAssert.Contains(output, "^");
+        StringAssert.Contains(output, "╭");
     }
 }

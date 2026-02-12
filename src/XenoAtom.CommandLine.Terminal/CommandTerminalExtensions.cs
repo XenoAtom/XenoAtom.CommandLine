@@ -16,10 +16,10 @@ public static class CommandTerminalExtensions
     /// <param name="options">Optional visual generation options.</param>
     /// <returns>A visual that can be rendered with <c>Terminal.Write(visual)</c> or embedded in another UI tree.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="command"/> is <see langword="null"/>.</exception>
-    public static Visual ToHelpVisual(this Command command, TerminalHelpVisualOptions? options = null)
+    public static Visual ToHelpVisual(this Command command, TerminalVisualOutputOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(command);
-        var effectiveOptions = options ?? new TerminalHelpVisualOptions();
+        var effectiveOptions = options ?? new TerminalVisualOutputOptions();
         var model = HelpModelBuilder.Build(command, effectiveOptions.PreserveNodeOrder);
         return HelpVisualBuilder.Build(model, effectiveOptions);
     }

@@ -24,7 +24,11 @@ app = new CommandApp(
         {
             if (showVisualHelp)
             {
-                return new TerminalVisualCommandOutput();
+                return new TerminalVisualCommandOutput(new TerminalVisualOutputOptions
+                {
+                    SectionGroupMinWidth = 70,
+                    ErrorGroupMinWidth = 70,
+                });
             }
 
             if (showMarkup)
@@ -72,8 +76,9 @@ app = new CommandApp(
         {
             var helpVisual = new Group(
                 new Markup("[bold]terminal-help[/]"),
-                app.ToHelpVisual(new TerminalHelpVisualOptions
+                app.ToHelpVisual(new TerminalVisualOutputOptions
                 {
+                    SectionGroupMinWidth = 70,
                     TableStyleOverride = TableStyle.Minimal with { ShowHeaderSeparator = false },
                 }));
             TerminalHost.Write(helpVisual);

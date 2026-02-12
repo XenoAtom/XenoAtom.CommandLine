@@ -576,12 +576,11 @@ var app = new CommandApp("myexe", config: new CommandConfig
 {
     OutputFactory = _ => new TerminalVisualCommandOutput(new TerminalVisualOutputOptions
     {
-        Help = new TerminalHelpVisualOptions
-        {
-            UseTableForOptions = true,
-            UseTableForArguments = true,
-            UseTableForCommands = true,
-        }
+        UseTableForOptions = true,
+        UseTableForArguments = true,
+        UseTableForCommands = true,
+        SectionGroupMinWidth = 70,
+        ErrorGroupMinWidth = 70,
     })
 });
 ```
@@ -594,9 +593,10 @@ Available renderers:
 You can also generate a standalone visual for fullscreen apps:
 
 ```csharp
-var helpVisual = app.ToHelpVisual(new TerminalHelpVisualOptions
+var helpVisual = app.ToHelpVisual(new TerminalVisualOutputOptions
 {
-    OptionMarkupStyle = "[accent]",
+    OptionPrototypeStyle = "[accent]",
+    SectionGroupMinWidth = 70,
 });
 
 TerminalHost.Write(helpVisual);

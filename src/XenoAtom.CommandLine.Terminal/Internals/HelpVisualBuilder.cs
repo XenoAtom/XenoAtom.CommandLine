@@ -8,7 +8,7 @@ namespace XenoAtom.CommandLine.Terminal.Internals;
 
 internal static class HelpVisualBuilder
 {
-    public static Visual Build(HelpModel model, TerminalHelpVisualOptions options)
+    public static Visual Build(HelpModel model, TerminalVisualOutputOptions options)
     {
         ArgumentNullException.ThrowIfNull(model);
         ArgumentNullException.ThrowIfNull(options);
@@ -25,23 +25,30 @@ internal static class HelpVisualBuilder
                     continue;
 
                 case HelpLineKind.Usage:
-                    root.Add(new Markup(MarkupStyleHelper.ApplyStyle(options.UsageMarkupStyle, line.Text ?? string.Empty)));
+                    root.Add(new Markup(MarkupStyleHelper.ApplyStyle(options.UsageStyle, line.Text ?? string.Empty)));
                     continue;
 
                 case HelpLineKind.Text:
+                    if (line.IsSectionHeader && TryReadGroupedSection(model, index, options, out var sectionGroup, out var sectionEnd))
+                    {
+                        root.Add(sectionGroup);
+                        index = sectionEnd;
+                        continue;
+                    }
+
                     if (string.IsNullOrEmpty(line.Text))
                     {
                         root.Add(new TextBlock(string.Empty));
                     }
                     else
                     {
-                        var style = line.IsSectionHeader ? "[bold]" : options.DimMarkupStyle;
+                        var style = line.IsSectionHeader ? options.SectionHeaderStyle : options.DescriptionStyle;
                         root.Add(new Markup(MarkupStyleHelper.ApplyStyle(style, line.Text)));
                     }
                     continue;
 
                 case HelpLineKind.FooterHint:
-                    root.Add(new Markup(MarkupStyleHelper.ApplyStyle(options.DimMarkupStyle, line.Text ?? string.Empty)));
+                    root.Add(new Markup(MarkupStyleHelper.ApplyStyle(options.HintStyle, line.Text ?? string.Empty)));
                     continue;
 
                 case HelpLineKind.Row when line.Row is not null:
@@ -53,7 +60,112 @@ internal static class HelpVisualBuilder
         return root;
     }
 
-    private static int AddRows(VStack root, HelpModel model, int start, TerminalHelpVisualOptions options)
+    private static bool TryReadGroupedSection(HelpModel model, int headerIndex, TerminalVisualOutputOptions options, out Visual sectionGroup, out int sectionEnd)
+    {
+        sectionGroup = null!;
+        sectionEnd = headerIndex;
+
+        if (!options.UseSectionGroups)
+        {
+            return false;
+        }
+
+        var headerText = model.Lines[headerIndex].Text;
+        if (!IsGroupHeader(headerText))
+        {
+            return false;
+        }
+
+        var start = headerIndex + 1;
+        if (start >= model.Lines.Count)
+        {
+            return false;
+        }
+
+        var end = start - 1;
+        var hasRow = false;
+        for (var index = start; index < model.Lines.Count; index++)
+        {
+            var line = model.Lines[index];
+            if (line.Kind is HelpLineKind.FooterHint or HelpLineKind.Usage)
+            {
+                break;
+            }
+
+            if (line.Kind == HelpLineKind.Text && line.IsSectionHeader && IsGroupHeader(line.Text))
+            {
+                break;
+            }
+
+            if (line.Kind == HelpLineKind.Row && line.Row is not null)
+            {
+                hasRow = true;
+            }
+
+            end = index;
+        }
+
+        while (end >= start && model.Lines[end].Kind == HelpLineKind.Blank)
+        {
+            end--;
+        }
+
+        if (!hasRow || end < start)
+        {
+            return false;
+        }
+
+        var content = new VStack();
+        for (var index = start; index <= end; index++)
+        {
+            var line = model.Lines[index];
+            switch (line.Kind)
+            {
+                case HelpLineKind.Blank:
+                    content.Add(new TextBlock(string.Empty));
+                    break;
+
+                case HelpLineKind.Usage:
+                    content.Add(new Markup(MarkupStyleHelper.ApplyStyle(options.UsageStyle, line.Text ?? string.Empty)));
+                    break;
+
+                case HelpLineKind.Text:
+                    if (string.IsNullOrEmpty(line.Text))
+                    {
+                        content.Add(new TextBlock(string.Empty));
+                    }
+                    else
+                    {
+                        var style = line.IsSectionHeader ? options.SectionHeaderStyle : options.DescriptionStyle;
+                        content.Add(new Markup(MarkupStyleHelper.ApplyStyle(style, line.Text)));
+                    }
+                    break;
+
+                case HelpLineKind.FooterHint:
+                    content.Add(new Markup(MarkupStyleHelper.ApplyStyle(options.HintStyle, line.Text ?? string.Empty)));
+                    break;
+
+                case HelpLineKind.Row when line.Row is not null:
+                    index = AddRows(content, model, index, options);
+                    break;
+            }
+        }
+
+        var title = GetGroupTitle(headerText!);
+        var groupTitle = new Markup(MarkupStyleHelper.ApplyStyle(options.SectionHeaderStyle, title));
+        var group = new Group(groupTitle, content);
+        if (options.SectionGroupMinWidth > 0)
+        {
+            group.MinWidth = options.SectionGroupMinWidth;
+        }
+        group.Style(options.SectionGroupStyle);
+
+        sectionGroup = group;
+        sectionEnd = end;
+        return true;
+    }
+
+    private static int AddRows(VStack root, HelpModel model, int start, TerminalVisualOutputOptions options)
     {
         var firstRow = model.Lines[start].Row!;
         var useTable = firstRow.Kind switch
@@ -80,7 +192,7 @@ internal static class HelpVisualBuilder
                 var row = model.Lines[index].Row!;
                 table.AddRow(
                     new Markup(MarkupStyleHelper.ApplyStyle(GetPrototypeStyle(options, row.Kind), row.Prototype)),
-                    new Markup(MarkupStyleHelper.ApplyStyle("[/]", row.Description)));
+                    new Markup(MarkupStyleHelper.ApplyStyle(options.DescriptionStyle, row.Description)));
             }
 
             root.Add(table);
@@ -97,14 +209,14 @@ internal static class HelpVisualBuilder
         return end;
     }
 
-    private static string GetPrototypeStyle(TerminalHelpVisualOptions options, HelpRowKind rowKind)
+    private static string GetPrototypeStyle(TerminalVisualOutputOptions options, HelpRowKind rowKind)
     {
         return rowKind switch
         {
-            HelpRowKind.Option => options.OptionMarkupStyle,
-            HelpRowKind.Argument => options.ArgumentMarkupStyle,
-            HelpRowKind.Command => options.CommandNameMarkupStyle,
-            _ => options.OptionMarkupStyle,
+            HelpRowKind.Option => options.OptionPrototypeStyle,
+            HelpRowKind.Argument => options.ArgumentPrototypeStyle,
+            HelpRowKind.Command => options.CommandNameStyle,
+            _ => options.OptionPrototypeStyle,
         };
     }
 
@@ -113,4 +225,19 @@ internal static class HelpVisualBuilder
         ShowHeaderSeparator = false,
         CellPadding = new Thickness(1, 0, 1, 0),
     };
+
+    private static bool IsGroupHeader(string? text)
+    {
+        return !string.IsNullOrWhiteSpace(text) && text.TrimEnd().EndsWith(":", StringComparison.Ordinal);
+    }
+
+    private static string GetGroupTitle(string text)
+    {
+        var trimmed = text.TrimEnd();
+        if (trimmed.EndsWith(":", StringComparison.Ordinal))
+        {
+            trimmed = trimmed[..^1].TrimEnd();
+        }
+        return trimmed;
+    }
 }
