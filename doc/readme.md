@@ -13,6 +13,7 @@ XenoAtom.CommandLine is a library that provides a simple and easy way to create 
 - [Help Text](#help-text)
 - [Custom Output Rendering](#custom-output-rendering)
   - [Terminal and Terminal.UI output package](#terminal-and-terminalui-output-package)
+    - [Grouped visual sections with `:`](#grouped-visual-sections-with-)
 - [Actions](#actions)
 - [Completions](#completions)
 - [Configuration](#configuration)
@@ -606,6 +607,30 @@ var helpVisual = app.ToHelpVisual(new TerminalVisualOutputOptions
 
 TerminalHost.Write(helpVisual);
 ```
+
+#### Grouped visual sections with `:`
+
+When using `TerminalVisualCommandOutput` (or `ToHelpVisual()`), a help text line ending with `:` is treated as a section header and the following rows are rendered in a grouped visual block (for example with a rounded border).
+
+Simple example:
+
+```csharp
+var app = new CommandApp("myexe", config: new CommandConfig
+{
+    OutputFactory = _ => new TerminalVisualCommandOutput()
+})
+{
+    new CommandUsage(),
+    "Options:",
+    { "n|name=", "Your {NAME}", _ => { } },
+    new HelpOption(),
+    "Arguments:",
+    { "<files>*", "Input files", new List<string>() },
+    (ctx, _) => ValueTask.FromResult(0)
+};
+```
+
+In this example, `Options:` and `Arguments:` become distinct visual groups in the rendered help.
 
 Related sample:
 
