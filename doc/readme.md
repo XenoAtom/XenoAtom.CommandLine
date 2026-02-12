@@ -5,9 +5,14 @@ XenoAtom.CommandLine is a library that provides a simple and easy way to create 
 - [CommandApp and Command](#commandapp-and-command)
 - [Parse API](#parse-api)
 - [Options](#options)
+  - [Quick Reference](#quick-reference)
+  - [Environment Variable Fallback](#environment-variable-fallback)
+  - [Value Validation](#value-validation)
+  - [Option Constraints](#option-constraints)
 - [Command Arguments](#command-arguments)
 - [Help Text](#help-text)
 - [Custom Output Rendering](#custom-output-rendering)
+  - [Terminal and Terminal.UI output package](#terminal-and-terminalui-output-package)
 - [Actions](#actions)
 - [Completions](#completions)
 - [Configuration](#configuration)
@@ -604,6 +609,8 @@ TerminalHost.Write(helpVisual);
 
 Related sample:
 
+- `samples/AdvancedApp/Program.cs`
+- `samples/HelloWorld/Program.cs`
 - `samples/TerminalVisualHelp/Program.cs`
 
 ## Actions

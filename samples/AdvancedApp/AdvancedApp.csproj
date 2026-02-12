@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\XenoAtom.CommandLine\XenoAtom.CommandLine.csproj" />
+    <ProjectReference Include="..\..\src\XenoAtom.CommandLine.Terminal\XenoAtom.CommandLine.Terminal.csproj" />
   </ItemGroup>
 
 </Project>

@@ -2,19 +2,27 @@
 // Licensed under the BSD-Clause 2 license.
 // See license.txt file in the project root for full license information.
 using XenoAtom.CommandLine;
+using XenoAtom.CommandLine.Terminal;
 
 // Demonstrate a plain command line application without using sub-commands
 const string _ = "";
 bool flag = false;
+bool showMarkup = false;
+bool showVisual = false;
 string? name = null;
 int age = 0;
 var files = new List<string>();
 
-var commandApp = new CommandApp()
+var commandApp = new CommandApp(config: new CommandConfig
+{
+    OutputFactory = _ => showVisual ?new TerminalVisualCommandOutput() : showMarkup ? new TerminalMarkupCommandOutput() : DefaultCommandOutput.Instance
+})
 {
     new CommandUsage(),
     _,
     "Options:",
+    { "markup", "Render help/errors with terminal markup", v => showMarkup = v is not null },
+    { "visual", "Render help/errors with terminal visual output", v => showVisual = v is not null },
     {"f|flag", "This is a flag", v => flag = v != null },
     {"n|name=", "Your {NAME}", v => name = v},
     {"a|age=", "Your {AGE}", (int v) => age = v},

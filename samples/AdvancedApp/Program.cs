@@ -2,10 +2,13 @@
 // Licensed under the BSD-Clause 2 license.
 // See license.txt file in the project root for full license information.
 using XenoAtom.CommandLine;
+using XenoAtom.CommandLine.Terminal;
 
 // Demonstrate a more complex command line application with sub-commands
 // Run with --help to see the available commands
 const string _ = "";
+bool showMarkup = false;
+bool showVisual = false;
 bool showAdvanced = false;
 var enums = new List<TestEnum>();
 var keyValues = new List<(string Key, string? Value)>();
@@ -24,12 +27,17 @@ var world_files = new List<string>();
 string? name = null;
 int age = 0;
 
-var app = new CommandApp("multi")
+var app = new CommandApp("multi", config: new CommandConfig
+{
+    OutputFactory = _ => showVisual ? new TerminalVisualCommandOutput() : showMarkup ? new TerminalMarkupCommandOutput() : DefaultCommandOutput.Instance
+})
 {
     new CommandUsage(),
     new CompletionCommands(), // Add completion commands
     _,
     "Options:",
+    { "markup", "Render help/errors with terminal markup", v => showMarkup = v is not null },
+    { "visual", "Render help/errors with terminal visual output", v => showVisual = v is not null },
     // gcc-like options
     { "D:", "Add a marco {0:NAME} and optional {1:VALUE}", (k, v) =>
         {

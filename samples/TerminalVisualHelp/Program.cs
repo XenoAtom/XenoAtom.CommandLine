@@ -7,7 +7,7 @@ using XenoAtom.Terminal.UI.Styling;
 using TerminalHost = XenoAtom.Terminal.Terminal;
 
 const string _ = "";
-var showVisualHelp = false;
+var showVisual = false;
 var showMarkup = false;
 var files = new List<string>();
 string? name = null;
@@ -22,7 +22,7 @@ app = new CommandApp(
     {
         OutputFactory = _ =>
         {
-            if (showVisualHelp)
+            if (showVisual)
             {
                 return new TerminalVisualCommandOutput(new TerminalVisualOutputOptions
                 {
@@ -44,7 +44,7 @@ app = new CommandApp(
     _,
     "Options:",
     { "markup", "Render help/errors with terminal markup", value => showMarkup = value is not null },
-    { "visual-help", "Render help by calling ToHelpVisual()", value => showVisualHelp = value is not null },
+    { "visual|visual-help", "Render help by calling ToHelpVisual()", value => showVisual = value is not null },
     new HelpOption(),
     new VersionOption("1.0.0"),
     _,
@@ -72,7 +72,7 @@ app = new CommandApp(
     },
     (ctx, _) =>
     {
-        if (showVisualHelp && app is not null)
+        if (showVisual && app is not null)
         {
             var helpVisual = new Group(
                 new Markup("[bold]terminal-help[/]"),
@@ -85,7 +85,7 @@ app = new CommandApp(
             return ValueTask.FromResult(0);
         }
 
-        ctx.Out.WriteLine("Run with --help, --markup --help, or --visual-help --help.");
+        ctx.Out.WriteLine("Run with --help, --markup --help, or --visual --help.");
         return ValueTask.FromResult(0);
     }
 };
