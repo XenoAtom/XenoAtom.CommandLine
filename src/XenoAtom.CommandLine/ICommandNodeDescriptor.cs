@@ -5,12 +5,16 @@
 namespace XenoAtom.CommandLine;
 
 /// <summary>
-/// Interface used to add a description to a <see cref="CommandNode"/>>.
+/// Provides plain-text help description intent for a <see cref="CommandNode"/>.
 /// </summary>
 public interface ICommandNodeDescriptor
 {
     /// <summary>
-    /// Gets the description of this command node (option, command...).
+    /// Gets the plain help text associated with this node.
     /// </summary>
+    /// <remarks>
+    /// This text should represent semantic help content (for example command/option/argument descriptions)
+    /// and should not contain renderer-specific markup.
+    /// </remarks>
     string? Description { get; }
 }

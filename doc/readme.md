@@ -34,6 +34,7 @@ await app.RunAsync(args);
 | [Validation & Constraints](validation.md) | Value validation (`Validate.Range`, `Validate.NonEmpty`, `Validate.FileExists`, …), mutually exclusive options, requires constraints |
 | [Help & Output](help-output.md) | Help text, `CommandUsage`, custom `ICommandOutput` rendering, Terminal markup and visual output |
 | [Advanced Topics](advanced.md) | Parse API for testing, shell completions, response files, `CommandConfig`, `CommandRunConfig`, localization, `EnumWrapper<T>`, NativeAOT, performance |
+| [Migration 2.0](migration-2.0.md) | Breaking changes and upgrade checklist from 1.x |
 
 ## Quick Links
 

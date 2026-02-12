@@ -9,6 +9,11 @@ namespace XenoAtom.CommandLine;
 /// <summary>
 /// Provides preformatted help content that should be written verbatim.
 /// </summary>
+/// <remarks>
+/// When a node implements both <see cref="IHelpPreformattedContent"/> and <see cref="ICommandNodeDescriptor"/>,
+/// text outputs should prefer <see cref="WriteTo"/> and use descriptor text as fallback only when preformatted
+/// rendering is not supported.
+/// </remarks>
 public interface IHelpPreformattedContent
 {
     /// <summary>

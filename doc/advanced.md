@@ -49,6 +49,13 @@ var result = app.Parse(["--name", "Alice", "--port", "8080"]);
 - Help/version requests are surfaced via `HelpRequested`/`VersionRequested`.
 - Errors are collected in `Errors` instead of being written to stderr.
 - If `runConfig` is null, `Out` and `Error` default to `TextWriter.Null` to suppress output.
+- Parsing mutates per-run option state (`WasSet` tracking), so command graphs are intended for one invocation at a time.
+
+### Invocation Concurrency Contract
+
+- Command graphs are **not thread-safe for concurrent `RunAsync`/`Parse` calls** on the same command tree.
+- Sequential invocations on the same graph are supported.
+- Create separate command graph instances if you need true parallel invocations.
 
 ### Testing Sub-Commands
 

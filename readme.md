@@ -110,6 +110,7 @@ Notes:
 - `CommandUsage()` defaults to `Usage: {NAME} {SYNTAX}` and `{SYNTAX}` is derived from your declared options/commands/arguments.
 - Positional arguments are strict by default: declare `<arg>` / `<arg>?` / `<arg>*` / `<arg>+`, or declare `<>` to forward remaining arguments to the command action.
 - Convenience helpers are available when not using collection initializers: `AddRemainder(...)`, `AddSection(...)`, and `AddText(...)`.
+- A command graph instance is intended for one invocation at a time (`RunAsync`/`Parse` are not concurrent-safe on the same graph).
 
 Running `myexe --help` will output:
 
@@ -227,6 +228,7 @@ Example of the advanced sample with an error:
 | [Validation & Constraints](doc/validation.md) | Value validation, mutually exclusive options, requires constraints |
 | [Help & Output](doc/help-output.md) | Help text, `CommandUsage`, custom output rendering, Terminal package |
 | [Advanced Topics](doc/advanced.md) | Parse API, shell completions, response files, configuration, environment variables, performance |
+| [Migration 2.0](doc/migration-2.0.md) | Breaking changes and upgrade steps |
 
 ## 🏗️ Build
 

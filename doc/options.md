@@ -265,6 +265,7 @@ Options can be hidden from help output:
 ```
 
 Hidden options are still functional — they just don't appear in `--help`.
+Set metadata (`hidden`, `envVar`, `envVarDelimiter`) while declaring options; these settings are part of construction-time configuration.
 
 ## Environment Variable Fallback
 
