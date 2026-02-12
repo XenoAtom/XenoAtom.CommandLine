@@ -1,3 +1,7 @@
+// Copyright (c) Alexandre Mutel. All rights reserved.
+// Licensed under the BSD-Clause 2 license.
+// See license.txt file in the project root for full license information.
+
 using System;
 using XenoAtom.Terminal.UI;
 using XenoAtom.Terminal.UI.Controls;
@@ -26,6 +30,10 @@ internal static class HelpVisualBuilder
 
                 case HelpLineKind.Usage:
                     root.Add(new Markup(MarkupStyleHelper.ApplyStyle(options.UsageStyle, line.Text ?? string.Empty)));
+                    continue;
+
+                case HelpLineKind.Visual when line.Visual is not null:
+                    root.Add(line.Visual);
                     continue;
 
                 case HelpLineKind.Text:
@@ -127,6 +135,10 @@ internal static class HelpVisualBuilder
 
                 case HelpLineKind.Usage:
                     content.Add(new Markup(MarkupStyleHelper.ApplyStyle(options.UsageStyle, line.Text ?? string.Empty)));
+                    break;
+
+                case HelpLineKind.Visual when line.Visual is not null:
+                    content.Add(line.Visual);
                     break;
 
                 case HelpLineKind.Text:

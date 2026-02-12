@@ -1,7 +1,12 @@
+// Copyright (c) Alexandre Mutel. All rights reserved.
+// Licensed under the BSD-Clause 2 license.
+// See license.txt file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using XenoAtom.CommandLine.Terminal.Internals;
 using XenoAtom.Terminal;
+using XenoAtom.Terminal.UI;
 
 namespace XenoAtom.CommandLine.Terminal.Internals;
 
@@ -20,9 +25,15 @@ internal static class HelpMarkupWriter
         var descriptionRemainingWidth = Math.Max(2, width - optionWidth - 2);
         var wrappedIndent = new string(' ', optionWidth + 2);
 
-        MarkupAtomicWriter.Write(writer =>
+        foreach (var line in model.Lines)
         {
-            foreach (var line in model.Lines)
+            if (line.Kind == HelpLineKind.Visual && line.Visual is { } visual)
+            {
+                XenoAtom.Terminal.Terminal.Write(visual);
+                continue;
+            }
+
+            MarkupAtomicWriter.Write(writer =>
             {
                 switch (line.Kind)
                 {
@@ -52,8 +63,8 @@ internal static class HelpMarkupWriter
                         WriteRow(writer, line.Row, options, optionWidth, descriptionFirstWidth, descriptionRemainingWidth, wrappedIndent);
                         break;
                 }
-            }
-        });
+            });
+        }
     }
 
     private static void WriteRow(

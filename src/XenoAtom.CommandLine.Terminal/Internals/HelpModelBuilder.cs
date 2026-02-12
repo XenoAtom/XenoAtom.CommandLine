@@ -1,5 +1,10 @@
+// Copyright (c) Alexandre Mutel. All rights reserved.
+// Licensed under the BSD-Clause 2 license.
+// See license.txt file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
+using XenoAtom.CommandLine.Terminal;
 
 namespace XenoAtom.CommandLine.Terminal.Internals;
 
@@ -83,6 +88,10 @@ internal static class HelpModelBuilder
                             GetDescription(subCommand.Description))));
                     continue;
 
+                case TerminalVisualNode visualNode:
+                    lines.Add(new HelpLine(HelpLineKind.Visual, Visual: visualNode.Visual));
+                    continue;
+
                 case ICommandNodeDescriptor descriptor:
                     if (IsHiddenDescriptorNode(node))
                     {
@@ -114,6 +123,8 @@ internal static class HelpModelBuilder
             }
         }
 
+        AddStandaloneVisuals(command, lines);
+
         AddRowSection(
             lines,
             "Options:",
@@ -131,6 +142,19 @@ internal static class HelpModelBuilder
             "Available commands:",
             HelpRowKind.Command,
             BuildCommands(command));
+    }
+
+    private static void AddStandaloneVisuals(Command command, List<HelpLine> lines)
+    {
+        foreach (var node in command.Nodes)
+        {
+            if (!node.IsActive() || node is not TerminalVisualNode visualNode)
+            {
+                continue;
+            }
+
+            lines.Add(new HelpLine(HelpLineKind.Visual, Visual: visualNode.Visual));
+        }
     }
 
     private static IEnumerable<HelpRow> BuildOptions(Command command)

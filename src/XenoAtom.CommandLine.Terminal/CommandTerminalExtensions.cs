@@ -1,3 +1,7 @@
+// Copyright (c) Alexandre Mutel. All rights reserved.
+// Licensed under the BSD-Clause 2 license.
+// See license.txt file in the project root for full license information.
+
 using System;
 using XenoAtom.CommandLine.Terminal.Internals;
 using XenoAtom.Terminal.UI;
@@ -9,6 +13,48 @@ namespace XenoAtom.CommandLine.Terminal;
 /// </summary>
 public static class CommandTerminalExtensions
 {
+    /// <summary>
+    /// Adds a Terminal.UI visual node to a command container.
+    /// </summary>
+    /// <typeparam name="TCommand">Type of the command container.</typeparam>
+    /// <typeparam name="TVisual">Type of the visual node.</typeparam>
+    /// <param name="command">The command container to append to.</param>
+    /// <param name="visual">The visual to append.</param>
+    /// <returns>The command container.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="command"/> or <paramref name="visual"/> is <see langword="null"/>.</exception>
+    public static TCommand Add<TCommand, TVisual>(this TCommand command, TVisual visual)
+        where TCommand : CommandContainer
+        where TVisual : Visual
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        ArgumentNullException.ThrowIfNull(visual);
+
+        command.Add(new TerminalVisualNode(visual));
+        return command;
+    }
+
+    /// <summary>
+    /// Adds a Terminal.UI visual node with fallback text to a command container.
+    /// </summary>
+    /// <typeparam name="TCommand">Type of the command container.</typeparam>
+    /// <typeparam name="TVisual">Type of the visual node.</typeparam>
+    /// <param name="command">The command container to append to.</param>
+    /// <param name="visual">The visual to append.</param>
+    /// <param name="fallbackText">Fallback text for outputs that don't render visuals.</param>
+    /// <returns>The command container.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="command"/>, <paramref name="visual"/>, or <paramref name="fallbackText"/> is <see langword="null"/>.</exception>
+    public static TCommand Add<TCommand, TVisual>(this TCommand command, TVisual visual, string fallbackText)
+        where TCommand : CommandContainer
+        where TVisual : Visual
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        ArgumentNullException.ThrowIfNull(visual);
+        ArgumentNullException.ThrowIfNull(fallbackText);
+
+        command.Add(new TerminalVisualNode(visual, fallbackText));
+        return command;
+    }
+
     /// <summary>
     /// Builds a help visual for the specified command.
     /// </summary>

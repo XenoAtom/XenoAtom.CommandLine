@@ -26,6 +26,7 @@
 - **Test-friendly parse API:** inspect parse results via `CommandApp.Parse(...)` without invoking command actions
 - **Pluggable output rendering:** replace built-in help/error/version/license rendering via `CommandConfig.OutputFactory`
   - Optional **`XenoAtom.CommandLine.Terminal`** package (`net10.0`) for colored markup output and Terminal.UI visual help (`TerminalVisualCommandOutput`, `Command.ToHelpVisual()`)
+  - Inline Terminal.UI visuals can be declared directly in command initializers and are rendered by default, markup, and visual outputs
 - **Better errors by default**
   - **Strict unknown `-` / `--` options** (`CommandConfig.StrictOptionParsing`)
   - **Helpful diagnostics:** suggestions + "inactive in this context" hints
@@ -165,17 +166,42 @@ For richer CLI output, use the optional `XenoAtom.CommandLine.Terminal` package:
 ```csharp
 using XenoAtom.CommandLine;
 using XenoAtom.CommandLine.Terminal;
-using TerminalHost = XenoAtom.Terminal.Terminal;
-
-using var session = TerminalHost.Open();
+using XenoAtom.Terminal.UI;
+using XenoAtom.Terminal.UI.Controls;
+using XenoAtom.Terminal.UI.Figlet;
+using XenoAtom.Terminal.UI.Styling;
 
 var app = new CommandApp("myexe", config: new CommandConfig
 {
     OutputFactory = _ => new TerminalVisualCommandOutput()
-});
+})
+{
+    new CommandUsage(),
+    new TextFiglet("XenoAtom")
+        .Font(FigletPredefinedFont.Standard)
+        .LetterSpacing(1)
+        .TextAlignment(TextAlignment.Left)
+        .Style(TextFigletStyle.Default with
+        {
+            ForegroundBrush = Brush.LinearGradient(
+                new GradientPoint(0f, 0f),
+                new GradientPoint(1f, 0f),
+                [
+                    new GradientStop(0f, Colors.DodgerBlue),
+                    new GradientStop(0.5f, Colors.White),
+                    new GradientStop(1f, Colors.Orange),
+                ],
+                mixSpaceOverride: ColorMixSpace.Oklab),
+        }),
+    "Options:",
+    { "n|name=", "Your {NAME}", _ => { } },
+    new HelpOption(),
+    (ctx, _) => ValueTask.FromResult(0)
+};
 ```
 
 This package also provides `command.ToHelpVisual(...)` for embedding help in Terminal.UI apps.
+For one-shot rendering, `Terminal.Write(...)` is lazily initialized and does not require an explicit terminal session.
 
 Example of the advanced sample with markup help:
 

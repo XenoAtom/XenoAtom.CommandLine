@@ -99,6 +99,59 @@ var app = new CommandApp("myexe")
 };
 ```
 
+## Inline Visual Nodes
+
+When using `XenoAtom.CommandLine.Terminal`, you can add [Terminal.UI `Visual` controls](https://xenoatom.github.io/terminal/docs/controls/) directly in command initializers.
+
+```csharp
+using XenoAtom.CommandLine;
+using XenoAtom.CommandLine.Terminal;
+using XenoAtom.Terminal.UI;
+using XenoAtom.Terminal.UI.Controls;
+using XenoAtom.Terminal.UI.Figlet;
+using XenoAtom.Terminal.UI.Styling;
+
+var app = new CommandApp("myexe")
+{
+    new CommandUsage(),
+    new TextFiglet("XenoAtom")
+        .Font(FigletPredefinedFont.Standard)
+        .LetterSpacing(1)
+        .TextAlignment(TextAlignment.Left)
+        .Style(TextFigletStyle.Default with
+        {
+            ForegroundBrush = Brush.LinearGradient(
+                new GradientPoint(0f, 0f),
+                new GradientPoint(1f, 0f),
+                [
+                    new GradientStop(0f, Colors.DodgerBlue),
+                    new GradientStop(0.5f, Colors.White),
+                    new GradientStop(1f, Colors.Orange),
+                ],
+                mixSpaceOverride: ColorMixSpace.Oklab)
+        }),
+    "Options:",
+    { "n|name=", "Your {NAME}", _ => { } },
+    new HelpOption(),
+    (ctx, _) => ValueTask.FromResult(0)
+};
+```
+
+You can also provide fallback text for non-visual renderers:
+
+```csharp
+new Command("myexe")
+{
+    { new TextFiglet("XenoAtom"), "XenoAtom" },
+    (ctx, _) => ValueTask.FromResult(0)
+};
+```
+
+Rendering behavior:
+- `DefaultCommandOutput`: renders visual nodes as preformatted text blocks.
+- `TerminalMarkupCommandOutput`: writes visual nodes inline via `Terminal.Write(visual)`.
+- `TerminalVisualCommandOutput` / `ToHelpVisual()`: inserts visual nodes directly in the visual tree.
+
 ## License Header
 
 Display a license banner before command execution:
@@ -224,9 +277,6 @@ Renders help and errors as Terminal.UI visuals with borders, tables, and structu
 ```csharp
 using XenoAtom.CommandLine;
 using XenoAtom.CommandLine.Terminal;
-using TerminalHost = XenoAtom.Terminal.Terminal;
-
-using var session = TerminalHost.Open();
 
 var app = new CommandApp("myexe", config: new CommandConfig
 {
@@ -240,6 +290,8 @@ var app = new CommandApp("myexe", config: new CommandConfig
     })
 });
 ```
+
+For one-shot rendering, `Terminal.Write(...)` is lazily initialized and does not require an explicit terminal session.
 
 ### Section Grouping with `:`
 
@@ -274,7 +326,7 @@ var helpVisual = app.ToHelpVisual(new TerminalVisualOutputOptions
     SectionGroupMinWidth = 70,
 });
 
-TerminalHost.Write(helpVisual);
+XenoAtom.Terminal.Terminal.Write(helpVisual);
 ```
 
 ### Choosing a Renderer

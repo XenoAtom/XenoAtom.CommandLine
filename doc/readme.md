@@ -6,6 +6,8 @@ Welcome to the XenoAtom.CommandLine documentation. This guide covers everything 
 
 **XenoAtom.CommandLine** is a lightweight, powerful and NativeAOT-friendly command-line parser for .NET. It uses a composition-first API — you declare commands, options, and arguments with collection initializers, and the library handles parsing, help generation, and error reporting.
 
+With the optional `XenoAtom.CommandLine.Terminal` package, you can also embed Terminal.UI visuals directly in command initializers for richer help output.
+
 ```csharp
 var app = new CommandApp("myexe")
 {

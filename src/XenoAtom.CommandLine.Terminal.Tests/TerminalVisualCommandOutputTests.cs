@@ -50,7 +50,8 @@ public sealed class TerminalVisualCommandOutputTests
         StringAssert.Contains(output, "Usage: app [options] <command>");
         StringAssert.Contains(output, "Options");
         StringAssert.Contains(output, "-n, --name=NAME");
-        Assert.IsFalse(output.Contains("Options:", StringComparison.Ordinal));
+        Assert.IsFalse(
+            output.Contains("Options:", StringComparison.Ordinal));
         StringAssert.Contains(output, "Available commands");
         Assert.IsFalse(output.Contains("Available commands:", StringComparison.Ordinal));
         StringAssert.Contains(output, "╭");

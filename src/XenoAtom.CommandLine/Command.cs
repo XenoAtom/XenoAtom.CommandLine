@@ -512,6 +512,12 @@ public class Command  : CommandContainer, ICommandNodeDescriptor
                 continue;
             }
 
+            if (p is IHelpPreformattedContent preformattedContent)
+            {
+                preformattedContent.WriteTo(o, runConfig);
+                continue;
+            }
+
             if (p is Command co)
             {
                 if (co.Hidden)

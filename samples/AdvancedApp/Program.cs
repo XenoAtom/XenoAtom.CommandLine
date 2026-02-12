@@ -3,6 +3,10 @@
 // See license.txt file in the project root for full license information.
 using XenoAtom.CommandLine;
 using XenoAtom.CommandLine.Terminal;
+using XenoAtom.Terminal.UI;
+using XenoAtom.Terminal.UI.Controls;
+using XenoAtom.Terminal.UI.Figlet;
+using XenoAtom.Terminal.UI.Styling;
 
 // Demonstrate a more complex command line application with sub-commands
 // Run with --help to see the available commands
@@ -33,6 +37,7 @@ var app = new CommandApp("multi", config: new CommandConfig
 })
 {
     new CommandUsage(),
+    CreateBanner(),
     new CompletionCommands(), // Add completion commands
     _,
     "Options:",
@@ -68,6 +73,7 @@ var app = new CommandApp("multi", config: new CommandConfig
     new Command("hello", "This is a hello command")
     {
         new CommandUsage(),
+        CreateBanner(),
         _,
         "Options:",
         { "n|name=", "This is a name", v => { name = v; } },
@@ -90,6 +96,7 @@ var app = new CommandApp("multi", config: new CommandConfig
     new Command("world", "This is a world command")
     {
         new CommandUsage("Usage: {NAME} {SYNTAX} @file"),
+        CreateBanner(),
         _,
         "Options:",
         { "e|enum=", $"This is an {{ENUM}} accepting the following values: {EnumWrapper<TestEnum>.Names}", (EnumWrapper<TestEnum> v) => { enums.Add(v); } },
@@ -191,6 +198,25 @@ var app = new CommandApp("multi", config: new CommandConfig
 };
 
 await app.RunAsync(args);
+
+static TextFiglet CreateBanner()
+{
+    var gradientBrush = Brush.LinearGradient(
+        new GradientPoint(0f, 0f),
+        new GradientPoint(1f, 0f),
+        [
+            new GradientStop(0f, Colors.DodgerBlue),
+            new GradientStop(0.5f, Colors.White),
+            new GradientStop(1f, Colors.Orange),
+        ],
+        mixSpaceOverride: ColorMixSpace.Oklab);
+
+    return new TextFiglet("XenoAtom")
+        .Font(FigletPredefinedFont.Standard)
+        .LetterSpacing(1)
+        .TextAlignment(TextAlignment.Left)
+        .Style(TextFigletStyle.Default with { ForegroundBrush = gradientBrush });
+}
 
 enum TestEnum
 {

@@ -3,6 +3,7 @@ using XenoAtom.CommandLine.Terminal;
 using XenoAtom.Terminal;
 using XenoAtom.Terminal.UI;
 using XenoAtom.Terminal.UI.Controls;
+using XenoAtom.Terminal.UI.Figlet;
 using XenoAtom.Terminal.UI.Styling;
 using TerminalHost = XenoAtom.Terminal.Terminal;
 
@@ -12,8 +13,6 @@ var showMarkup = false;
 var files = new List<string>();
 string? name = null;
 int age = 0;
-
-using var session = TerminalHost.Open();
 
 CommandApp? app = null;
 app = new CommandApp(
@@ -41,6 +40,7 @@ app = new CommandApp(
     })
 {
     new CommandUsage(),
+    CreateBanner(),
     _,
     "Options:",
     { "markup", "Render help/errors with terminal markup", value => showMarkup = value is not null },
@@ -51,6 +51,8 @@ app = new CommandApp(
     "Available commands:",
     new Command("hello", "Greets someone")
     {
+        new CommandUsage(),
+        CreateBanner(),
         _,
         "Options:",
         { "n|name=", "The {NAME} to greet", value => name = value },
@@ -91,3 +93,22 @@ app = new CommandApp(
 };
 
 return await app.RunAsync(args);
+
+static TextFiglet CreateBanner()
+{
+    var gradientBrush = Brush.LinearGradient(
+        new GradientPoint(0f, 0f),
+        new GradientPoint(1f, 0f),
+        [
+            new GradientStop(0f, Colors.DodgerBlue),
+            new GradientStop(0.5f, Colors.White),
+            new GradientStop(1f, Colors.Orange),
+        ],
+        mixSpaceOverride: ColorMixSpace.Oklab);
+
+    return new TextFiglet("XenoAtom")
+        .Font(FigletPredefinedFont.Standard)
+        .LetterSpacing(1)
+        .TextAlignment(TextAlignment.Left)
+        .Style(TextFigletStyle.Default with { ForegroundBrush = gradientBrush });
+}

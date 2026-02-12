@@ -3,6 +3,10 @@
 // See license.txt file in the project root for full license information.
 using XenoAtom.CommandLine;
 using XenoAtom.CommandLine.Terminal;
+using XenoAtom.Terminal.UI;
+using XenoAtom.Terminal.UI.Controls;
+using XenoAtom.Terminal.UI.Figlet;
+using XenoAtom.Terminal.UI.Styling;
 
 // Demonstrate a command line application with a sub-command
 const string _ = "";
@@ -24,6 +28,7 @@ var commandApp = new CommandApp("myexe", config: new CommandConfig
 })
 {
     new CommandUsage(),
+    CreateBanner(),
     _,
     "Options:",
     { "markup", "Render help/errors with terminal markup", v => showMarkup = v is not null },
@@ -41,6 +46,8 @@ var commandApp = new CommandApp("myexe", config: new CommandConfig
     "Available commands:",
     new Command("commit")
     {
+        new CommandUsage(),
+        CreateBanner(),
         _,
         "Options:",
         {"m|message=", "Add a {MESSAGE} to this commit", commitMessages},
@@ -83,3 +90,22 @@ var commandApp = new CommandApp("myexe", config: new CommandConfig
 };
 
 await commandApp.RunAsync(args);
+
+static TextFiglet CreateBanner()
+{
+    var gradientBrush = Brush.LinearGradient(
+        new GradientPoint(0f, 0f),
+        new GradientPoint(1f, 0f),
+        [
+            new GradientStop(0f, Colors.DodgerBlue),
+            new GradientStop(0.5f, Colors.White),
+            new GradientStop(1f, Colors.Orange),
+        ],
+        mixSpaceOverride: ColorMixSpace.Oklab);
+
+    return new TextFiglet("XenoAtom")
+        .Font(FigletPredefinedFont.Standard)
+        .LetterSpacing(1)
+        .TextAlignment(TextAlignment.Left)
+        .Style(TextFigletStyle.Default with { ForegroundBrush = gradientBrush });
+}
