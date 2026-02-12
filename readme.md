@@ -177,6 +177,18 @@ var app = new CommandApp("myexe", config: new CommandConfig
 
 This package also provides `command.ToHelpVisual(...)` for embedding help in Terminal.UI apps.
 
+Example of the advanced sample with markup help:
+
+![Example advanced markup](./img/advanced-markup.png)
+
+Example of the advanced sample with visual help:
+
+![Example advanced visual](./img/advanced-visual.png)
+
+Example of the advanced sample with an error:
+
+![Example advanced error](./img/advanced-error-visual.png)
+
 ## 📃 Documentation
 
 | Guide | Description |
