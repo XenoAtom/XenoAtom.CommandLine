@@ -1,3 +1,8 @@
+---
+discard: true
+title: "XenoAtom.CommandLine — New Features Specification"
+---
+
 # XenoAtom.CommandLine — New Features Specification
 
 **Version scope:** v1.5 (Short-Term) and v1.6 (Medium-Term)  
@@ -903,3 +908,4 @@ Each feature requires:
 2. Unit tests covering error paths (invalid values, constraint violations).
 3. Integration tests using `ParseResult` (§4) to verify combined behavior (e.g., validation + env var fallback).
 4. Completion tests verifying that new features don't break existing completion behavior.
+

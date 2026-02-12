@@ -1,3 +1,7 @@
+---
+title: "Advanced Topics"
+---
+
 # Advanced Topics
 
 This guide covers advanced features of XenoAtom.CommandLine: the parse API for testing, shell completions, response files, configuration, and performance.
@@ -30,6 +34,7 @@ var result = app.Parse(["--name", "Alice", "--port", "8080"]);
 
 ### ParseResult Properties
 
+{.table}
 | Property | Type | Description |
 |---|---|---|
 | `ResolvedCommand` | `Command` | The command that was resolved |
@@ -192,6 +197,7 @@ myexe @args.txt
 
 ### Response File Syntax
 
+{.table}
 | Feature | Syntax | Example |
 |---|---|---|
 | Whitespace separation | spaces/tabs | `--name John` → `--name`, `John` |
@@ -241,6 +247,7 @@ var config = new CommandConfig
 var app = new CommandApp("myexe", config: config);
 ```
 
+{.table}
 | Property | Default | Description |
 |---|---|---|
 | `StrictOptionParsing` | `true` | Fail on unknown `-`/`--` tokens |
@@ -263,6 +270,7 @@ var runConfig = new CommandRunConfig(Width: 120, OptionWidth: 32)
 await app.RunAsync(args, runConfig);
 ```
 
+{.table}
 | Property | Default | Description |
 |---|---|---|
 | `Width` | `80` | Terminal width for formatting |
@@ -306,7 +314,7 @@ var colors = new List<Color>();
 
 var app = new CommandApp("myexe")
 {
-    { "c|color=", $"Console {{COLOR}} ({EnumWrapper<Color>.Names})",
+    { "c|color=", "Console {COLOR} (" + EnumWrapper<Color>.Names + ")",
         (EnumWrapper<Color> v) => colors.Add(v) },
     (ctx, _) => ValueTask.FromResult(0)
 };
@@ -354,7 +362,7 @@ dotnet publish -c Release -r win-x64 /p:PublishAot=true
 
 The following diagram shows the main types and their relationships:
 
-![Class diagram](XenoAtom.CommandLine.png)
+![Class diagram](../img/architecture.png)
 
 The design is intentionally simple. The main types are:
 
@@ -378,3 +386,4 @@ All these types inherit from `CommandNode`, the base class for all command tree 
 - [Arguments](arguments.md) — positional arguments
 - [Validation & Constraints](validation.md) — validate values and constraints
 - [Help & Output](help-output.md) — customize help rendering
+

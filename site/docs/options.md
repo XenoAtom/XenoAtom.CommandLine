@@ -1,3 +1,7 @@
+---
+title: "Options"
+---
+
 # Options
 
 Options are the core building block of any command-line interface. XenoAtom.CommandLine provides a rich option syntax inherited from Mono.Options with significant extensions.
@@ -33,6 +37,7 @@ The suffix only needs to appear on one alias, but if it appears on multiple alia
 
 ### Quick Reference
 
+{.table}
 | Prototype | Type | Command-line examples | Notes |
 |---|---|---|---|
 | `"v\|verbose"` | Flag | `-v`, `--verbose`, `/v` | `+`/`-` suffix to explicitly enable/disable |
@@ -46,6 +51,7 @@ The suffix only needs to appear on one alias, but if it appears on multiple alia
 
 All options can be invoked with any of the three prefixes:
 
+{.table}
 | Prefix | Example |
 |---|---|
 | `-` (POSIX short) | `-v`, `-n John` |
@@ -195,7 +201,7 @@ var colors = new List<Color>();
 
 var app = new CommandApp("myexe")
 {
-    { "c|color=", $"The {{COLOR}} ({EnumWrapper<Color>.Names})", (EnumWrapper<Color> v) => colors.Add(v) },
+    { "c|color=", "The {COLOR} (" + EnumWrapper<Color>.Names + ")", (EnumWrapper<Color> v) => colors.Add(v) },
 };
 ```
 
@@ -301,3 +307,4 @@ Rules:
 - [Commands](commands.md) — sub-commands, groups, and actions
 - [Arguments](arguments.md) — positional arguments
 - [Validation & Constraints](validation.md) — validate values and declare option relationships
+

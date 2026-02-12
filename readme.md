@@ -205,30 +205,24 @@ var app = new CommandApp("myexe", config: new CommandConfig
 This package also provides `command.ToHelpVisual(...)` for embedding help in Terminal.UI apps.
 For one-shot rendering, `Terminal.Write(...)` is lazily initialized and does not require an explicit terminal session.
 
-Example of the advanced sample with markup help:
+Example of the advanced sample:
 
-![Example advanced markup](./img/advanced-markup.png)
-
-Example of the advanced sample with visual help:
-
-![Example advanced visual](./img/advanced-visual.png)
-
-Example of the advanced sample with an error:
-
-![Example advanced error](./img/advanced-error-visual.png)
+![Terminal UI help output](https://raw.githubusercontent.com/XenoAtom/XenoAtom.CommandLine/main/site/img/xenoatom-commandline-show.gif)
 
 ## 📃 Documentation
 
 | Guide | Description |
 |---|---|
-| [Getting Started](doc/getting-started.md) | Installation, first application, running and testing |
-| [Options](doc/options.md) | Option prototypes, values, flags, aliases, bundling, key/value pairs, typed parsing |
-| [Commands](doc/commands.md) | Commands, sub-commands, actions, and conditional groups |
-| [Arguments](doc/arguments.md) | Positional arguments, cardinality, remainder arguments |
-| [Validation & Constraints](doc/validation.md) | Value validation, mutually exclusive options, requires constraints |
-| [Help & Output](doc/help-output.md) | Help text, `CommandUsage`, custom output rendering, Terminal package |
-| [Advanced Topics](doc/advanced.md) | Parse API, shell completions, response files, configuration, environment variables, performance |
-| [Migration 2.0](doc/migration-2.0.md) | Breaking changes and upgrade steps |
+| [Getting Started](site/docs/getting-started.md) | Installation, first application, running and testing |
+| [Options](site/docs/options.md) | Option prototypes, values, flags, aliases, bundling, key/value pairs, typed parsing |
+| [Commands](site/docs/commands.md) | Commands, sub-commands, actions, and conditional groups |
+| [Arguments](site/docs/arguments.md) | Positional arguments, cardinality, remainder arguments |
+| [Validation & Constraints](site/docs/validation.md) | Value validation, mutually exclusive options, requires constraints |
+| [Help & Output](site/docs/help-output.md) | Help text, `CommandUsage`, custom output rendering, Terminal package |
+| [Advanced Topics](site/docs/advanced.md) | Parse API, shell completions, response files, configuration, environment variables, performance |
+| [Migration 2.0](site/docs/migration-2.0.md) | Breaking changes and upgrade steps |
+
+Most users migrating from 1.x should have little or no impact; check [Migration 2.0](site/docs/migration-2.0.md) for a quick impact checklist.
 
 ## 🏗️ Build
 

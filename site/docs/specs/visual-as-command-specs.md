@@ -1,3 +1,8 @@
+---
+discard: true
+title: "XenoAtom.CommandLine.Terminal — Visual As Command Nodes (Specification)"
+---
+
 # XenoAtom.CommandLine.Terminal — Visual As Command Nodes (Specification)
 
 **Version scope:** XenoAtom.CommandLine.Terminal (net10.0)  
@@ -293,3 +298,4 @@ When implementing:
 2. Use small visuals like `TextBlock("Hello")` for stable assertions (avoid brittle figlet snapshots).
 3. Add a `DefaultCommandOutput` test ensuring `IHelpPreformattedContent` nodes bypass wrapping and preserve whitespace.
 4. Add a test for the fallback path (no terminal session): `Description` is used or the node is ignored (decide and document).
+

@@ -1,4 +1,4 @@
-# XenoAtom.Logging — Codex Agent Instructions
+# XenoAtom.CommandLine — Codex Agent Instructions
 
 **XenoAtom.CommandLine** is a lightweight, powerful and NativeAOT friendly command line parser for .NET
 
@@ -6,9 +6,9 @@ Paths/commands below are relative to this directory.
 
 ## Orientation
 
-- Library: `src/XenoAtom.Logging/`
-- Tests: `src/XenoAtom.Logging.Tests/` (MSTest)
-- Docs to keep in sync with behavior: `readme.md` and the docs under `doc/` (e.g., `doc/**/*.md`)
+- Library: `src/XenoAtom.CommandLine/`
+- Tests: `src/XenoAtom.CommandLine.Tests/` and `src/XenoAtom.CommandLine.Terminal.Tests/` (MSTest)
+- Docs to keep in sync with behavior: `readme.md` and the docs under `site/docs/` (e.g., `site/docs/**/*.md`)
 
 ## Build & Test
 
@@ -17,6 +17,12 @@ Paths/commands below are relative to this directory.
 cd src
 dotnet build -c Release
 dotnet test -c Release
+```
+
+```sh
+# from the project root (this folder), when site/docs changes
+cd site
+lunet build
 ```
 
 All tests must pass and docs must be updated before submitting.

@@ -370,3 +370,7 @@ tmp/
 
 # Remove artifacts produced by dotnet-releaser
 artifacts-dotnet-releaser/
+
+# Ignore Lunet build output
+.lunet/build
+site/.lunet/build

@@ -1,3 +1,7 @@
+---
+title: "Help & Output"
+---
+
 # Help & Output
 
 XenoAtom.CommandLine auto-generates help text from your declarations and provides a fully pluggable output system.
@@ -201,22 +205,22 @@ public sealed class JsonOutputRenderer : ICommandOutput
     public void WriteHelp(Command command, CommandRunConfig runConfig)
     {
         // Access command.Options, command.Arguments, command.SubCommands
-        runConfig.Out.WriteLine($"{{ \"help\": \"{command.GetFullCommandPath()}\" }}");
+        runConfig.Out.WriteLine("{ \"help\": \"" + command.GetFullCommandPath() + "\" }");
     }
 
     public void WriteError(Command command, CommandRunConfig runConfig, CommandException exception)
     {
-        runConfig.Error.WriteLine($"{{ \"error\": \"{exception.Message}\" }}");
+        runConfig.Error.WriteLine("{ \"error\": \"" + exception.Message + "\" }");
     }
 
     public void WriteUnknownTokens(Command command, CommandRunConfig runConfig, UnknownTokenReport report)
     {
         foreach (var token in report.UnknownTokens)
-            runConfig.Error.WriteLine($"{{ \"unknown\": \"{token.Token}\" }}");
+            runConfig.Error.WriteLine("{ \"unknown\": \"" + token.Token + "\" }");
     }
 
     public void WriteVersion(Command command, CommandRunConfig runConfig, string version)
-        => runConfig.Out.WriteLine($"{{ \"version\": \"{version}\" }}");
+        => runConfig.Out.WriteLine("{ \"version\": \"" + version + "\" }");
 
     public void WriteLicenseHeader(Command command, CommandRunConfig runConfig, string licenseText)
         => runConfig.Out.WriteLine(licenseText);
@@ -346,6 +350,7 @@ XenoAtom.Terminal.Terminal.Write(helpVisual);
 
 ### Choosing a Renderer
 
+{.table}
 | Renderer | Output | Best for |
 |---|---|---|
 | `DefaultCommandOutput` | Plain text | Simple CLIs, piped output |
@@ -392,3 +397,4 @@ myexe -- -5 --not-an-option
 - [Commands](commands.md) — sub-commands and groups
 - [Validation & Constraints](validation.md) — validate values
 - [Advanced Topics](advanced.md) — parse API, completions, and configuration
+

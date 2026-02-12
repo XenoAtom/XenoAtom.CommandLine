@@ -1,9 +1,17 @@
+---
+title: "Migration Guide — 2.0"
+---
+
 # Migration Guide — 2.0
 
-This guide summarizes the 2.0 API changes that require code updates.
+This guide summarizes the 2.0 API changes that may require code updates.
+
+Most applications are expected to need little or no migration work.
+The main updates are for advanced extensibility scenarios (custom output implementations or direct usage of low-level renamed APIs).
 
 ## Breaking Renames
 
+{.table}
 | 1.x | 2.0 |
 |---|---|
 | `OptionException` | `CommandOptionException` |
@@ -74,3 +82,4 @@ Typed and list families now support `hidden` parity:
 
 - Key/value (`Action<TKey, TValue>`) overloads intentionally still do **not** support env-var fallback or validation delegates.
 - Command graphs remain single-invocation-at-a-time; avoid concurrent `RunAsync`/`Parse` on the same graph instance.
+

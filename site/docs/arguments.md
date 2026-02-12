@@ -1,3 +1,7 @@
+---
+title: "Positional Arguments"
+---
+
 # Positional Arguments
 
 In addition to options (prefixed with `-`, `--`, `/`), XenoAtom.CommandLine supports positional arguments — values passed without any option prefix that are consumed in declaration order.
@@ -31,6 +35,7 @@ Input: file.txt
 
 The suffix on the argument prototype controls how many values are expected:
 
+{.table}
 | Prototype | Cardinality | Meaning |
 |---|---:|---|
 | `<input>` | Exactly 1 | Required — an error is raised if missing |
@@ -204,3 +209,4 @@ This is especially useful when argument values start with `-`.
 - [Options](options.md) — full option reference
 - [Commands](commands.md) — sub-commands and groups
 - [Validation & Constraints](validation.md) — validate argument values
+

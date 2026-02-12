@@ -1,0 +1,10 @@
+doc:
+  - {path: readme.md, title: "<i class='bi bi-book' aria-hidden='true'></i> User Guide"}
+  - {path: getting-started.md, title: "<i class='bi bi-rocket-takeoff' aria-hidden='true'></i> Getting Started"}
+  - {path: options.md, title: "<i class='bi bi-toggle-on' aria-hidden='true'></i> Options"}
+  - {path: commands.md, title: "<i class='bi bi-terminal' aria-hidden='true'></i> Commands"}
+  - {path: arguments.md, title: "<i class='bi bi-input-cursor-text' aria-hidden='true'></i> Arguments"}
+  - {path: validation.md, title: "<i class='bi bi-shield-check' aria-hidden='true'></i> Validation & Constraints"}
+  - {path: help-output.md, title: "<i class='bi bi-chat-square-text' aria-hidden='true'></i> Help & Output"}
+  - {path: advanced.md, title: "<i class='bi bi-tools' aria-hidden='true'></i> Advanced Topics"}
+  - {path: migration-2.0.md, title: "<i class='bi bi-arrow-left-right' aria-hidden='true'></i> Migration 2.0"}

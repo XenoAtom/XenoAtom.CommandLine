@@ -1,3 +1,7 @@
+---
+title: "XenoAtom.CommandLine — User Guide"
+---
+
 # XenoAtom.CommandLine — User Guide
 
 Welcome to the XenoAtom.CommandLine documentation. This guide covers everything from installation to advanced usage.
@@ -23,8 +27,25 @@ var app = new CommandApp("myexe")
 await app.RunAsync(args);
 ```
 
+## Migrating to 2.0 (Quick Check)
+
+Most users should see little or no migration impact.
+
+You are likely unaffected if you:
+- use built-in output renderers (no custom `ICommandOutput`),
+- configure command/option metadata at declaration time,
+- do not reference low-level renamed APIs directly.
+
+You likely need small updates if you:
+- implemented custom `ICommandOutput` (`WriteUnknownTokens` now takes `UnknownTokenReport`),
+- used renamed members (`OptionException`, `IsThisNodeActive`, `OptionsName`),
+- mutated metadata after construction (`Hidden`, `EnvironmentVariable`, `EnvironmentVariableDelimiter`).
+
+For exact details and before/after snippets, see [Migration 2.0](migration-2.0.md).
+
 ## Guides
 
+{.table}
 | Guide | What you'll learn |
 |---|---|
 | [Getting Started](getting-started.md) | Install the package, create your first app, add options and sub-commands |
@@ -45,4 +66,5 @@ await app.RunAsync(args);
 
 ## Class Diagram
 
-![Class diagram](XenoAtom.CommandLine.png)
+![Class diagram](../img/architecture.png)
+

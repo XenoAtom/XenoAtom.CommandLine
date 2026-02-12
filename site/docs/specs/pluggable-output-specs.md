@@ -1,3 +1,8 @@
+---
+discard: true
+title: "XenoAtom.CommandLine — Pluggable Output & Help Rendering"
+---
+
 # XenoAtom.CommandLine — Pluggable Output & Help Rendering
 
 **Version scope:** v2.0 (preferred; designed to be additive)  
@@ -42,6 +47,7 @@ The goal is to introduce a clean extension point so that all output produced by 
 
 All output originates from a small number of internal sites in `Command.cs` and `VersionOption.cs`:
 
+{.table}
 | Output Kind | Method(s) | Target Stream | Triggered By |
 |---|---|---|---|
 | **Help** | `Command.ShowHelp(CommandRunConfig)` (public) + private helpers: `WriteOptionPrototype`, `WriteDescription`, `ShowHelp(runConfig, command, name)`, `GetDefaultUsage`, `GetDefaultUsageSyntax` | `runConfig.Out` | `HelpOption` sets `ShouldShowHelp = true`; `RunAsync` calls `ShowHelp` |
@@ -794,6 +800,7 @@ public sealed class UnderlineErrorOutput : ICommandOutput
 
 A custom `ICommandOutput` implementation receives the `Command` object, which already exposes all the structured data needed to build any visual representation:
 
+{.table}
 | Data | Access |
 |---|---|
 | Command name & path | `command.Name`, `command.GetFullCommandPath()` |
@@ -1013,3 +1020,4 @@ When implemented, the following documentation must be updated:
 5. **WriteUnknownTokens receives suggestions** — tests verifying fuzzy-match suggestions are passed to the handler.
 6. **WriteVersion invoked** — tests confirming `--version` flows through the output handler.
 7. **Composition with default** — test that a partial custom handler can delegate to `DefaultCommandOutput.Instance`.
+

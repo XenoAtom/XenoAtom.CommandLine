@@ -1,0 +1,17 @@
+# Use the Lunet template as the base for this documentation site
+extend "XenoAtom/lunet_template@1.0.0"
+
+# -----------------------------------------------------------------------------
+# SITE SECTION (project-specific values only)
+# -----------------------------------------------------------------------------
+
+site_project_name = "XenoAtom.CommandLine"
+site_project_description = "A lightweight, powerful and NativeAOT-friendly command line parser for .NET."
+site_project_logo_path = "/img/XenoAtom.CommandLine.svg"
+site_project_social_banner_path = "/img/advanced-visual.png"
+site_project_banner_background_path = "/img/advanced-markup.png"
+site_project_package_id = "XenoAtom.CommandLine"
+site_project_github_repo = "XenoAtom.CommandLine"
+site_project_basepath = "/commandline"
+
+site_project_init

@@ -1,3 +1,7 @@
+---
+title: "Commands"
+---
+
 # Commands
 
 XenoAtom.CommandLine supports commands and sub-commands, allowing you to build rich multi-command CLIs similar to `git`, `docker`, or `dotnet`.
@@ -317,3 +321,4 @@ If the parser is currently expecting a value for an option, the next token is **
 - [Arguments](arguments.md) — positional arguments and cardinality
 - [Validation & Constraints](validation.md) — validate values and declare option relationships
 - [Help & Output](help-output.md) — customize help rendering
+

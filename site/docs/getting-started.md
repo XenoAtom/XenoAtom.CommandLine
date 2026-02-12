@@ -1,3 +1,7 @@
+---
+title: "Getting Started"
+---
+
 # Getting Started
 
 This guide walks you through installing XenoAtom.CommandLine and building your first command-line application.
@@ -223,3 +227,4 @@ Now that you have a working application, explore the rest of the documentation:
 - [Validation & Constraints](validation.md) — validate values and declare option relationships
 - [Help & Output](help-output.md) — customize help rendering and use the Terminal package
 - [Advanced Topics](advanced.md) — parse API, completions, response files, and configuration
+

@@ -1,3 +1,8 @@
+---
+discard: true
+title: "XenoAtom.CommandLine.Terminal — Terminal & Terminal.UI Output Specification"
+---
+
 # XenoAtom.CommandLine.Terminal — Terminal & Terminal.UI Output Specification
 
 **Version scope:** new extension package (alongside XenoAtom.CommandLine v2.x)  
@@ -40,6 +45,7 @@ The built-in `DefaultCommandOutput` writes plain text to `CommandRunConfig.Out`/
 
 This spec defines a new extension package — **`XenoAtom.CommandLine.Terminal`** — that provides two progressively richer rendering tiers:
 
+{.table}
 | Tier | Rendering backend | When to use |
 |------|-------------------|-------------|
 | **Markup** | `XenoAtom.Terminal` (`Terminal.WriteMarkup`, `Terminal.WriteAtomic`) | CLI tools wanting colored, styled help without pulling in a layout framework |
@@ -109,6 +115,7 @@ src/
 
 ### 3.3 Dependencies
 
+{.table}
 | Dependency | Version | Notes |
 |------------|---------|-------|
 | `XenoAtom.CommandLine` | project reference or `>= 2.0` | Provides `ICommandOutput`, `CommandOutputHelper`, etc. |
@@ -184,6 +191,7 @@ src/
 
 `TerminalVisualCommandOutput` inherits from `TerminalMarkupCommandOutput` and overrides help rendering while reusing the base for shorter-form outputs:
 
+{.table}
 | ICommandOutput method | Markup tier (base) | Visual tier (override?) |
 |---|---|---|
 | `WriteHelp` | Colored text via `Terminal.WriteMarkup` | **Override** — builds `Visual` tree, calls `Terminal.Write(visual)` |
@@ -499,6 +507,7 @@ Terminal.Run(
 
 Help rendering uses `HelpModelBuilder` to walk `Command.Nodes` in declaration order (matching `DefaultCommandOutput` behavior) and produce a `HelpModel`. The Markup tier renders this model via `HelpMarkupWriter` (and the Visual tier reuses the same model via `HelpVisualBuilder`). Data extraction uses `CommandOutputHelper` methods exclusively:
 
+{.table}
 | Data needed | Helper method |
 |-------------|---------------|
 | Full command path | `CommandOutputHelper.GetFullCommandPath(command)` |
@@ -633,6 +642,7 @@ This produces clean, lightweight alignment without the visual weight of grid lin
 
 ### 7.4 Control Selection Rationale
 
+{.table}
 | Help element | Terminal.UI control | Rationale |
 |---|---|---|
 | Usage line | `Markup` | Inline styled text, no alignment needed (`UsageStyle`) |
@@ -755,6 +765,7 @@ Error messages and unknown tokens frequently contain **user-provided text** (CLI
 
 Specific escaping points:
 
+{.table}
 | Method | User text source | Escaping |
 |--------|-----------------|----------|
 | `WriteError` | `exception.Message` | `AnsiMarkup.Escape(...)` |
@@ -1036,3 +1047,4 @@ Terminal.Run(
     ),
     onUpdate: () => /* handle input */);
 ```
+

@@ -1,3 +1,7 @@
+---
+title: "Validation & Constraints"
+---
+
 # Validation & Constraints
 
 XenoAtom.CommandLine provides built-in support for validating option and argument values at parse time, as well as declaring relationships between options.
@@ -33,6 +37,7 @@ XenoAtom.CommandLine includes a comprehensive set of validators in the `Validate
 
 ### Numeric Validators
 
+{.table}
 | Validator | Description |
 |---|---|
 | `Validate.Range<T>(min, max)` | Value must be within the inclusive range `[min, max]` |
@@ -47,6 +52,7 @@ XenoAtom.CommandLine includes a comprehensive set of validators in the `Validate
 
 ### String Validators
 
+{.table}
 | Validator | Description |
 |---|---|
 | `Validate.NonEmpty()` | Value must not be null or empty |
@@ -62,6 +68,7 @@ XenoAtom.CommandLine includes a comprehensive set of validators in the `Validate
 
 ### File System Validators
 
+{.table}
 | Validator | Description |
 |---|---|
 | `Validate.FileExists()` | Path must refer to an existing file |
@@ -75,6 +82,7 @@ XenoAtom.CommandLine includes a comprehensive set of validators in the `Validate
 
 ### Custom Validators
 
+{.table}
 | Validator | Description |
 |---|---|
 | `Validate.That<T>(predicate, errorMessage)` | Custom predicate with error message |
@@ -173,3 +181,4 @@ This means environment variable fallbacks **do** trigger constraint checks. For 
 - [Arguments](arguments.md) — positional arguments
 - [Help & Output](help-output.md) — customize help rendering
 - [Advanced Topics](advanced.md) — parse API, completions, and configuration
+
