@@ -4,8 +4,6 @@
 
 **XenoAtom.CommandLine** is a lightweight, powerful and NativeAOT friendly command line parser for .NET
 
-It is a fork of the excellent [NDesk.Options](http://www.ndesk.org/Options)/[Mono.Options](https://tirania.org/blog/archive/2008/Oct-14.html) with significant improvements and new features.
-
 ## ✨ Features 
 
 - **Lightweight and NativeAOT-friendly** (`net8.0`+), with **zero dependencies**
@@ -202,6 +200,8 @@ $ dotnet build src -c Release
 ## 🪪 License
 
 This software is released under the [BSD-2-Clause license](https://opensource.org/licenses/BSD-2-Clause).
+
+This library is a fork of the excellent [NDesk.Options](http://www.ndesk.org/Options)/[Mono.Options](https://tirania.org/blog/archive/2008/Oct-14.html) with significant improvements and new features.
 
 The license also integrate the original MIT license from [Mono.Options](https://github.com/mono/mono/blob/main/mcs/class/Mono.Options/Mono.Options/Options.cs).
 
