@@ -109,7 +109,7 @@ Use `Validate.Chain(...)` to combine multiple validators. The first failure wins
 
 ## Option Constraints
 
-Constraints let you declare relationships between options. They are checked **after** all options are parsed (including environment variable fallbacks) and **before** the command action runs.
+Constraints let you declare relationships between options. In collection initializer style, add constraint nodes directly in the command declaration. They are checked **after** all options are parsed (including environment variable fallbacks) and **before** the command action runs.
 
 ### Mutually Exclusive Options
 
@@ -121,9 +121,14 @@ var app = new CommandApp("myexe")
     { "j|json", "Output JSON", _ => {} },
     { "x|xml", "Output XML", _ => {} },
     { "c|csv", "Output CSV", _ => {} },
+    new MutuallyExclusiveConstraint("json", "xml", "csv"),
     (ctx, _) => ValueTask.FromResult(0)
 };
+```
 
+If you are not using collection initializers, the fluent alternative is:
+
+```csharp
 app.AddMutuallyExclusive("json", "xml", "csv");
 ```
 
@@ -143,9 +148,14 @@ var app = new CommandApp("myexe")
 {
     { "u|user=", "User", _ => {} },
     { "p|password=", "Password", _ => {} },
+    new RequiresConstraint("password", "user"),
     (ctx, _) => ValueTask.FromResult(0)
 };
+```
 
+If you are not using collection initializers, the fluent alternative is:
+
+```csharp
 app.AddRequires("password", "user");
 ```
 
@@ -159,6 +169,29 @@ Use `myexe --help` for usage.
 ### Combining Constraints
 
 You can add multiple constraints to the same command:
+
+```csharp
+var app = new CommandApp("myexe")
+{
+    { "j|json", "Output JSON", _ => {} },
+    { "x|xml", "Output XML", _ => {} },
+    { "v|verbose", "Verbose output", _ => {} },
+    { "q|quiet", "Quiet output", _ => {} },
+    { "u|user=", "User", _ => {} },
+    { "p|password=", "Password", _ => {} },
+    { "tls-cert=", "TLS cert path", _ => {} },
+    { "tls-key=", "TLS key path", _ => {} },
+
+    new MutuallyExclusiveConstraint("json", "xml"),
+    new MutuallyExclusiveConstraint("verbose", "quiet"),
+    new RequiresConstraint("password", "user"),
+    new RequiresConstraint("tls-cert", "tls-key"),
+
+    (ctx, _) => ValueTask.FromResult(0)
+};
+```
+
+Equivalent fluent setup:
 
 ```csharp
 app.AddMutuallyExclusive("json", "xml");
