@@ -7,7 +7,7 @@ title: "Migration Guide — 2.0"
 This guide summarizes the 2.0 API changes that may require code updates.
 
 Most applications are expected to need little or no migration work.
-The main updates are for advanced extensibility scenarios (custom output implementations or direct usage of low-level renamed APIs).
+The main updates are low-level API renames and metadata initialization changes.
 
 ## Breaking Renames
 
@@ -18,20 +18,11 @@ The main updates are for advanced extensibility scenarios (custom output impleme
 | `CommandNode.IsThisNodeActive` | `CommandNode.ActivePredicate` |
 | `Command.OptionsName` | `Command.OptionsSectionName` |
 
-## `ICommandOutput` Unknown Token API
+## Output Rendering API (New in 2.0)
 
-`WriteUnknownTokens` now receives a single report object:
+The pluggable output system (`ICommandOutput`, `CommandConfig.OutputFactory`, markup/visual outputs) was introduced in 2.0.
 
-```csharp
-void WriteUnknownTokens(Command command, CommandRunConfig runConfig, UnknownTokenReport report);
-```
-
-`UnknownTokenReport` includes:
-- `Kind`
-- `UnknownTokens`
-- `InvocationTokens` (when available)
-
-Update custom outputs to use `report.Kind`, `report.UnknownTokens`, and `report.InvocationTokens`.
+This is additive for migration purposes: there is no 1.x output API to migrate from, so no breaking change is required unless you choose to adopt these new extensibility features.
 
 ## Metadata Mutability Changes
 
