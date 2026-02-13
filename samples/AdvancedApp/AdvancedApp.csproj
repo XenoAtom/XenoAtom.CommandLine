@@ -12,6 +12,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="multi-demo.tape" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="multi-demo.tape">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\XenoAtom.CommandLine\XenoAtom.CommandLine.csproj" />
     <ProjectReference Include="..\..\src\XenoAtom.CommandLine.Terminal\XenoAtom.CommandLine.Terminal.csproj" />
   </ItemGroup>
