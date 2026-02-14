@@ -8,6 +8,6 @@
     <PackageVersion Include="MinVer" Version="7.0.0" />
     <PackageVersion Include="Verify.MSTest" Version="31.12.5" />
     <PackageVersion Include="MSTest" Version="4.1.0" />
-    <PackageVersion Include="XenoAtom.Terminal.UI" Version="1.1.0" />
+    <PackageVersion Include="XenoAtom.Terminal.UI" Version="1.1.1" />
   </ItemGroup>
 </Project>
