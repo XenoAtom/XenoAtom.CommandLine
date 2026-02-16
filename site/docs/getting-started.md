@@ -20,7 +20,8 @@ XenoAtom.CommandLine targets `net8.0` and later. It has zero dependencies and is
 
 A minimal CLI application needs just a `CommandApp`, one or more options, and an action:
 
-```csharp
+<!-- snippet: site_docs_getting_started_md_001 -->
+```cs
 using XenoAtom.CommandLine;
 
 string? name = null;
@@ -38,6 +39,7 @@ var app = new CommandApp("greet")
 
 await app.RunAsync(args);
 ```
+<!-- endSnippet -->
 
 Running `greet --name Alice` prints:
 
@@ -66,7 +68,8 @@ Usage: greet [options]
 
 You can add multiple options of different types:
 
-```csharp
+<!-- snippet: site_docs_getting_started_md_002 -->
+```cs
 using XenoAtom.CommandLine;
 
 string? name = null;
@@ -91,6 +94,7 @@ var app = new CommandApp("greet")
 
 await app.RunAsync(args);
 ```
+<!-- endSnippet -->
 
 Key points:
 - `"a|age="` with a typed callback `(int v) =>` automatically parses the value as an `int`.
@@ -112,7 +116,8 @@ Usage: greet [options]
 
 Real-world CLI tools often have sub-commands (like `git commit`, `docker run`). Add them with `Command`:
 
-```csharp
+<!-- snippet: site_docs_getting_started_md_003 -->
+```cs
 using XenoAtom.CommandLine;
 
 const string _ = "";
@@ -150,6 +155,7 @@ var app = new CommandApp("myapp")
 
 await app.RunAsync(args);
 ```
+<!-- endSnippet -->
 
 The empty string `_` adds a blank line in the help output for visual separation.
 
@@ -157,7 +163,8 @@ The empty string `_` adds a blank line in the help output for visual separation.
 
 Besides options (prefixed with `-`/`--`/`/`), you can declare positional arguments:
 
-```csharp
+<!-- snippet: site_docs_getting_started_md_004 -->
+```cs
 using XenoAtom.CommandLine;
 
 string? input = null;
@@ -181,6 +188,7 @@ var app = new CommandApp("myapp")
 
 await app.RunAsync(args);
 ```
+<!-- endSnippet -->
 
 Running `myapp file1.txt file2.txt file3.txt`:
 
@@ -207,13 +215,15 @@ For strict error handling, the library rejects unknown `-`/`--` options by defau
 
 You can parse arguments without executing the command action — useful for unit testing:
 
-```csharp
+<!-- snippet: site_docs_getting_started_md_005 -->
+```cs
 var result = app.Parse(["--name", "Alice", "--age", "30"]);
 
 // result.HasErrors             → false
 // result.OptionValues["name"]  → ["Alice"]
 // result.OptionValues["age"]   → ["30"]
 ```
+<!-- endSnippet -->
 
 See [Advanced Topics](advanced.md#parse-api) for full details.
 

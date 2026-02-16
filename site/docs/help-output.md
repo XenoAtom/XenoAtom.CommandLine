@@ -10,7 +10,8 @@ XenoAtom.CommandLine auto-generates help text from your declarations and provide
 
 Every string added to a command appears as descriptive text in the help output. Options, arguments, and commands are rendered in declaration order:
 
-```csharp
+<!-- snippet: site_docs_help_output_md_001 -->
+```cs
 var app = new CommandApp("myexe")
 {
     "Options:",
@@ -24,6 +25,7 @@ var app = new CommandApp("myexe")
     (ctx, _) => ValueTask.FromResult(0)
 };
 ```
+<!-- endSnippet -->
 
 Running `myexe --help`:
 
@@ -46,10 +48,12 @@ Available commands:
 
 ### Default Usage
 
-```csharp
+<!-- snippet: site_docs_help_output_md_002 -->
+```cs
 new CommandUsage()
 // Produces: "Usage: myexe [options] <command>"
 ```
+<!-- endSnippet -->
 
 The default format is `"Usage: {NAME} {SYNTAX}"` where:
 - `{NAME}` is replaced with the full command path (e.g. `myexe commit`).
@@ -57,15 +61,18 @@ The default format is `"Usage: {NAME} {SYNTAX}"` where:
 
 ### Custom Usage
 
-```csharp
+<!-- snippet: site_docs_help_output_md_003 -->
+```cs
 new CommandUsage("Usage: {NAME} [--advanced] [Advanced Options]")
 ```
+<!-- endSnippet -->
 
 ### Multiple Usage Lines
 
 You can add multiple `CommandUsage` entries to show alternative invocations:
 
-```csharp
+<!-- snippet: site_docs_help_output_md_004 -->
+```cs
 var app = new CommandApp("myexe")
 {
     new CommandUsage(),
@@ -73,6 +80,7 @@ var app = new CommandApp("myexe")
     // ...
 };
 ```
+<!-- endSnippet -->
 
 ### No Usage Line
 
@@ -82,7 +90,8 @@ If no `CommandUsage` is declared, a default one is automatically shown as the fi
 
 Use empty strings for blank lines and plain strings for section headers:
 
-```csharp
+<!-- snippet: site_docs_help_output_md_005 -->
+```cs
 const string _ = "";
 var app = new CommandApp("myexe")
 {
@@ -102,20 +111,24 @@ var app = new CommandApp("myexe")
     (ctx, _) => ValueTask.FromResult(0)
 };
 ```
+<!-- endSnippet -->
 
 You can also use explicit helper methods when building commands without collection initializers:
 
-```csharp
+<!-- snippet: site_docs_help_output_md_006 -->
+```cs
 app.AddSection("Options");  // Adds "Options:"
 app.AddText("Additional help text");
 app.AddRemainder("Extra arguments");
 ```
+<!-- endSnippet -->
 
 ## Inline Visual Nodes
 
 When using `XenoAtom.CommandLine.Terminal`, you can add [XenoAtom.Terminal.UI](https://xenoatom.github.io/terminal) `Visual` controls directly in command initializers.
 
-```csharp
+<!-- snippet: site_docs_help_output_md_007 -->
+```cs
 using XenoAtom.CommandLine;
 using XenoAtom.CommandLine.Terminal;
 using XenoAtom.Terminal.UI;
@@ -148,16 +161,19 @@ var app = new CommandApp("myexe")
     (ctx, _) => ValueTask.FromResult(0)
 };
 ```
+<!-- endSnippet -->
 
 You can also provide fallback text for non-visual renderers:
 
-```csharp
+<!-- snippet: site_docs_help_output_md_008 -->
+```cs
 new Command("myexe")
 {
     { new TextFiglet("XenoAtom"), "XenoAtom" },
     (ctx, _) => ValueTask.FromResult(0)
 };
 ```
+<!-- endSnippet -->
 
 Rendering behavior:
 - `DefaultCommandOutput`: renders visual nodes as preformatted text blocks.
@@ -168,7 +184,8 @@ Rendering behavior:
 
 Display a license banner before command execution:
 
-```csharp
+<!-- snippet: site_docs_help_output_md_009 -->
+```cs
 var app = new CommandApp("myexe")
 {
     LicenseHeader = () => "MyApp v1.0 - Copyright (c) 2025 MyCompany",
@@ -177,6 +194,7 @@ var app = new CommandApp("myexe")
 
 await app.RunAsync(args, new CommandRunConfig { ShowLicenseOnRun = true });
 ```
+<!-- endSnippet -->
 
 The license header is printed once before the command action runs. Set `ShowLicenseOnRun = false` to suppress it.
 
@@ -186,7 +204,8 @@ All library-generated output — help, errors, unknown-token diagnostics, versio
 
 ### ICommandOutput Interface
 
-```csharp
+<!-- snippet: site_docs_help_output_md_010 -->
+```cs
 public interface ICommandOutput
 {
     void WriteHelp(Command command, CommandRunConfig runConfig);
@@ -196,10 +215,12 @@ public interface ICommandOutput
     void WriteLicenseHeader(Command command, CommandRunConfig runConfig, string licenseText);
 }
 ```
+<!-- endSnippet -->
 
 ### Example: Custom Output Renderer
 
-```csharp
+<!-- snippet: site_docs_help_output_md_011 -->
+```cs
 public sealed class JsonOutputRenderer : ICommandOutput
 {
     public void WriteHelp(Command command, CommandRunConfig runConfig)
@@ -226,23 +247,28 @@ public sealed class JsonOutputRenderer : ICommandOutput
         => runConfig.Out.WriteLine(licenseText);
 }
 ```
+<!-- endSnippet -->
 
 ### Registering the Custom Renderer
 
-```csharp
+<!-- snippet: site_docs_help_output_md_012 -->
+```cs
 var app = new CommandApp("myexe", config: new CommandConfig
 {
     OutputFactory = runConfig => new JsonOutputRenderer()
 });
 ```
+<!-- endSnippet -->
 
 ### One-Off Help Rendering
 
 You can render help with a specific renderer without changing the configuration:
 
-```csharp
+<!-- snippet: site_docs_help_output_md_013 -->
+```cs
 app.ShowHelp(new JsonOutputRenderer());
 ```
+<!-- endSnippet -->
 
 ### CommandOutputHelper
 
@@ -279,7 +305,8 @@ dotnet add package XenoAtom.CommandLine.Terminal
 
 Renders help, errors, and version output with terminal markup (colors/bold):
 
-```csharp
+<!-- snippet: site_docs_help_output_md_014 -->
+```cs
 using XenoAtom.CommandLine;
 using XenoAtom.CommandLine.Terminal;
 
@@ -288,12 +315,14 @@ var app = new CommandApp("myexe", config: new CommandConfig
     OutputFactory = _ => new TerminalMarkupCommandOutput()
 });
 ```
+<!-- endSnippet -->
 
 ### TerminalVisualCommandOutput
 
 Renders help and errors as [XenoAtom.Terminal.UI](https://xenoatom.github.io/terminal) visuals with borders, tables, and structured layout:
 
-```csharp
+<!-- snippet: site_docs_help_output_md_015 -->
+```cs
 using XenoAtom.CommandLine;
 using XenoAtom.CommandLine.Terminal;
 
@@ -309,6 +338,7 @@ var app = new CommandApp("myexe", config: new CommandConfig
     })
 });
 ```
+<!-- endSnippet -->
 
 For one-shot rendering, `Terminal.Write(...)` is lazily initialized and does not require an explicit terminal session.
 
@@ -316,7 +346,8 @@ For one-shot rendering, `Terminal.Write(...)` is lazily initialized and does not
 
 When using `TerminalVisualCommandOutput` (or `ToHelpVisual()`), a help text line ending with `:` is treated as a **section header**. The following rows are rendered in a grouped visual block (e.g. with a rounded border):
 
-```csharp
+<!-- snippet: site_docs_help_output_md_016 -->
+```cs
 var app = new CommandApp("myexe", config: new CommandConfig
 {
     OutputFactory = _ => new TerminalVisualCommandOutput()
@@ -331,6 +362,7 @@ var app = new CommandApp("myexe", config: new CommandConfig
     (ctx, _) => ValueTask.FromResult(0)
 };
 ```
+<!-- endSnippet -->
 
 `Options:` and `Arguments:` become distinct visual groups in the rendered output.
 
@@ -338,7 +370,8 @@ var app = new CommandApp("myexe", config: new CommandConfig
 
 Generate a help visual for embedding in fullscreen [XenoAtom.Terminal.UI](https://xenoatom.github.io/terminal) applications:
 
-```csharp
+<!-- snippet: site_docs_help_output_md_017 -->
+```cs
 var helpVisual = app.ToHelpVisual(new TerminalVisualOutputOptions
 {
     OptionPrototypeStyle = "[accent]",
@@ -347,6 +380,7 @@ var helpVisual = app.ToHelpVisual(new TerminalVisualOutputOptions
 
 XenoAtom.Terminal.Terminal.Write(helpVisual);
 ```
+<!-- endSnippet -->
 
 ### Choosing a Renderer
 

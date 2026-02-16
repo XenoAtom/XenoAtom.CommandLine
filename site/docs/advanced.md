@@ -10,7 +10,8 @@ This guide covers advanced features of XenoAtom.CommandLine: the parse API for t
 
 `CommandApp.Parse(...)` runs the full parsing pipeline — option callbacks, argument binding, constraint checks — but **does not** invoke the command action. This is ideal for unit testing:
 
-```csharp
+<!-- snippet: site_docs_advanced_md_001 -->
+```cs
 string? name = null;
 int port = 0;
 
@@ -31,6 +32,7 @@ var result = app.Parse(["--name", "Alice", "--port", "8080"]);
 // name → "Alice" (option callbacks are invoked)
 // port → 8080
 ```
+<!-- endSnippet -->
 
 ### ParseResult Properties
 
@@ -64,12 +66,14 @@ var result = app.Parse(["--name", "Alice", "--port", "8080"]);
 
 ### Testing Sub-Commands
 
-```csharp
+<!-- snippet: site_docs_advanced_md_002 -->
+```cs
 var result = app.Parse(["commit", "--message", "Hello"]);
 
 // result.ResolvedCommandPath → "myexe commit"
 // result.OptionValues["message"][0] → "Hello"
 ```
+<!-- endSnippet -->
 
 ## Shell Completions
 
@@ -79,7 +83,8 @@ XenoAtom.CommandLine can generate shell completion scripts and provide completio
 
 Add `CompletionCommands` to your app to expose completion commands:
 
-```csharp
+<!-- snippet: site_docs_advanced_md_003 -->
+```cs
 var app = new CommandApp("myexe")
 {
     new CompletionCommands(),
@@ -89,6 +94,7 @@ var app = new CommandApp("myexe")
     (ctx, _) => ValueTask.FromResult(0)
 };
 ```
+<!-- endSnippet -->
 
 This adds two sub-commands:
 - `completion <shell>` (hidden) — generates the shell completion script
@@ -118,25 +124,29 @@ myexe completion powershell | Out-String | Invoke-Expression
 
 You can also get completion candidates programmatically:
 
-```csharp
+<!-- snippet: site_docs_advanced_md_004 -->
+```cs
 var candidates = app.GetCompletions("myexe --na");
 // → ["--name"]
 
-var candidates = app.GetCompletionsForTokens(["myexe", "buil"], tokenIndex: 1);
+var commandCandidates = app.GetCompletionsForTokens(["myexe", "buil"], tokenIndex: 1);
 // → ["build"]
 ```
+<!-- endSnippet -->
 
 ### Value Completions
 
 Provide completion candidates for option and argument values:
 
-```csharp
+<!-- snippet: site_docs_advanced_md_005 -->
+```cs
 app.Options["name"].ValueCompleter = static (index, prefix) =>
     ["Alice", "Bob", "Charlie"];
 
 app.Arguments[0].ValueCompleter = static (index, prefix) =>
     ["README.md", "src/", "tests/"];
 ```
+<!-- endSnippet -->
 
 The `ValueCompleter` delegate receives:
 - `index` — the 0-based value index being completed
@@ -159,7 +169,8 @@ Response files let users put arguments in a file and reference it with `@`:
 
 Add `ResponseFileSource` to your command:
 
-```csharp
+<!-- snippet: site_docs_advanced_md_006 -->
+```cs
 var app = new CommandApp("myexe")
 {
     new HelpOption(),
@@ -173,6 +184,7 @@ var app = new CommandApp("myexe")
     }
 };
 ```
+<!-- endSnippet -->
 
 Help output includes:
 
@@ -212,7 +224,8 @@ myexe @args.txt
 
 You can create your own argument source by extending `ArgumentSource`:
 
-```csharp
+<!-- snippet: site_docs_advanced_md_007 -->
+```cs
 public class EnvironmentSource : ArgumentSource
 {
     public override string Description => "Read arguments from environment";
@@ -230,6 +243,7 @@ public class EnvironmentSource : ArgumentSource
     }
 }
 ```
+<!-- endSnippet -->
 
 ## Configuration
 
@@ -237,7 +251,8 @@ public class EnvironmentSource : ArgumentSource
 
 `CommandConfig` controls application-level behavior. It is set once when creating the `CommandApp`:
 
-```csharp
+<!-- snippet: site_docs_advanced_md_008 -->
+```cs
 var config = new CommandConfig
 {
     StrictOptionParsing = true,                    // default
@@ -248,6 +263,7 @@ var config = new CommandConfig
 
 var app = new CommandApp("myexe", config: config);
 ```
+<!-- endSnippet -->
 
 {.table}
 | Property | Default | Description |
@@ -261,7 +277,8 @@ var app = new CommandApp("myexe", config: config);
 
 `CommandRunConfig` controls runtime behavior for a specific invocation:
 
-```csharp
+<!-- snippet: site_docs_advanced_md_009 -->
+```cs
 var runConfig = new CommandRunConfig(Width: 120, OptionWidth: 32)
 {
     Out = Console.Out,
@@ -271,6 +288,7 @@ var runConfig = new CommandRunConfig(Width: 120, OptionWidth: 32)
 
 await app.RunAsync(args, runConfig);
 ```
+<!-- endSnippet -->
 
 {.table}
 | Property | Default | Description |
@@ -285,12 +303,14 @@ await app.RunAsync(args, runConfig);
 
 Use `CommandConfig.Localizer` to translate all built-in strings:
 
-```csharp
+<!-- snippet: site_docs_advanced_md_010 -->
+```cs
 var app = new CommandApp("myexe", config: new CommandConfig
 {
     Localizer = text => MyLocalizationService.Translate(text),
 });
 ```
+<!-- endSnippet -->
 
 The localizer is applied before strings are written to `Out`/`Error`.
 
@@ -298,7 +318,8 @@ The localizer is applied before strings are written to `Out`/`Error`.
 
 Override environment variable lookup for testing or custom scenarios:
 
-```csharp
+<!-- snippet: site_docs_advanced_md_011 -->
+```cs
 var envVars = new Dictionary<string, string> { ["MY_PORT"] = "8080" };
 
 var app = new CommandApp("myexe", config: new CommandConfig
@@ -306,12 +327,14 @@ var app = new CommandApp("myexe", config: new CommandConfig
     EnvironmentVariableResolver = name => envVars.GetValueOrDefault(name),
 });
 ```
+<!-- endSnippet -->
 
 ## EnumWrapper
 
 `EnumWrapper<T>` provides AOT-friendly enum parsing for options:
 
-```csharp
+<!-- snippet: site_docs_advanced_md_012 -->
+```cs
 var colors = new List<Color>();
 
 var app = new CommandApp("myexe")
@@ -323,6 +346,7 @@ var app = new CommandApp("myexe")
 
 enum Color { Red, Green, Blue }
 ```
+<!-- endSnippet -->
 
 `EnumWrapper<T>`:
 - Implements `ISpanParsable<T>` for seamless integration with the option parser.

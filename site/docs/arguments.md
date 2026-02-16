@@ -10,7 +10,8 @@ In addition to options (prefixed with `-`, `--`, `/`), XenoAtom.CommandLine supp
 
 Arguments use angle-bracket prototypes and are added with the same collection initializer syntax as options:
 
-```csharp
+<!-- snippet: site_docs_arguments_md_001 -->
+```cs
 string? input = null;
 var app = new CommandApp("myexe")
 {
@@ -24,6 +25,7 @@ var app = new CommandApp("myexe")
     }
 };
 ```
+<!-- endSnippet -->
 
 Running `myexe file.txt`:
 
@@ -46,9 +48,11 @@ The suffix on the argument prototype controls how many values are expected:
 
 ### Required Argument
 
-```csharp
+<!-- snippet: site_docs_arguments_md_002 -->
+```cs
 { "<input>", "Input file", v => input = v }
 ```
+<!-- endSnippet -->
 
 If the user does not provide a value, an error is raised:
 
@@ -58,42 +62,53 @@ myexe: Missing required argument: <input>
 
 ### Optional Argument
 
-```csharp
+<!-- snippet: site_docs_arguments_md_003 -->
+```cs
 { "<output>?", "Output file (optional)", v => output = v }
 ```
+<!-- endSnippet -->
 
 The `?` suffix makes the argument optional. Optional arguments must be the **last** declared argument.
 
 ### List Arguments
 
-```csharp
+<!-- snippet: site_docs_arguments_md_004 -->
+```cs
 var files = new List<string>();
 { "<files>*", "Input files", files }
 ```
+<!-- endSnippet -->
 
 The `*` suffix collects zero or more remaining positional values into a list. Use `+` to require at least one:
 
-```csharp
+<!-- snippet: site_docs_arguments_md_005 -->
+```cs
 { "<files>+", "Input files (at least one)", files }
 ```
+<!-- endSnippet -->
 
 List arguments must be the **last** declared argument.
 
 ### Remainder Argument
 
-```csharp
+<!-- snippet: site_docs_arguments_md_006 -->
+```cs
 { "<>", "Extra arguments passed to the action" }
 ```
+<!-- endSnippet -->
 
 Or with the explicit helper:
 
-```csharp
+<!-- snippet: site_docs_arguments_md_007 -->
+```cs
 app.AddRemainder("Extra arguments passed to the action");
 ```
+<!-- endSnippet -->
 
 The `<>` prototype forwards all remaining positional arguments to the command action's `arguments` array instead of binding them to a specific variable or list:
 
-```csharp
+<!-- snippet: site_docs_arguments_md_008 -->
+```cs
 var app = new CommandApp("myexe")
 {
     { "<>", "Extra arguments" },
@@ -105,12 +120,14 @@ var app = new CommandApp("myexe")
     }
 };
 ```
+<!-- endSnippet -->
 
 ## Combining Arguments
 
 You can combine multiple arguments with different cardinalities:
 
-```csharp
+<!-- snippet: site_docs_arguments_md_009 -->
+```cs
 string? input = null;
 string? output = null;
 var extraFiles = new List<string>();
@@ -133,6 +150,7 @@ var app = new CommandApp("myexe")
     }
 };
 ```
+<!-- endSnippet -->
 
 Running `myexe --help`:
 
@@ -151,18 +169,22 @@ Arguments:
 
 Like options, arguments support typed parsing with `ISpanParsable<T>`:
 
-```csharp
+<!-- snippet: site_docs_arguments_md_010 -->
+```cs
 int count = 0;
 { "<count>", "Number of items", (int v) => count = v }
 ```
+<!-- endSnippet -->
 
 ## Argument Validation
 
 Arguments also support validation (see [Validation & Constraints](validation.md)):
 
-```csharp
-{ "<input>", "Input {FILE}", v => input = v, validate: Validate.FileExists() }
+<!-- snippet: site_docs_arguments_md_011 -->
+```cs
+{ "<input>", "Input {FILE}", v => input = v, Validate.FileExists(), false }
 ```
+<!-- endSnippet -->
 
 ## Strict Argument Parsing
 
@@ -178,7 +200,8 @@ This prevents typos in option names from silently becoming positional arguments.
 
 Arguments and options work together naturally. Options are parsed first, and remaining tokens become positional arguments in declaration order:
 
-```csharp
+<!-- snippet: site_docs_arguments_md_012 -->
+```cs
 var app = new CommandApp("myexe")
 {
     { "v|verbose", "Verbose", v => {} },
@@ -188,6 +211,7 @@ var app = new CommandApp("myexe")
     (ctx, _) => ValueTask.FromResult(0)
 };
 ```
+<!-- endSnippet -->
 
 ```sh
 myexe --verbose input.txt output.txt

@@ -10,7 +10,8 @@ XenoAtom.CommandLine supports commands and sub-commands, allowing you to build r
 
 `CommandApp` is the entry point for your application. It inherits from `Command` and is the root of the command tree:
 
-```csharp
+<!-- snippet: site_docs_commands_md_001 -->
+```cs
 var app = new CommandApp("myexe")
 {
     { "v|verbose", "Enable verbose output", v => {} },
@@ -24,6 +25,7 @@ var app = new CommandApp("myexe")
 
 await app.RunAsync(args);
 ```
+<!-- endSnippet -->
 
 If you omit the name, it defaults to the current executable name.
 
@@ -31,7 +33,8 @@ If you omit the name, it defaults to the current executable name.
 
 Add sub-commands using `Command`:
 
-```csharp
+<!-- snippet: site_docs_commands_md_002 -->
+```cs
 using XenoAtom.CommandLine;
 
 const string _ = "";
@@ -75,6 +78,7 @@ var app = new CommandApp("myexe")
 
 await app.RunAsync(args);
 ```
+<!-- endSnippet -->
 
 Running `myexe --help`:
 
@@ -112,7 +116,8 @@ Arguments:
 
 Commands can be nested to any depth:
 
-```csharp
+<!-- snippet: site_docs_commands_md_003 -->
+```cs
 var app = new CommandApp("myexe")
 {
     new Command("remote")
@@ -130,6 +135,7 @@ var app = new CommandApp("myexe")
     },
 };
 ```
+<!-- endSnippet -->
 
 This creates `myexe remote add --name origin` and `myexe remote remove --name origin`.
 
@@ -137,9 +143,11 @@ This creates `myexe remote add --name origin` and `myexe remote remove --name or
 
 Commands can be hidden from help output:
 
-```csharp
+<!-- snippet: site_docs_commands_md_004 -->
+```cs
 var cmd = new Command("internal-debug", "Debug command") { Hidden = true };
 ```
+<!-- endSnippet -->
 
 Hidden commands are still executable — they just don't appear in `--help`.
 
@@ -149,19 +157,22 @@ Every `Command` (including `CommandApp`) can have a single action that runs afte
 
 ### With Context and Arguments
 
-```csharp
+<!-- snippet: site_docs_commands_md_005 -->
+```cs
 (ctx, _) =>
 {
     ctx.Out.WriteLine("Hello!");
     return ValueTask.FromResult(0);
 }
 ```
+<!-- endSnippet -->
 
 The `ctx` parameter is a `CommandRunContext` providing access to `Out`, `Error`, and `RunConfig`. The second parameter is the array of remaining positional arguments (empty when using `CommandArgument` declarations).
 
 ### Arguments Only
 
-```csharp
+<!-- snippet: site_docs_commands_md_006 -->
+```cs
 (arguments) =>
 {
     foreach (var arg in arguments)
@@ -169,18 +180,21 @@ The `ctx` parameter is a `CommandRunContext` providing access to `Out`, `Error`,
     return ValueTask.FromResult(0);
 }
 ```
+<!-- endSnippet -->
 
 ### Async Actions
 
 All action signatures return `ValueTask<int>` for native async support:
 
-```csharp
+<!-- snippet: site_docs_commands_md_007 -->
+```cs
 async (ctx, _) =>
 {
     await SomeAsyncWork();
     return 0;
 }
 ```
+<!-- endSnippet -->
 
 ### Exit Codes
 
@@ -190,7 +204,8 @@ The return value is the process exit code. Return `0` for success and any non-ze
 
 `CommandGroup` lets you group related nodes (options, commands, text) together. More importantly, groups can be **conditional** — their contents are only active when a condition is met:
 
-```csharp
+<!-- snippet: site_docs_commands_md_008 -->
+```cs
 bool advanced = false;
 
 var app = new CommandApp("myexe")
@@ -207,6 +222,7 @@ var app = new CommandApp("myexe")
     (ctx, _) => ValueTask.FromResult(0)
 };
 ```
+<!-- endSnippet -->
 
 Running `myexe --help`:
 
@@ -235,7 +251,8 @@ The conditional group affects both **visibility** (help output) and **availabili
 
 You can also put commands inside conditional groups:
 
-```csharp
+<!-- snippet: site_docs_commands_md_009 -->
+```cs
 new CommandGroup(() => advanced)
 {
     "Advanced Commands:",
@@ -246,6 +263,7 @@ new CommandGroup(() => advanced)
     },
 }
 ```
+<!-- endSnippet -->
 
 The `debug` command only appears and is executable when `--advanced` is passed.
 
@@ -253,7 +271,8 @@ The `debug` command only appears and is executable when `--advanced` is passed.
 
 Any string added to a command becomes descriptive text in the help output:
 
-```csharp
+<!-- snippet: site_docs_commands_md_010 -->
+```cs
 var app = new CommandApp("myexe")
 {
     "Options:",
@@ -267,6 +286,7 @@ var app = new CommandApp("myexe")
     },
 };
 ```
+<!-- endSnippet -->
 
 The empty string `""` (or `const string _ = ""`) adds a blank line in the help output. All items — options, commands, text — are rendered in declaration order.
 
@@ -278,27 +298,33 @@ XenoAtom.CommandLine provides two built-in option types:
 
 Adds `-h`, `-?`, and `--help`:
 
-```csharp
+<!-- snippet: site_docs_commands_md_011 -->
+```cs
 new HelpOption()
 // Equivalent to:
 // { "h|?|help", "Show this message and exit", v => { /* triggers help */ } }
 ```
+<!-- endSnippet -->
 
 You can customize the prototype and description:
 
-```csharp
+<!-- snippet: site_docs_commands_md_012 -->
+```cs
 new HelpOption("h|help", "Display help information")
 ```
+<!-- endSnippet -->
 
 ### VersionOption
 
 Adds `--version` (and optionally `-v`):
 
-```csharp
+<!-- snippet: site_docs_commands_md_013 -->
+```cs
 new VersionOption("1.2.3")
 // Equivalent to:
 // { "v|version", "Show the version of this command", v => { /* prints version */ } }
 ```
+<!-- endSnippet -->
 
 If no version string is provided, it extracts the version from the assembly's informational version attribute.
 

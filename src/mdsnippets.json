@@ -1,0 +1,16 @@
+{
+  "$schema": "https://raw.githubusercontent.com/SimonCropp/MarkdownSnippets/master/schema.json",
+  "Convention": "InPlaceOverwrite",
+  "WriteHeader": false,
+  "OmitSnippetLinks": true,
+  "ValidateContent": false,
+  "ExcludeMarkdownDirectories": [
+    ".git",
+    ".github",
+    ".vscode",
+    "src",
+    "samples",
+    "site/.lunet",
+    "site/docs/specs"
+  ]
+}

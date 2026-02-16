@@ -35,23 +35,27 @@ These members now use construction-time initialization:
 
 ### Before
 
-```csharp
+<!-- snippet: site_docs_migration_2_0_md_001 -->
+```cs
 var hidden = new Command("secret");
 hidden.Hidden = true;
 
 app.Options["name"].EnvironmentVariable = "APP_NAME";
 ```
+<!-- endSnippet -->
 
 ### After
 
-```csharp
+<!-- snippet: site_docs_migration_2_0_md_002 -->
+```cs
 var hidden = new Command("secret")
 {
     Hidden = true
 };
 
-app.Add("n|name=", "Name", value => { }, envVar: "APP_NAME");
+app.Add("n|name=", "Name", value => { }, "APP_NAME");
 ```
+<!-- endSnippet -->
 
 ## New Clarity Helpers
 

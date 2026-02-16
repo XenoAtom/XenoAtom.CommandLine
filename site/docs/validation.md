@@ -10,20 +10,22 @@ XenoAtom.CommandLine provides built-in support for validating option and argumen
 
 Add a `validate` parameter when declaring an option or argument to validate parsed values immediately:
 
-```csharp
+<!-- snippet: site_docs_validation_md_001 -->
+```cs
 int port = 0;
 string? email = null;
 string? input = null;
 
 var app = new CommandApp("myexe")
 {
-    { "p|port=", "Server {PORT}", (int v) => port = v, validate: Validate.Range(1, 65535) },
+    { "p|port=", "Server {PORT}", (int v) => port = v, Validate.Range(1, 65535) },
     { "e|email=", "Contact {EMAIL}", v => email = v,
-        validate: Validate.That<string>(v => v.Contains('@'), "The value must be a valid email address.") },
-    { "<input>", "Input {FILE}", v => input = v, validate: Validate.FileExists() },
+        Validate.That<string>(v => v.Contains('@'), "The value must be a valid email address."), false },
+    { "<input>", "Input {FILE}", v => input = v, Validate.FileExists(), false },
     (ctx, _) => ValueTask.FromResult(0)
 };
 ```
+<!-- endSnippet -->
 
 If validation fails, a clear error message is shown:
 
@@ -45,11 +47,13 @@ XenoAtom.CommandLine includes a comprehensive set of validators in the `Validate
 | `Validate.Positive<T>()` | Value must be greater than zero |
 | `Validate.NonNegative<T>()` | Value must be greater than or equal to zero |
 
-```csharp
-{ "p|port=", "Port", (int v) => port = v, validate: Validate.Range(1, 65535) }
-{ "t|threads=", "Threads", (int v) => threads = v, validate: Validate.Positive<int>() }
-{ "r|retries=", "Retries", (int v) => retries = v, validate: Validate.NonNegative<int>() }
+<!-- snippet: site_docs_validation_md_002 -->
+```cs
+{ "p|port=", "Port", (int v) => port = v, Validate.Range(1, 65535) }
+{ "t|threads=", "Threads", (int v) => threads = v, Validate.Positive<int>() }
+{ "r|retries=", "Retries", (int v) => retries = v, Validate.NonNegative<int>() }
 ```
+<!-- endSnippet -->
 
 ### String Validators
 
@@ -61,11 +65,13 @@ XenoAtom.CommandLine includes a comprehensive set of validators in the `Validate
 | `Validate.Matches(regex)` | Value must match a compiled `Regex` |
 | `Validate.OneOf<T>(params T[])` | Value must be one of the specified values |
 
-```csharp
-{ "n|name=", "Name", v => name = v, validate: Validate.NonEmpty() }
-{ "e|email=", "Email", v => email = v, validate: Validate.Matches(@"^[^@]+@[^@]+$", "Must be a valid email.") }
-{ "l|level=", "Level", v => level = v, validate: Validate.OneOf("debug", "info", "warn", "error") }
+<!-- snippet: site_docs_validation_md_003 -->
+```cs
+{ "n|name=", "Name", v => name = v, Validate.NonEmpty(), false }
+{ "e|email=", "Email", v => email = v, Validate.Matches(@"^[^@]+@[^@]+$", "Must be a valid email."), false }
+{ "l|level=", "Level", v => level = v, Validate.OneOf("debug", "info", "warn", "error"), false }
 ```
+<!-- endSnippet -->
 
 ### File System Validators
 
@@ -76,10 +82,12 @@ XenoAtom.CommandLine includes a comprehensive set of validators in the `Validate
 | `Validate.DirectoryExists()` | Path must refer to an existing directory |
 | `Validate.PathExists()` | Path must refer to an existing file or directory |
 
-```csharp
-{ "<input>", "Input file", v => input = v, validate: Validate.FileExists() }
-{ "o|output-dir=", "Output dir", v => dir = v, validate: Validate.DirectoryExists() }
+<!-- snippet: site_docs_validation_md_004 -->
+```cs
+{ "<input>", "Input file", v => input = v, Validate.FileExists(), false }
+{ "o|output-dir=", "Output dir", v => dir = v, Validate.DirectoryExists(), false }
 ```
+<!-- endSnippet -->
 
 ### Custom Validators
 
@@ -89,23 +97,27 @@ XenoAtom.CommandLine includes a comprehensive set of validators in the `Validate
 | `Validate.That<T>(predicate, errorMessage)` | Custom predicate with error message |
 | `Validate.Custom<T>(validator)` | Pass-through for an `OptionValidator<T>` delegate |
 
-```csharp
+<!-- snippet: site_docs_validation_md_005 -->
+```cs
 { "p|port=", "Port", (int v) => port = v,
-    validate: Validate.That<int>(v => v % 2 == 0, "Port must be an even number.") }
+    Validate.That<int>(v => v % 2 == 0, "Port must be an even number.") }
 ```
+<!-- endSnippet -->
 
 ### Composing Validators
 
 Use `Validate.Chain(...)` to combine multiple validators. The first failure wins:
 
-```csharp
+<!-- snippet: site_docs_validation_md_006 -->
+```cs
 { "p|port=", "Port", (int v) => port = v,
-    validate: Validate.Chain(
+    Validate.Chain(
         Validate.Range(1, 65535),
         Validate.That<int>(v => v != 80, "Port 80 is reserved.")
     )
 }
 ```
+<!-- endSnippet -->
 
 ## Option Constraints
 
@@ -115,7 +127,8 @@ Constraints let you declare relationships between options. In collection initial
 
 Prevent two or more options from being used together:
 
-```csharp
+<!-- snippet: site_docs_validation_md_007 -->
+```cs
 var app = new CommandApp("myexe")
 {
     { "j|json", "Output JSON", _ => {} },
@@ -125,12 +138,15 @@ var app = new CommandApp("myexe")
     (ctx, _) => ValueTask.FromResult(0)
 };
 ```
+<!-- endSnippet -->
 
 If you are not using collection initializers, the fluent alternative is:
 
-```csharp
+<!-- snippet: site_docs_validation_md_008 -->
+```cs
 app.AddMutuallyExclusive("json", "xml", "csv");
 ```
+<!-- endSnippet -->
 
 If the user passes `--json --xml`, the error is:
 
@@ -143,7 +159,8 @@ Use `myexe --help` for usage.
 
 Declare that when one option is present, another must also be specified:
 
-```csharp
+<!-- snippet: site_docs_validation_md_009 -->
+```cs
 var app = new CommandApp("myexe")
 {
     { "u|user=", "User", _ => {} },
@@ -152,12 +169,15 @@ var app = new CommandApp("myexe")
     (ctx, _) => ValueTask.FromResult(0)
 };
 ```
+<!-- endSnippet -->
 
 If you are not using collection initializers, the fluent alternative is:
 
-```csharp
+<!-- snippet: site_docs_validation_md_010 -->
+```cs
 app.AddRequires("password", "user");
 ```
+<!-- endSnippet -->
 
 If the user passes `--password secret` without `--user`, the error is:
 
@@ -170,7 +190,8 @@ Use `myexe --help` for usage.
 
 You can add multiple constraints to the same command:
 
-```csharp
+<!-- snippet: site_docs_validation_md_011 -->
+```cs
 var app = new CommandApp("myexe")
 {
     { "j|json", "Output JSON", _ => {} },
@@ -190,15 +211,18 @@ var app = new CommandApp("myexe")
     (ctx, _) => ValueTask.FromResult(0)
 };
 ```
+<!-- endSnippet -->
 
 Equivalent fluent setup:
 
-```csharp
+<!-- snippet: site_docs_validation_md_012 -->
+```cs
 app.AddMutuallyExclusive("json", "xml");
 app.AddMutuallyExclusive("verbose", "quiet");
 app.AddRequires("password", "user");
 app.AddRequires("tls-cert", "tls-key");
 ```
+<!-- endSnippet -->
 
 ### Constraint Timing
 

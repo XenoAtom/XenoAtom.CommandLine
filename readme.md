@@ -39,7 +39,8 @@
 
 ## 🧪 Example
 
-```csharp
+<!-- snippet: readme_md_001 -->
+```cs
 using System;
 using XenoAtom.CommandLine;
 
@@ -107,6 +108,7 @@ var commandApp = new CommandApp("myexe")
 
 await commandApp.RunAsync(args);
 ```
+<!-- endSnippet -->
 
 Notes:
 - `CommandUsage()` defaults to `Usage: {NAME} {SYNTAX}` and `{SYNTAX}` is derived from your declared options/commands/arguments.
@@ -167,7 +169,8 @@ Commit message: World!
 
 For richer CLI output, use the optional `XenoAtom.CommandLine.Terminal` package:
 
-```csharp
+<!-- snippet: readme_md_002 -->
+```cs
 using XenoAtom.CommandLine;
 using XenoAtom.CommandLine.Terminal;
 using XenoAtom.Terminal.UI;
@@ -203,6 +206,7 @@ var app = new CommandApp("myexe", config: new CommandConfig
     (ctx, _) => ValueTask.FromResult(0)
 };
 ```
+<!-- endSnippet -->
 
 This package also provides `command.ToHelpVisual(...)` for embedding help in Terminal.UI apps.
 For one-shot rendering, `Terminal.Write(...)` is lazily initialized and does not require an explicit terminal session.

@@ -15,7 +15,8 @@ Welcome to the XenoAtom.CommandLine documentation. This guide covers everything 
 
 With the optional `XenoAtom.CommandLine.Terminal` package, you can also embed [XenoAtom.Terminal.UI](https://xenoatom.github.io/terminal) visuals directly in command initializers for richer help output.
 
-```csharp
+<!-- snippet: site_docs_readme_md_001 -->
+```cs
 var app = new CommandApp("myexe")
 {
     { "n|name=", "Your {NAME}", v => name = v },
@@ -29,6 +30,7 @@ var app = new CommandApp("myexe")
 
 await app.RunAsync(args);
 ```
+<!-- endSnippet -->
 
 ## Migrating to 2.0 (Quick Check)
 

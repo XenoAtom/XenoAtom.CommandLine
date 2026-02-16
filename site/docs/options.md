@@ -10,7 +10,8 @@ Options are the core building block of any command-line interface. XenoAtom.Comm
 
 Options are added to a `CommandApp` or `Command` using collection initializers or the `Add` method:
 
-```csharp
+<!-- snippet: site_docs_options_md_001 -->
+```cs
 var app = new CommandApp("myexe")
 {
     { "o|output=", "The target output {FILE}", v => target = v },
@@ -19,6 +20,7 @@ var app = new CommandApp("myexe")
 // Equivalent:
 app.Add("o|output=", "The target output {FILE}", v => target = v);
 ```
+<!-- endSnippet -->
 
 ## Option Prototype Syntax
 
@@ -64,33 +66,39 @@ All options can be invoked with any of the three prefixes:
 
 A flag option has no `=` or `:` in its prototype. It receives a non-null value when present:
 
-```csharp
+<!-- snippet: site_docs_options_md_002 -->
+```cs
 bool verbose = false;
 var app = new CommandApp("myexe")
 {
     { "v|verbose", "Enable verbose output", v => verbose = v is not null },
 };
 ```
+<!-- endSnippet -->
 
 You can explicitly enable or disable a flag with `+` and `-`:
 
-```csharp
+<!-- snippet: site_docs_options_md_003 -->
+```cs
 await app.RunAsync(["-v"]);   // verbose == true
 await app.RunAsync(["-v+"]);  // verbose == true
 await app.RunAsync(["-v-"]);  // verbose == false
 ```
+<!-- endSnippet -->
 
 ## Required Value Options
 
 Append `=` to the prototype to require a value:
 
-```csharp
+<!-- snippet: site_docs_options_md_004 -->
+```cs
 string? name = null;
 var app = new CommandApp("myexe")
 {
     { "n|name=", "Your {NAME}", v => name = v },
 };
 ```
+<!-- endSnippet -->
 
 The value can be provided in several ways:
 - `--name John` (next argument)
@@ -103,13 +111,15 @@ The value can be provided in several ways:
 
 Append `:` to the prototype for an optional value:
 
-```csharp
+<!-- snippet: site_docs_options_md_005 -->
+```cs
 string? output = null;
 var app = new CommandApp("myexe")
 {
     { "o:", "Output file (optional)", v => output = v },
 };
 ```
+<!-- endSnippet -->
 
 When the value is optional, it **must** be provided inline. `-o VALUE` does **not** attach `VALUE` to `-o` — instead, `VALUE` becomes a positional argument and `output` is set to `null` (or empty string).
 
@@ -119,7 +129,8 @@ Valid: `-ofile.txt`, `-o:file.txt`, `-o=file.txt`
 
 When an option callback has two parameters, values are automatically split into a key and a value:
 
-```csharp
+<!-- snippet: site_docs_options_md_006 -->
+```cs
 var app = new CommandApp("myexe")
 {
     { "D:", "Define {0:NAME} and optional {1:VALUE}", (key, value) =>
@@ -133,6 +144,7 @@ var app = new CommandApp("myexe")
     }},
 };
 ```
+<!-- endSnippet -->
 
 ```sh
 myexe -DA=B -DHello -IG=F --macro X=Y
@@ -149,9 +161,11 @@ Macro: X = Y
 
 The default key/value separators are `=` and `:`. You can use a custom separator:
 
-```csharp
+<!-- snippet: site_docs_options_md_007 -->
+```cs
 { "P={->}", "Define {0:NAME} and {1:VALUE}", (k, v) => Console.WriteLine($"{k} -> {v}") },
 ```
+<!-- endSnippet -->
 
 Now `-PKey->Value` splits into `Key` and `Value`.
 
@@ -161,13 +175,15 @@ Now `-PKey->Value` splits into `Key` and `Value`.
 
 Any type that implements `ISpanParsable<TSelf>` can be used directly:
 
-```csharp
+<!-- snippet: site_docs_options_md_008 -->
+```cs
 int port = 0;
 var app = new CommandApp("myexe")
 {
     { "p|port=", "Server {PORT}", (int v) => port = v },
 };
 ```
+<!-- endSnippet -->
 
 This works with all built-in numeric types, `DateTime`, `DateTimeOffset`, `Guid`, `TimeSpan`, `IPAddress`, and any custom type implementing `ISpanParsable<T>`.
 
@@ -175,7 +191,8 @@ This works with all built-in numeric types, `DateTime`, `DateTimeOffset`, `Guid`
 
 Instead of a callback, you can bind an option directly to a collection:
 
-```csharp
+<!-- snippet: site_docs_options_md_009 -->
+```cs
 var names = new List<string>();
 var ports = new List<int>();
 
@@ -185,6 +202,7 @@ var app = new CommandApp("myexe")
     { "p|port=", "A {PORT}", ports },
 };
 ```
+<!-- endSnippet -->
 
 Each time the option appears on the command line, the value is added to the list:
 
@@ -196,14 +214,18 @@ myexe --name Alice --name Bob --port 8080 --port 9090
 
 Use `EnumWrapper<T>` for AOT-friendly enum parsing:
 
-```csharp
+<!-- snippet: site_docs_options_md_010 -->
+```cs
 var colors = new List<Color>();
 
 var app = new CommandApp("myexe")
 {
     { "c|color=", "The {COLOR} (" + EnumWrapper<Color>.Names + ")", (EnumWrapper<Color> v) => colors.Add(v) },
 };
+
+enum Color { Red, Green, Blue }
 ```
+<!-- endSnippet -->
 
 `EnumWrapper<T>` implements `ISpanParsable<T>` and provides case-insensitive parsing. The `.Names` property returns a comma-separated list of valid values for use in descriptions.
 
@@ -211,7 +233,8 @@ var app = new CommandApp("myexe")
 
 Single-character options can be bundled with the `-` prefix (POSIX/tar style):
 
-```csharp
+<!-- snippet: site_docs_options_md_011 -->
+```cs
 bool a = false, b = false, c = false;
 var app = new CommandApp("myexe")
 {
@@ -222,10 +245,12 @@ var app = new CommandApp("myexe")
 
 await app.RunAsync(["-abc"]); // a == true, b == true, c == true
 ```
+<!-- endSnippet -->
 
 At most one option in the bundle can accept a value, and its value starts from the next character:
 
-```csharp
+<!-- snippet: site_docs_options_md_012 -->
+```cs
 string? file = null;
 var app = new CommandApp("myexe")
 {
@@ -235,22 +260,27 @@ var app = new CommandApp("myexe")
 
 await app.RunAsync(["-xfarchive.tar"]); // file == "archive.tar"
 ```
+<!-- endSnippet -->
 
 ## Value Placeholders in Descriptions
 
 Use `{NAME}` in the description to label the value in help output:
 
-```csharp
+<!-- snippet: site_docs_options_md_013 -->
+```cs
 { "n|name=", "Your {NAME}", v => name = v }
 // Help: -n, --name=NAME            Your NAME
 ```
+<!-- endSnippet -->
 
 For key/value options, use indexed placeholders:
 
-```csharp
+<!-- snippet: site_docs_options_md_014 -->
+```cs
 { "D:", "Define {0:KEY} and optional {1:VALUE}", (k, v) => {} }
 // Help: -D[=KEY:VALUE]             Define KEY and optional VALUE
 ```
+<!-- endSnippet -->
 
 ## Stop Parsing with `--`
 
@@ -266,9 +296,11 @@ This is useful for passing values that start with `-` without them being interpr
 
 Options can be hidden from help output:
 
-```csharp
-{ "secret=", "Secret option", v => {}, hidden: true }
+<!-- snippet: site_docs_options_md_015 -->
+```cs
+{ "secret=", "Secret option", v => {}, true }
 ```
+<!-- endSnippet -->
 
 Hidden options are still functional — they just don't appear in `--help`.
 Set metadata (`hidden`, `envVar`, `envVarDelimiter`) while declaring options; these settings are part of construction-time configuration.
@@ -277,17 +309,19 @@ Set metadata (`hidden`, `envVar`, `envVarDelimiter`) while declaring options; th
 
 Options can fall back to environment variables when not provided on the command line:
 
-```csharp
+<!-- snippet: site_docs_options_md_016 -->
+```cs
 int port = 0;
 var includes = new List<string>();
 
 var app = new CommandApp("myexe")
 {
-    { "p|port=", "Server {PORT}", (int v) => port = v, envVar: "MY_PORT" },
-    { "i|include=", "Include {PATH}", includes, envVar: "MY_INCLUDES", envVarDelimiter: Path.PathSeparator },
+    { "p|port=", "Server {PORT}", (int v) => port = v, "MY_PORT" },
+    { "i|include=", "Include {PATH}", includes, "MY_INCLUDES", Path.PathSeparator },
     (ctx, _) => ValueTask.FromResult(0)
 };
 ```
+<!-- endSnippet -->
 
 The environment variable name appears in help output:
 

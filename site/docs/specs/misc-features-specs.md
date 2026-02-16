@@ -101,13 +101,13 @@ To preserve **source compatibility** and avoid overload ambiguities, these new o
 
 ```csharp
 // Shorthand (string action)
-{ "t|token=", "API {TOKEN}", v => token = v, envVar: "MY_TOKEN" }
+{ "t|token=", "API {TOKEN}", v => token = v, "MY_TOKEN" }
 
 // Typed value
-{ "p|port=", "Server {PORT}", (int v) => port = v, envVar: "SERVER_PORT" }
+{ "p|port=", "Server {PORT}", (int v) => port = v, "SERVER_PORT" }
 
 // Collection binding (opt-in splitting)
-{ "i|include=", "Include {PATH}", includes, envVar: "MY_INCLUDES", envVarDelimiter: Path.PathSeparator }
+{ "i|include=", "Include {PATH}", includes, "MY_INCLUDES", Path.PathSeparator }
 ```
 
 If `prototype` is an **argument prototype** (e.g. `<file>`), specifying `envVar` is invalid and must throw an `ArgumentException` (env var fallback applies to options only).
@@ -421,7 +421,7 @@ Notes:
 var app = new CommandApp("myexe")
 {
     { "p|port=", "Server {PORT}", (int v) => port = v,
-        validate: Validate.Range(1, 65535) },
+        Validate.Range(1, 65535) },
 };
 
 // Error output:
@@ -433,7 +433,7 @@ var app = new CommandApp("myexe")
 
 ```csharp
 { "n|count=", "Iteration {COUNT}", (int v) => count = v,
-    validate: Validate.Chain(
+    Validate.Chain(
         Validate.Positive<int>(),
         Validate.Range(1, 1000)
     )
@@ -447,7 +447,7 @@ var app = new CommandApp("myexe")
 
 ```csharp
 { "e|email=", "Contact {EMAIL}", v => email = v,
-    validate: Validate.That<string>(
+    Validate.That<string>(
         v => v.Contains('@'),
         "The value must be a valid email address."
     )
@@ -461,7 +461,7 @@ var app = new CommandApp("myexe")
 
 ```csharp
 { "n|name=", "Your {NAME}", v => name = v,
-    validate: Validate.NonEmpty() }
+    Validate.NonEmpty() }
 
 // Error output:
 // Invalid value for option `--name`: The value must not be empty.
@@ -471,7 +471,7 @@ var app = new CommandApp("myexe")
 
 ```csharp
 { "<input>", "Input {FILE}", v => input = v,
-    validate: Validate.FileExists() }
+    Validate.FileExists() }
 
 // Error output:
 // Invalid value for argument `<input>`: The file `missing.txt` does not exist.
@@ -481,7 +481,7 @@ var app = new CommandApp("myexe")
 
 ```csharp
 { "f|format=", "Output {FORMAT}", v => format = v,
-    validate: Validate.OneOf("json", "xml", "csv") }
+    Validate.OneOf("json", "xml", "csv") }
 
 // Error output:
 // Invalid value for option `--format`: The value must be one of: json, xml, csv.
@@ -491,8 +491,8 @@ var app = new CommandApp("myexe")
 
 ```csharp
 { "p|port=", "Server {PORT}", (int v) => port = v,
-    validate: Validate.Range(1, 65535),
-    envVar: "SERVER_PORT" }
+    Validate.Range(1, 65535),
+    "SERVER_PORT" }
 ```
 
 When the env var `SERVER_PORT=99999` is set and `--port` is not provided, the validator runs on the env var value and produces:

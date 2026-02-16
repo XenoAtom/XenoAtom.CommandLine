@@ -5,6 +5,8 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
+    <PackageVersion Include="MarkdownSnippets.MsBuild" Version="28.0.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
     <PackageVersion Include="MinVer" Version="7.0.0" />
     <PackageVersion Include="Verify.MSTest" Version="31.12.5" />
     <PackageVersion Include="MSTest" Version="4.1.0" />
