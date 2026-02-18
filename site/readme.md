@@ -21,7 +21,7 @@ og_type: website
     <div class="row row-cols-1 row-cols-lg-2 gx-3 gy-3 mt-4 text-start mx-auto" style="max-width: 66rem;">
       <div class="col">
         <div class="card h-100">
-          <div class="card-header h5"><i class="bi bi-box-seam xenoatom-feature-icon xenoatom-icon--input"></i>Core package</div>
+          <div class="card-header h5"><i class="bi bi-box-seam lunet-feature-icon lunet-icon--input"></i>Core package</div>
           <div class="card-body">
             <p class="mb-2">Install <code>XenoAtom.CommandLine</code> for the parser, help system, validation, and completions.</p>
             <pre class="language-shell-session mb-0"><code>dotnet add package XenoAtom.CommandLine</code></pre>
@@ -30,7 +30,7 @@ og_type: website
       </div>
       <div class="col">
         <div class="card h-100">
-          <div class="card-header h5"><i class="bi bi-display xenoatom-feature-icon xenoatom-icon--controls"></i>Terminal visuals (optional)</div>
+          <div class="card-header h5"><i class="bi bi-display lunet-feature-icon lunet-icon--controls"></i>Terminal visuals (optional)</div>
           <div class="card-body">
             <p class="mb-2">Add <code>XenoAtom.CommandLine.Terminal</code> for markup and rich visual output powered by <a href="https://xenoatom.github.io/terminal">XenoAtom.Terminal.UI</a>.</p>
             <pre class="language-shell-session mb-0"><code>dotnet add package XenoAtom.CommandLine.Terminal</code></pre>
@@ -46,11 +46,11 @@ og_type: website
 </section>
 
 <section class="container my-5">
-  <h2 class="display-6 mb-4"><i class="bi bi-stars xenoatom-feature-icon xenoatom-icon--themes"></i>Features</h2>
+  <h2 class="display-6 mb-4"><i class="bi bi-stars lunet-feature-icon lunet-icon--themes"></i>Features</h2>
   <div class="row row-cols-1 row-cols-lg-2 gx-4 gy-4">
     <div class="col">
       <div class="card h-100">
-        <div class="card-header h4"><i class="bi bi-diagram-3 xenoatom-feature-icon xenoatom-icon--layout"></i> Commands &amp; Arguments</div>
+        <div class="card-header h4"><i class="bi bi-diagram-3 lunet-feature-icon lunet-icon--layout"></i> Commands &amp; Arguments</div>
         <div class="card-body">
           <p class="card-text mb-2">Compose nested command trees and strict positional arguments with cardinality support.</p>
           <p class="mb-0"><a href="{{site.basepath}}/docs/commands/">Commands docs</a> · <a href="{{site.basepath}}/docs/arguments/">Arguments docs</a></p>
@@ -59,7 +59,7 @@ og_type: website
     </div>
     <div class="col">
       <div class="card h-100">
-        <div class="card-header h4"><i class="bi bi-terminal xenoatom-feature-icon xenoatom-icon--input"></i> Option Parsing</div>
+        <div class="card-header h4"><i class="bi bi-terminal lunet-feature-icon lunet-icon--input"></i> Option Parsing</div>
         <div class="card-body">
           <p class="card-text mb-2">Support <code>-</code>/<code>--</code>/<code>/</code>, aliases, short bundles, key/value forms, and typed parsing.</p>
           <p class="mb-0"><a href="{{site.basepath}}/docs/options/">Options docs</a></p>
@@ -68,7 +68,7 @@ og_type: website
     </div>
     <div class="col">
       <div class="card h-100">
-        <div class="card-header h4"><i class="bi bi-shield-check xenoatom-feature-icon xenoatom-icon--actions"></i> Validation &amp; Constraints</div>
+        <div class="card-header h4"><i class="bi bi-shield-check lunet-feature-icon lunet-icon--actions"></i> Validation &amp; Constraints</div>
         <div class="card-body">
           <p class="card-text mb-2">Use built-in validators, custom delegates, mutually-exclusive options, and requires relationships.</p>
           <p class="mb-0"><a href="{{site.basepath}}/docs/validation/">Validation docs</a></p>
@@ -77,7 +77,7 @@ og_type: website
     </div>
     <div class="col">
       <div class="card h-100">
-        <div class="card-header h4"><i class="bi bi-chat-square-text xenoatom-feature-icon xenoatom-icon--debug"></i> Help &amp; Diagnostics</div>
+        <div class="card-header h4"><i class="bi bi-chat-square-text lunet-feature-icon lunet-icon--debug"></i> Help &amp; Diagnostics</div>
         <div class="card-body">
           <p class="card-text mb-2">Generate help automatically and provide context-aware errors with useful suggestions.</p>
           <p class="mb-0"><a href="{{site.basepath}}/docs/help-output/">Help &amp; output docs</a></p>
@@ -86,7 +86,7 @@ og_type: website
     </div>
     <div class="col">
       <div class="card h-100">
-        <div class="card-header h4"><i class="bi bi-plug xenoatom-feature-icon xenoatom-icon--binding"></i> Extensible Output</div>
+        <div class="card-header h4"><i class="bi bi-plug lunet-feature-icon lunet-icon--binding"></i> Extensible Output</div>
         <div class="card-body">
           <p class="card-text mb-2">Swap output pipelines through <code>ICommandOutput</code> and choose default, markup, or custom formats.</p>
           <p class="mb-0"><a href="{{site.basepath}}/docs/help-output/">Output customization docs</a></p>
@@ -95,7 +95,7 @@ og_type: website
     </div>
     <div class="col">
       <div class="card h-100">
-        <div class="card-header h4"><i class="bi bi-display xenoatom-feature-icon xenoatom-icon--controls"></i> Terminal &amp; Advanced</div>
+        <div class="card-header h4"><i class="bi bi-display lunet-feature-icon lunet-icon--controls"></i> Terminal &amp; Advanced</div>
         <div class="card-body">
           <p class="card-text mb-2">Add terminal markup/visual output, response files, completions, Parse API, and NativeAOT-friendly runtime behavior.</p>
           <p class="mb-0"><a href="{{site.basepath}}/docs/help-output/">Help &amp; output docs</a> · <a href="{{site.basepath}}/docs/advanced/">Advanced docs</a> · <a href="{{site.basepath}}/docs/migration-2.0/">Migration 2.0</a></p>
