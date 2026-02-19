@@ -46,4 +46,9 @@ with api.dotnet
             path: "../src/XenoAtom.CommandLine.Terminal/XenoAtom.CommandLine.Terminal.csproj"
         }
     ]
+    external_apis = [
+        { assembly: "XenoAtom.Terminal", url: "https://xenoatom.github.io/terminal/api" },
+        { assembly: "XenoAtom.Terminal.UI", url: "https://xenoatom.github.io/terminal/api" },
+        { assembly: "XenoAtom.Ansi", url: "https://xenoatom.github.io/terminal/api" }
+    ]
 end
