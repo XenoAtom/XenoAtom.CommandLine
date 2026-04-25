@@ -5,11 +5,11 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
-    <PackageVersion Include="MarkdownSnippets.MsBuild" Version="28.0.0" />
+    <PackageVersion Include="MarkdownSnippets.MsBuild" Version="28.2.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
     <PackageVersion Include="MinVer" Version="7.0.0" />
-    <PackageVersion Include="Verify.MSTest" Version="31.12.5" />
-    <PackageVersion Include="MSTest" Version="4.1.0" />
-    <PackageVersion Include="XenoAtom.Terminal.UI" Version="1.1.1" />
+    <PackageVersion Include="Verify.MSTest" Version="31.16.2" />
+    <PackageVersion Include="MSTest" Version="4.2.1" />
+    <PackageVersion Include="XenoAtom.Terminal.UI" Version="2.9.4" />
   </ItemGroup>
 </Project>
