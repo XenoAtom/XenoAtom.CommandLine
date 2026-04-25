@@ -8,6 +8,7 @@
     ".git",
     ".github",
     ".vscode",
+    "_ReSharper.Caches",
     "src",
     "samples",
     "site/.lunet",
