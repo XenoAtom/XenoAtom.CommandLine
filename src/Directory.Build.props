@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <!-- Verify (test dependency) requires a sponsorship declaration: this is an open source project without revenue. -->
+    <Verify_SponsorshipExemption>OpenSource</Verify_SponsorshipExemption>
+    <Verify_SponsorshipExemptionUntil>2027-09</Verify_SponsorshipExemptionUntil>
+  </PropertyGroup>
+</Project>

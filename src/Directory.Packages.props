@@ -5,11 +5,12 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
-    <PackageVersion Include="MarkdownSnippets.MsBuild" Version="28.2.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
-    <PackageVersion Include="MinVer" Version="7.0.0" />
-    <PackageVersion Include="Verify.MSTest" Version="31.16.2" />
-    <PackageVersion Include="MSTest" Version="4.2.1" />
-    <PackageVersion Include="XenoAtom.Terminal.UI" Version="2.9.4" />
+    <!-- Pinned to 29.x: the MSBuild task of 30.x targets net11.0 and does not load with the .NET 10 SDK (global.json) -->
+    <PackageVersion Include="MarkdownSnippets.MsBuild" Version="29.0.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.12.0" />
+    <PackageVersion Include="MinVer" Version="8.0.0" />
+    <PackageVersion Include="Verify.MSTest" Version="33.7.0" />
+    <PackageVersion Include="MSTest" Version="4.5.3" />
+    <PackageVersion Include="XenoAtom.Terminal.UI" Version="3.12.0" />
   </ItemGroup>
 </Project>

@@ -1,3 +1,5 @@
 # Set the default behavior, in case people don't have core.autocrlf set.
 * text=auto
 *.sh text eol=lf
+# Verify requires LF line endings in verified files
+*.verified.txt text eol=lf
