@@ -145,6 +145,12 @@ public class NativeAotSizeTests
             psi.ArgumentList.Add(arg);
         }
 
+        // The test host passes the MSBuild environment of the SDK that runs the tests. The child `dotnet` resolves its
+        // own SDK (global.json), which can be another one: it must not load the targets of the parent's SDK.
+        psi.Environment.Remove("MSBuildSDKsPath");
+        psi.Environment.Remove("MSBuildExtensionsPath");
+        psi.Environment.Remove("MSBUILD_EXE_PATH");
+
         using var process = Process.Start(psi);
         if (process is null)
             throw new InvalidOperationException($"Failed to start process `{fileName}`.");
